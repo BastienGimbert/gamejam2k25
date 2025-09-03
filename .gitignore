@@ -37,7 +37,10 @@ coverage.xml
 # Fichiers et dossiers IDEA
 .idea/
 *.iml
-TMPassets/.DS_Store
 
+# Cursor workspace complet
+.cursor/
+# macOS metadata
+.DS_Store
+**/.DS_Store
 
-src
