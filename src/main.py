@@ -1,6 +1,8 @@
 import sys
 import pygame
 import os
+import random
+
 
 from classes.menu import creer_boutons_menu, creer_boutons_credits, dessiner_menu, dessiner_credits
 from game import Game
@@ -25,36 +27,54 @@ HORLOGE = pygame.time.Clock()
 # Etats possibles: "MENU", "JEU", "PAUSE", "CREDITS"
 ETAT = "MENU"
 
-# Gestion du son (muet ou non)
-est_muet = False
-VOLUME_MUSIQUE = 1.0  # volume par défaut quand non muet
-
 # ------------------- MUSIQUE DE FOND -------------------
 
+# Gestion du son (muet ou non)
+est_muet = False
+VOLUME_MUSIQUE = 1.0 
+
+# événement pour musique terminée
+MUSIQUE_FINIE = pygame.USEREVENT + 1  
+pygame.mixer.music.set_endevent(MUSIQUE_FINIE) 
+
+derniere_piste = None   # piste jouée précédemment
+
+
 def demarrer_musique_de_fond() -> None:
-    """Tente de charger et jouer une musique en boucle si le mixer est dispo.
-    Le chemin est résolu depuis la racine du projet pour éviter les erreurs de chemin relatifs.
-    """
+    """Choisit une musique aléatoirement et la joue"""
+    global derniere_piste
     if not MIXER_DISPONIBLE:
         return
-    # Résout le chemin par rapport au dossier racine du projet (src/..)
     base_dir = os.path.dirname(os.path.dirname(__file__))
     pistes_candidates = [
-        os.path.join(base_dir, "assets", "audio", "music_Glorious_Morning_by_Waterflame.mp3"),
+        os.path.join(base_dir, "assets", "audio", "Aqua-Barbie-Girl.mp3"),
+        os.path.join(base_dir, "assets", "audio", "Camila-Cabello-Havana.mp3"),
+        os.path.join(base_dir, "assets", "audio", "Crab-Rave-medieval-style.mp3"),
+        os.path.join(base_dir, "assets", "audio", "Nirvana-Smells-Like-Teen-Spirit.mp3"),
+        os.path.join(base_dir, "assets", "audio", "Shakira-Hips-Don-t-Lie.mp3"),
+        os.path.join(base_dir, "assets", "audio", "We-Found-Love-Bardcore.mp3"),
     ]
-    for chemin in pistes_candidates:
-        try:
-            if not os.path.exists(chemin):
-                # fichier absent, passe au suivant
-                continue
-            pygame.mixer.music.load(chemin)
-            pygame.mixer.music.set_volume(0.0 if est_muet else VOLUME_MUSIQUE)
-            pygame.mixer.music.play(-1)  # -1 => boucle infinie
-            print(f"Musique chargée: {chemin}")
-            return
-        except Exception as e:
-            print(f"Impossible de charger la musique {chemin}: {e}")
-            continue
+
+    # Filtrer celles qui existent vraiment
+    pistes_existantes = [p for p in pistes_candidates if os.path.exists(p)]
+    if not pistes_existantes:
+        print("Aucune piste musicale trouvée.")
+        return
+
+    # Choisir une piste différente de la précédente
+    choix = random.choice(pistes_existantes)
+    while len(pistes_existantes) > 1 and choix == derniere_piste:
+        choix = random.choice(pistes_existantes)
+
+    derniere_piste = choix
+
+    try:
+        pygame.mixer.music.load(choix)
+        pygame.mixer.music.set_volume(0.0 if est_muet else VOLUME_MUSIQUE)
+        pygame.mixer.music.play() 
+        print(f"Musique choisie et lancée : {choix}")
+    except Exception as e:
+        print(f"Impossible de charger la musique {choix}: {e}")
     # Si aucune piste trouvée/chargée, on ignore silencieusement
     return
 
@@ -132,6 +152,8 @@ def main() -> None:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            elif event.type == MUSIQUE_FINIE:
+                demarrer_musique_de_fond() 
 
             if ETAT == "MENU":
                 for b in BOUTONS_MENU:
