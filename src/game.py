@@ -1,7 +1,8 @@
 import pygame
 import os
 
-from classes.pointeur import Pointeur 
+from classes.pointeur import Pointeur
+from classes.ennemi import Gobelin
 
 # ------------------- GAME (SCÈNE DE JEU) -------------------
 class Game:
@@ -19,6 +20,7 @@ class Game:
         
         # Surbrillance de case
         self.case_survolee = None
+        self.dt = pygame.time.Clock().tick(60) / 1000.0
         
         # Chargement de la carte
         self.carte = self.charger_carte()
@@ -27,11 +29,16 @@ class Game:
         self.couleur_surbrillance = (255, 255, 0)  # Jaune
 
         self.pointeur = Pointeur()  # Initialisation du pointeur de souris
+
+        # ---------- ENNEMIS ----------
+        tmj_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "tilesets", "carte.tmj")
+        gob = Gobelin(id=1, tmj_path=tmj_path)   # charge le chemin depuis la map
+        gob.apparaitre()                         # positionné au début du chemin
+        self.ennemis = [gob]                     # liste d'ennemis
         
     def charger_carte(self):
         """Charge la carte depuis assets/tilesets/carte.png (chemin résolu depuis la racine du projet)."""
         try:
-            # Résout le chemin par rapport au dossier racine du projet (src/..)
             base_dir = os.path.dirname(os.path.dirname(__file__))
             chemin_carte = os.path.join(base_dir, "assets", "tilesets", "carte.png")
             if os.path.exists(chemin_carte):
@@ -45,7 +52,6 @@ class Game:
             raise
     
     def obtenir_position_case(self, pos_souris):
-        """Convertit la position de la souris en coordonnées de case"""
         x_case = pos_souris[0] // self.taille_case
         y_case = pos_souris[1] // self.taille_case
         if 0 <= x_case < self.colonnes and 0 <= y_case < self.lignes:
@@ -53,15 +59,12 @@ class Game:
         return None
     
     def dessiner_carte(self, ecran: pygame.Surface) -> None:
-        """Dessine la carte de fond"""
         if self.carte:
-            # La carte fait déjà 768x768, on l'affiche directement
             ecran.blit(self.carte, (0, 0))
         else:
             ecran.fill((50, 100, 50))
     
     def dessiner_surbrillance(self, ecran: pygame.Surface) -> None:
-        """Dessine la surbrillance sur la case survolée"""
         if not self.case_survolee:
             return
         x_case, y_case = self.case_survolee
@@ -71,21 +74,31 @@ class Game:
             self.taille_case,
             self.taille_case,
         )
-        # Surface semi-transparente
         overlay = pygame.Surface((self.taille_case, self.taille_case), pygame.SRCALPHA)
         overlay.fill((*self.couleur_surbrillance, 80))
         ecran.blit(overlay, rect)
+
+    def dessiner_ennemis(self, ecran: pygame.Surface):
+        for e in self.ennemis:
+            if not e.visible or e.estMort():
+                continue
+            # cercle (point) vert pour le gobelin
+            pygame.draw.circle(ecran, (0, 200, 0), (int(e.position.x), int(e.position.y)), 8)
     
     def dessiner(self, ecran: pygame.Surface) -> None:
-        """Dessine la carte et la surbrillance"""
         self.dessiner_carte(ecran)
         self.dessiner_surbrillance(ecran)
+        self.dessiner_ennemis(ecran)
+        self.pointeur.draw(ecran)  # au-dessus
+        self.maj(self.dt) 
 
-        # Dessine le cercle du pointeur **en dernier** pour qu'il soit au-dessus
-        self.pointeur.draw(ecran)
+    
+    def maj(self, dt: float):
+        # dt en secondes
+        for e in self.ennemis:
+            e.seDeplacer(dt)
     
     def gerer_evenement(self, event: pygame.event.Event) -> str | None:
-        """Gestion des entrées pour la scène de jeu"""
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             return "PAUSE"
         if event.type == pygame.MOUSEMOTION:

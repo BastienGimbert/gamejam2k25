@@ -37,6 +37,7 @@ class Ennemi(ABC):
         self._dist_on_segment = 0.0
         self._arrive_au_bout = False
         self.visible = True
+        #print(f"{self.type_nom} {self.id} est apparu. En {self.position.x}, {self.position.y}")
 
     def seDeplacer(self, dt: float):
         if self.estMort() or self._arrive_au_bout:
@@ -56,6 +57,7 @@ class Ennemi(ABC):
                 self.position.x = p0.x + (p1.x - p0.x) * t
                 self.position.y = p0.y + (p1.y - p0.y) * t
                 d = 0.0
+                #print(f"{self.type_nom} {self.id} deplacement {self.position.x}, {self.position.y}")
             else:
                 self.position.x, self.position.y = p1.x, p1.y
                 d -= reste
