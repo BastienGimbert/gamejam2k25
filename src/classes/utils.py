@@ -2,7 +2,7 @@
 
 import json
 from math import hypot
-from git import List
+from typing import List
 from classes.position import Position
 
 def distance_positions(a: Position, b: Position) -> float:
