@@ -2,6 +2,8 @@ import pygame
 import os
 
 # ------------------- GAME (SCÈNE DE JEU) -------------------
+base_dir = os.path.dirname(os.path.dirname(__file__))
+
 class Game:
     """
     Scène de jeu avec:
@@ -57,7 +59,7 @@ class Game:
 
     # ------------------- Chargements -------------------
     def _charger_carte(self):
-        chemin_carte = "assets/tilesets/carte.png"
+        chemin_carte = os.path.join(base_dir, "assets", "tilesets", "carte.png")
         if not os.path.exists(chemin_carte):
             raise FileNotFoundError(f"Carte non trouvée: {chemin_carte}")
         img = pygame.image.load(chemin_carte).convert_alpha()
@@ -82,21 +84,18 @@ class Game:
         assets = {}
         for tower_type in self.tower_types:
             dossier = os.path.join("assets", "tower", tower_type)
-            frames = []
-            for idx in range(1, 8):  # 1..7
-                chemin = os.path.join(dossier, f"{idx}.png")
-                if not os.path.exists(chemin):
-                    continue
-                image = pygame.image.load(chemin).convert_alpha()
-                # Découpe: on suppose 4 colonnes côte à côte
+            chemins = [f for f in os.listdir(os.path.join(base_dir, dossier)) if f.endswith(".png")]
+            if chemins:
+                chemins.sort()
+                dernier_chemin = os.path.join(base_dir, dossier, chemins[-1])
+                image = pygame.image.load(dernier_chemin).convert_alpha()
                 w, h = image.get_width(), image.get_height()
                 col_w = w // 4
                 slices = [image.subsurface(pygame.Rect(col_w * i, 0, col_w, h)) for i in range(4)]
-                frames.append(slices)
-            if frames:
-                # Icone: on prend la première tranche de la première frame
-                icon = pygame.transform.smoothscale(frames[0][0], (48, 48)) # à changer
+                frames = [slices]
+                icon = pygame.transform.smoothscale(slices[2], (48, 48))
                 assets[tower_type] = {"frames": frames, "icon": icon}
+
         return assets
 
     # ------------------- Boutique -------------------
@@ -178,18 +177,13 @@ class Game:
     def _dessiner_tours_placees(self, ecran):
         for (x_case, y_case), data in self.positions_occupees.items():
             ttype = data["type"]
-            frame_idx = data.get("frame", 0)
-            col_idx = 0
             surf = None
             if ttype in self.tower_assets and self.tower_assets[ttype]["frames"]:
-                frames = self.tower_assets[ttype]["frames"]
-                frame_idx = min(frame_idx, len(frames) - 1)
-                # Utilise la première colonne (orientation) pour l'instant
-                surf = frames[frame_idx][col_idx]
-                # Redimensionne à la taille de case
+                # Toujours prendre la 3ème tranche (index 2)
+                slices = self.tower_assets[ttype]["frames"][0]
+                surf = slices[2]
                 surf = pygame.transform.smoothscale(surf, (self.taille_case, self.taille_case))
             if surf is None:
-                # Bloc neutre si pas d'asset
                 surf = pygame.Surface((self.taille_case, self.taille_case))
                 surf.fill((150, 150, 180))
             ecran.blit(surf, (x_case * self.taille_case, y_case * self.taille_case))
