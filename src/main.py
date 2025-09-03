@@ -1,5 +1,6 @@
 import sys
 import pygame
+import os
 
 from classes.menu import creer_boutons_menu, creer_boutons_credits, dessiner_menu, dessiner_credits
 from game import Game
@@ -31,19 +32,28 @@ VOLUME_MUSIQUE = 1.0  # volume par défaut quand non muet
 # ------------------- MUSIQUE DE FOND -------------------
 
 def demarrer_musique_de_fond() -> None:
-    """Tente de charger et jouer une musique en boucle si le mixer est dispo."""
+    """Tente de charger et jouer une musique en boucle si le mixer est dispo.
+    Le chemin est résolu depuis la racine du projet pour éviter les erreurs de chemin relatifs.
+    """
     if not MIXER_DISPONIBLE:
         return
+    # Résout le chemin par rapport au dossier racine du projet (src/..)
+    base_dir = os.path.dirname(os.path.dirname(__file__))
     pistes_candidates = [
-        "assets/audio/music_Glorious_Morning_by_Waterflame.mp3",
+        os.path.join(base_dir, "assets", "audio", "music_Glorious_Morning_by_Waterflame.mp3"),
     ]
     for chemin in pistes_candidates:
         try:
+            if not os.path.exists(chemin):
+                # fichier absent, passe au suivant
+                continue
             pygame.mixer.music.load(chemin)
             pygame.mixer.music.set_volume(0.0 if est_muet else VOLUME_MUSIQUE)
             pygame.mixer.music.play(-1)  # -1 => boucle infinie
+            print(f"Musique chargée: {chemin}")
             return
-        except Exception:
+        except Exception as e:
+            print(f"Impossible de charger la musique {chemin}: {e}")
             continue
     # Si aucune piste trouvée/chargée, on ignore silencieusement
     return

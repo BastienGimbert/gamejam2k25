@@ -24,15 +24,16 @@ class Game:
         self.carte = self.charger_carte()
         
         # Couleurs
-        self.couleur_quadrillage = (100, 100, 100)
         self.couleur_surbrillance = (255, 255, 0)  # Jaune
 
         self.pointeur = Pointeur()  # Initialisation du pointeur de souris
         
     def charger_carte(self):
-        """Charge la carte depuis assets/tilesets/carte.png"""
+        """Charge la carte depuis assets/tilesets/carte.png (chemin résolu depuis la racine du projet)."""
         try:
-            chemin_carte = "assets/tilesets/carte.png"
+            # Résout le chemin par rapport au dossier racine du projet (src/..)
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            chemin_carte = os.path.join(base_dir, "assets", "tilesets", "carte.png")
             if os.path.exists(chemin_carte):
                 carte = pygame.image.load(chemin_carte).convert_alpha()
                 print(f"Carte chargée: {chemin_carte}")
@@ -50,15 +51,6 @@ class Game:
         if 0 <= x_case < self.colonnes and 0 <= y_case < self.lignes:
             return (x_case, y_case)
         return None
-    
-    def dessiner_quadrillage(self, ecran: pygame.Surface) -> None:
-        """Dessine le quadrillage de la carte"""
-        largeur = self.colonnes * self.taille_case
-        hauteur = self.lignes * self.taille_case
-        for x in range(0, largeur + 1, self.taille_case):
-            pygame.draw.line(ecran, self.couleur_quadrillage, (x, 0), (x, hauteur))
-        for y in range(0, hauteur + 1, self.taille_case):
-            pygame.draw.line(ecran, self.couleur_quadrillage, (0, y), (largeur, y))
     
     def dessiner_carte(self, ecran: pygame.Surface) -> None:
         """Dessine la carte de fond"""
@@ -85,9 +77,8 @@ class Game:
         ecran.blit(overlay, rect)
     
     def dessiner(self, ecran: pygame.Surface) -> None:
-        """Dessine la carte, le quadrillage et la surbrillance"""
+        """Dessine la carte et la surbrillance"""
         self.dessiner_carte(ecran)
-        self.dessiner_quadrillage(ecran)
         self.dessiner_surbrillance(ecran)
 
         # Dessine le cercle du pointeur **en dernier** pour qu'il soit au-dessus
