@@ -146,6 +146,7 @@ def main() -> None:
                 changement = scene_jeu.gerer_evenement(event)
                 if changement == "PAUSE":
                     ETAT = "PAUSE"
+            
 
         # 2) Affichage
         if ETAT == "MENU":
@@ -159,6 +160,7 @@ def main() -> None:
                 b.dessiner(ECRAN)
         elif ETAT == "JEU":
             scene_jeu.dessiner(ECRAN)
+
 
         # 3) Mise à jour de l'écran + FPS
         pygame.display.flip()
