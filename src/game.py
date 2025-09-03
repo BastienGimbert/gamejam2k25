@@ -26,9 +26,11 @@ class Game:
         self.couleur_surbrillance = (255, 255, 0)  # Jaune
         
     def charger_carte(self):
-        """Charge la carte depuis assets/tilesets/carte.png"""
+        """Charge la carte depuis assets/tilesets/carte.png (chemin résolu depuis la racine du projet)."""
         try:
-            chemin_carte = "assets/tilesets/carte.png"
+            # Résout le chemin par rapport au dossier racine du projet (src/..)
+            base_dir = os.path.dirname(os.path.dirname(__file__))
+            chemin_carte = os.path.join(base_dir, "assets", "tilesets", "carte.png")
             if os.path.exists(chemin_carte):
                 carte = pygame.image.load(chemin_carte).convert_alpha()
                 print(f"Carte chargée: {chemin_carte}")
