@@ -38,6 +38,9 @@ coverage.xml
 .idea/
 *.iml
 
+# Dossiers VSCode
+.vscode/
+
 # Cursor workspace complet
 .cursor/
 # macOS metadata
