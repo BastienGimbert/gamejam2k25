@@ -1,3 +1,4 @@
+from src.position import Position
 class Ennemi:
     def __init__(self, vitesse : float, pointDeVie :int, position : Position, degat : int):
         self.vitesse = vitesse
