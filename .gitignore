@@ -33,3 +33,7 @@ coverage.xml
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+# Fichiers et dossiers IDEA
+.idea/
+*.iml
