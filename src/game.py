@@ -37,6 +37,9 @@ class Game:
         # Animation pièce : liste de frames (découpée depuis MonedaD.png) et index courant
         self.coin_frames = self._charger_piece()
         self.coin_frame_idx = 0
+        # Vitesse animation (ms) et timestamp du dernier changement
+        self.COIN_ANIM_INTERVAL = 120  # ms
+        self.last_coin_ticks = pygame.time.get_ticks()
 
         # Types de tours et assets
         self.tower_types = ["archer", "catapult", "guardian", "mage"]
@@ -79,10 +82,6 @@ class Game:
             frames = [img.subsurface(pygame.Rect(col_w * i, 0, col_w, h)).copy() for i in range(5)]
             # Mettre à une taille pratique pour l'UI (24x24)
             frames = [pygame.transform.smoothscale(f, (24, 24)) for f in frames]
-            for i in range(5):
-                surf = pygame.Surface((24, 24), pygame.SRCALPHA)
-                pygame.draw.circle(surf, (255, 215, 0), (12, 12), 12)
-                frames.append(surf)
             return frames
 
     def _charger_tours(self):
@@ -148,8 +147,11 @@ class Game:
         if self.coin_frames:
             coin = self.coin_frames[self.coin_frame_idx % len(self.coin_frames)]
             ecran.blit(coin, (self.rect_boutique.x + 20, 60))
-            # Avancer la frame à chaque appel (un tick)
-            self.coin_frame_idx = (self.coin_frame_idx + 1) % len(self.coin_frames)
+            # Avancer la frame toutes les COIN_ANIM_INTERVAL ms
+            now = pygame.time.get_ticks()
+            if now - self.last_coin_ticks >= self.COIN_ANIM_INTERVAL:
+                self.coin_frame_idx = (self.coin_frame_idx + 1) % len(self.coin_frames)
+                self.last_coin_ticks = now
         else:
             # Sécurité : si pas de frames, ne rien faire
             pass
