@@ -1,6 +1,8 @@
 import pygame
 import os
 
+from classes.pointeur import Pointeur 
+
 # ------------------- GAME (SCÈNE DE JEU) -------------------
 class Game:
     """
@@ -24,6 +26,8 @@ class Game:
         # Couleurs
         self.couleur_quadrillage = (100, 100, 100)
         self.couleur_surbrillance = (255, 255, 0)  # Jaune
+
+        self.pointeur = Pointeur()  # Initialisation du pointeur de souris
         
     def charger_carte(self):
         """Charge la carte depuis assets/tilesets/carte.png"""
@@ -85,6 +89,9 @@ class Game:
         self.dessiner_carte(ecran)
         self.dessiner_quadrillage(ecran)
         self.dessiner_surbrillance(ecran)
+
+        # Dessine le cercle du pointeur **en dernier** pour qu'il soit au-dessus
+        self.pointeur.draw(ecran)
     
     def gerer_evenement(self, event: pygame.event.Event) -> str | None:
         """Gestion des entrées pour la scène de jeu"""
