@@ -28,6 +28,29 @@ ETAT = "MENU"
 est_muet = False
 VOLUME_MUSIQUE = 1.0  # volume par défaut quand non muet
 
+# ------------------- MUSIQUE DE FOND -------------------
+
+def demarrer_musique_de_fond() -> None:
+    """Tente de charger et jouer une musique en boucle si le mixer est dispo."""
+    if not MIXER_DISPONIBLE:
+        return
+    pistes_candidates = [
+        "assets/audio/music_Glorious_Morning_by_Waterflame.mp3",
+    ]
+    for chemin in pistes_candidates:
+        try:
+            pygame.mixer.music.load(chemin)
+            pygame.mixer.music.set_volume(0.0 if est_muet else VOLUME_MUSIQUE)
+            pygame.mixer.music.play(-1)  # -1 => boucle infinie
+            return
+        except Exception:
+            continue
+    # Si aucune piste trouvée/chargée, on ignore silencieusement
+    return
+
+# Lancer la musique au démarrage
+demarrer_musique_de_fond()
+
 # ------------------- CALLBACKS D'ACTION -------------------
 
 def demarrer_jeu():
