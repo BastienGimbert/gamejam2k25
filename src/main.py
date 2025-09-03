@@ -15,7 +15,7 @@ except Exception:
     # Si pas de périphérique audio dispo, on continue sans mixer
     MIXER_DISPONIBLE = False
 
-LARGEUR, HAUTEUR = 768, 768
+LARGEUR, HAUTEUR = 1168, 768
 ECRAN = pygame.display.set_mode((LARGEUR, HAUTEUR))
 pygame.display.set_caption("Tower Defense")
 
