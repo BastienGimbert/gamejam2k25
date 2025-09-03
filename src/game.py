@@ -34,8 +34,10 @@ class Game:
         # Argent joueur
         self.solde = 100
         self.prix_tour = 10
-        self.coin_image = self._charger_piece()
-        
+        # Animation pièce : liste de frames (découpée depuis MonedaD.png) et index courant
+        self.coin_frames = self._charger_piece()
+        self.coin_frame_idx = 0
+
         # Types de tours et assets
         self.tower_types = ["archer", "catapult", "guardian", "mage"]
         # {type: {frames: [[surfaces_decoupees_par_colonne] pour 1..7], icon: surface}}
@@ -67,19 +69,22 @@ class Game:
         return img
     
     def _charger_piece(self):
-        # Le nom exact varie; on essaie plusieurs variantes sans planter si introuvable
-        candidats = [
-            "assets/money/MoneydaD.png",
-            "assets/money/MonedaD.png",
-        ]
-        for p in candidats:
-            if os.path.exists(p):
-                return pygame.image.load(p).convert_alpha()
-        # Fallback visuel simple (cercle) si pas d'asset trouvé
-        surf = pygame.Surface((24, 24), pygame.SRCALPHA)
-        pygame.draw.circle(surf, (255, 215, 0), (12, 12), 12)
-        return surf
-    
+        # On recherche le fichier dans le dossier assets (en utilisant base_dir)
+        coinImg = os.path.join(base_dir, "assets", "money", "MonedaD.png")
+        if os.path.exists(coinImg):
+            img = pygame.image.load(coinImg).convert_alpha()
+            w, h = img.get_width(), img.get_height()
+            # Découper en 5 colonnes
+            col_w = max(1, w // 5)
+            frames = [img.subsurface(pygame.Rect(col_w * i, 0, col_w, h)).copy() for i in range(5)]
+            # Mettre à une taille pratique pour l'UI (24x24)
+            frames = [pygame.transform.smoothscale(f, (24, 24)) for f in frames]
+            for i in range(5):
+                surf = pygame.Surface((24, 24), pygame.SRCALPHA)
+                pygame.draw.circle(surf, (255, 215, 0), (12, 12), 12)
+                frames.append(surf)
+            return frames
+
     def _charger_tours(self):
         assets = {}
         for tower_type in self.tower_types:
@@ -139,8 +144,15 @@ class Game:
         ecran.blit(titre, (self.rect_boutique.x + (self.largeur_boutique - titre.get_width()) // 2, 20))
         
         # Solde
-        coin = pygame.transform.smoothscale(self.coin_image, (24, 24))
-        ecran.blit(coin, (self.rect_boutique.x + 20, 60))
+        # Afficher la frame courante de l'animation de la pièce
+        if self.coin_frames:
+            coin = self.coin_frames[self.coin_frame_idx % len(self.coin_frames)]
+            ecran.blit(coin, (self.rect_boutique.x + 20, 60))
+            # Avancer la frame à chaque appel (un tick)
+            self.coin_frame_idx = (self.coin_frame_idx + 1) % len(self.coin_frames)
+        else:
+            # Sécurité : si pas de frames, ne rien faire
+            pass
         txt_solde = self.police.render(f"{self.solde}", True, self.couleur_texte)
         ecran.blit(txt_solde, (self.rect_boutique.x + 50, 56))
         
