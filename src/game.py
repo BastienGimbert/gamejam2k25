@@ -80,11 +80,10 @@ class Game:
 
     def dessiner_ennemis(self, ecran: pygame.Surface):
         for e in self.ennemis:
-            if not e.visible or e.estMort():
-                continue
-            # cercle (point) vert pour le gobelin
-            pygame.draw.circle(ecran, (0, 200, 0), (int(e.position.x), int(e.position.y)), 8)
-    
+            e.majVisible()
+            e.draw(ecran)
+ 
+
     def dessiner(self, ecran: pygame.Surface) -> None:
         self.dessiner_carte(ecran)
         self.dessiner_surbrillance(ecran)

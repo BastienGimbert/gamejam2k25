@@ -1,7 +1,8 @@
 from typing import Callable, List, Optional
-from abc import ABC
+from abc import ABC, abstractmethod
 from classes.position import Position
 from classes.utils import charger_chemin_tiled, distance_positions
+import pygame
 
 class Ennemi(ABC):
     def __init__(
@@ -30,6 +31,11 @@ class Ennemi(ABC):
         self._arrive_au_bout = False
         self.visible = False
         self._on_reach_castle = on_reach_castle
+
+    @abstractmethod
+    def draw(self, ecran: pygame.Surface) -> None:
+        """Dessine l’ennemi (implémenté par chaque sous-classe)."""
+        raise NotImplementedError
 
     def apparaitre(self):
         self.position = self._chemin[0].copy()
@@ -86,12 +92,30 @@ class Ennemi(ABC):
         self._arrive_au_bout = True
         if self._on_reach_castle and not self.estMort():
             self._on_reach_castle(self)
+    
+    def majVisible(self):
+        x, y  = pygame.mouse.get_pos()
+        pointeurPos = Position(x, y)
+        if(distance_positions(self.position, pointeurPos) < 100):
+            self.set_visibilite(True)
+        else:
+            self.set_visibilite(False)
+
 
 class Gobelin(Ennemi):
     @property
     def type_nom(self) -> str: return "Gobelin"
     def __init__(self, id: int, chemin: Optional[List[Position]] = None, **kw):
         super().__init__(id=id, vitesse=80.0, pointsDeVie=60, degats=1, chemin=chemin, **kw)
+
+    def draw(self, ecran: pygame.Surface) -> None:
+        if self.estMort(): 
+            return
+        pos = (int(self.position.x), int(self.position.y))
+        if self.visible:
+            pygame.draw.circle(ecran, (50, 200, 50), pos, 10)
+        else:
+            pygame.draw.circle(ecran, (200, 50, 50), pos, 10)
 
 class Rat(Ennemi):
     @property
