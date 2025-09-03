@@ -1,6 +1,7 @@
 from src.position import Position
 class Ennemi:
-    def __init__(self, vitesse : float, pointDeVie :int, position : Position, degat : int):
+    def __init__(self, id:int ,vitesse : float, pointDeVie :int, position : Position, degat : int):
+        self.id = id
         self.vitesse = vitesse
         self.pointDeVie = pointDeVie
         self.position = position
