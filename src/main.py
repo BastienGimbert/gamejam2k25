@@ -1,7 +1,7 @@
 import sys
 import pygame
 
-from menu import creer_boutons_menu, creer_boutons_credits, dessiner_menu, dessiner_credits
+from classes.menu import creer_boutons_menu, creer_boutons_credits, dessiner_menu, dessiner_credits
 from game import Game
 
 # ------------------- INITIALISATION -------------------

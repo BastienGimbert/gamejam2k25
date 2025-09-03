@@ -1,5 +1,5 @@
 import pygame
-from bouton import Bouton
+from .bouton import Bouton
 
 # ------------------- COULEURS PAR DÉFAUT -------------------
 BLANC = (255, 255, 255)
@@ -56,4 +56,4 @@ def dessiner_credits(ecran: pygame.Surface, police: pygame.font.Font, largeur: i
     lignes = ["Tower Defense", "Par ...", "2025"]
     for i, ligne in enumerate(lignes):
         surf = police.render(ligne, True, NOIR)
-        ecran.blit(surf, (largeur // 2 - surf.get_width() // 2, 150 + i * 60)) 
+        ecran.blit(surf, (largeur // 2 - surf.get_width() // 2, 150 + i * 60))
