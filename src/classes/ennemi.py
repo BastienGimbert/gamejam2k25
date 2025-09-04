@@ -14,6 +14,7 @@ class Ennemi(ABC):
         vitesse: float,
         pointsDeVie: int,
         degats: int,
+        valeur: int = 1,
         tempsApparition = 0,
         chemin: Optional[List[Position]] = None,
         on_reach_castle: Optional[Callable[["Ennemi"], None]] = None,
@@ -27,6 +28,8 @@ class Ennemi(ABC):
         self.vitesse = float(vitesse)
         self.pointsDeVie = int(pointsDeVie)
         self.degats = int(degats)
+        # Valeur d'or gagnée quand cet ennemi est tué par une tour
+        self.valeur = int(valeur)
         self._chemin: List[Position] = chemin
         self.position = self._chemin[0].copy()
         self._segment_index = 0
@@ -35,6 +38,9 @@ class Ennemi(ABC):
         self.visible = False
         self._on_reach_castle = on_reach_castle
         self.tempsApparition = tempsApparition
+        # Drapeaux internes pour la récompense
+        self._recompense_donnee = False
+        self._ne_pas_recompenser = False
         
 
 
@@ -118,7 +124,8 @@ class Gobelin(Ennemi):
         return "Gobelin"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=80.0, pointsDeVie=60, degats=1, chemin=chemin, **kw)
+        # Valeur arbitraire
+        super().__init__(tempsApparition=tempsApparition, vitesse=80.0, pointsDeVie=6, degats=1, valeur=5, chemin=chemin, **kw)
 
         # Charger les frames si elles sont vide uniquement la première fois
         if Gobelin._frames is None:
@@ -155,7 +162,7 @@ class Rat(Ennemi):
     @property
     def type_nom(self) -> str: return "Rat"
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=120.0, pointsDeVie=30, degats=1, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=120.0, pointsDeVie=3, degats=1, valeur=3, chemin=chemin, **kw)
     def draw(self, ecran: pygame.Surface) -> None:
         if self.estMort(): 
             return
@@ -169,7 +176,7 @@ class Loup(Ennemi):
     @property
     def type_nom(self) -> str: return "Loup"
     def __init__(self,tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=100.0, pointsDeVie=90, degats=2, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=100.0, pointsDeVie=9, degats=2, valeur=8, chemin=chemin, **kw)
     def draw(self, ecran: pygame.Surface) -> None:
         if self.estMort(): 
             return
@@ -183,7 +190,7 @@ class Mage(Ennemi):
     @property
     def type_nom(self) -> str: return "Mage"
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=70.0, pointsDeVie=120, degats=3, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=70.0, pointsDeVie=12, degats=3, valeur=12, chemin=chemin, **kw)
     def draw(self, ecran: pygame.Surface) -> None:
         if self.estMort(): 
             return

@@ -399,6 +399,11 @@ class Game:
                     # Infliger les dégâts de l'ennemi au joueur puis le retirer
                     deg = getattr(e, "degats", 1)
                     self.joueur.point_de_vie = max(0, int(self.joueur.point_de_vie) - int(deg))
+                    # Marque pour ne pas donner d'or si l'ennemi est retiré pour arrivée au château
+                    try:
+                        setattr(e, "_ne_pas_recompenser", True)
+                    except Exception:
+                        pass
                     if hasattr(e, "perdreVie"):
                         e.perdreVie(getattr(e, "pointsDeVie", 1))
                     else:
@@ -438,6 +443,13 @@ class Game:
                 if hasattr(pr, "aTouche") and pr.aTouche(e):
                     if hasattr(pr, "appliquerDegats"):
                         pr.appliquerDegats(e)
+                        # Si l'ennemi vient de mourir suite à ce projectile, créditer la récompense
+                        try:
+                            if e.estMort() and not getattr(e, "_recompense_donnee", False) and not getattr(e, "_ne_pas_recompenser", False):
+                                self.joueur.argent += int(getattr(e, "valeur", 0))
+                                setattr(e, "_recompense_donnee", True)
+                        except Exception:
+                            pass
                     break
 
         # Nettoyage projectiles
