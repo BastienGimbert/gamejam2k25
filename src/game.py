@@ -3,6 +3,7 @@ import os
 
 from classes.pointeur import Pointeur
 from classes.ennemi import Gobelin
+from classes.joueur import Joueur
 from classes.position import Position
 from classes.tour import Archer, Catapult, Tour
 from classes.projectile import ProjectileFleche, ProjectilePierre
@@ -11,6 +12,7 @@ base_dir = os.path.dirname(os.path.dirname(__file__))
 
 class Game:
     def __init__(self, police: pygame.font.Font):
+        self.joueur = Joueur(argent=100, point_de_vie=100, sort="feu", etat="normal")
         self.police = police
         self.taille_case = 64
         self.colonnes = 12
@@ -23,12 +25,16 @@ class Game:
         self.largeur_boutique = 400
         # La boutique occupe toute la hauteur de l'écran, collée à droite de la carte
         self.rect_boutique = pygame.Rect(self.largeur_ecran, 0, self.largeur_boutique, self.hauteur_ecran)
-        self.solde = 100
         self.prix_tour = 10
         self.coin_frames = self._charger_piece()
         self.coin_frame_idx = 0
         self.COIN_ANIM_INTERVAL = 120
         self.last_coin_ticks = pygame.time.get_ticks()
+        # Coeurs (animation) — chargés depuis assets/heart
+        self.heart_frames = self._charger_coeurs()
+        self.heart_frame_idx = 0
+        self.HEART_ANIM_INTERVAL = 120
+        self.last_heart_ticks = pygame.time.get_ticks()
         # Types de tours disponibles dans la boutique
         self.tower_types = ["archer", "catapult", "guardian", "mage"]
         self.tower_assets = self._charger_tours()
@@ -72,6 +78,25 @@ class Game:
             frames = [pygame.transform.smoothscale(f, (24, 24)) for f in frames]
             return frames
         return []
+
+    def _charger_coeurs(self):
+        """Charge toutes les images de coeur dans assets/heart et retourne une liste de surfaces."""
+        frames = []
+        dossier = os.path.join(base_dir, "assets", "heart")
+        if not os.path.isdir(dossier):
+            return frames
+        fichiers = [f for f in os.listdir(dossier) if f.lower().endswith('.png')]
+        if not fichiers:
+            return frames
+        fichiers.sort()
+        for fn in fichiers:
+            p = os.path.join(dossier, fn)
+            try:
+                img = pygame.image.load(p).convert_alpha()
+                frames.append(img)
+            except Exception:
+                continue
+        return frames
 
     def _charger_tours(self):
         assets = {}
@@ -151,12 +176,27 @@ class Game:
             if now - self.last_coin_ticks >= self.COIN_ANIM_INTERVAL:
                 self.coin_frame_idx = (self.coin_frame_idx + 1) % len(self.coin_frames)
                 self.last_coin_ticks = now
-        txt_solde = self.police.render(f"{self.solde}", True, self.couleur_texte)
+
+        txt_solde = self.police.render(f"{self.joueur.argent}", True, self.couleur_texte)
         ecran.blit(txt_solde, (self.rect_boutique.x + 50, 56))
+
+        # --- Points de vie ---
+        coeur_pos = (self.rect_boutique.x + 120, 60)
+        coeur = self.heart_frames[self.heart_frame_idx % len(self.heart_frames)]
+        coeur_s = pygame.transform.smoothscale(coeur, (24, 24))
+        ecran.blit(coeur_s, coeur_pos)
+        now = pygame.time.get_ticks()
+        if now - self.last_heart_ticks >= self.HEART_ANIM_INTERVAL:
+            self.heart_frame_idx = (self.heart_frame_idx + 1) % len(self.heart_frames)
+            self.last_heart_ticks = now
+        txt_pv = self.police.render(f"{self.joueur.point_de_vie}", True, self.couleur_texte)
+        ecran.blit(txt_pv, (coeur_pos[0] + 30, coeur_pos[1]))
+
         for item in self.shop_items:
             rect = item["rect"]
             hover = rect.collidepoint(pygame.mouse.get_pos())
-            pygame.draw.rect(ecran, self.couleur_bouton_hover if hover else self.couleur_bouton_bg, rect, border_radius=6)
+            pygame.draw.rect(ecran, self.couleur_bouton_hover if hover else self.couleur_bouton_bg, rect,
+                             border_radius=6)
             pygame.draw.rect(ecran, self.couleur_boutique_border, rect, 2, border_radius=6)
             t = item["type"]
             label = self.police.render(t.capitalize(), True, self.couleur_texte)
@@ -165,6 +205,7 @@ class Game:
             ecran.blit(prix, (rect.right - 30, rect.y + 10))
             if t in self.tower_assets:
                 ecran.blit(self.tower_assets[t]["icon"], (rect.x + 10, rect.y + 10))
+
         if self.type_selectionne:
             info = self.police.render(f"Place: {self.type_selectionne}", True, (200, 220, 255))
             ecran.blit(info, (self.rect_boutique.x + 20, self.hauteur_ecran - 40))
@@ -203,16 +244,7 @@ class Game:
         for e in self.ennemis:
             e.majVisible()
             e.draw(ecran)
- 
 
-    def dessiner(self, ecran: pygame.Surface) -> None:
-        self.dessiner_carte(ecran)
-        self.dessiner_surbrillance(ecran)
-        self.dessiner_ennemis(ecran)
-        self.pointeur.draw(ecran)  # au-dessus
-        self.maj(self.dt) 
-
-    
     def maj(self, dt: float):
         for e in self.ennemis:
             e.seDeplacer(dt)
@@ -273,7 +305,7 @@ class Game:
             if self.rect_boutique.collidepoint(pos):
                 for item in self.shop_items:
                     if item["rect"].collidepoint(pos):
-                        if self.solde >= self.prix_tour:
+                        if self.joueur.argent >= self.prix_tour:
                             self.type_selectionne = item["type"]
                         else:
                             self.type_selectionne = None
@@ -281,7 +313,7 @@ class Game:
                 return None
             if self.type_selectionne and self._position_dans_grille(pos):
                 case = self._case_depuis_pos(pos)
-                if case and case not in self.positions_occupees and self.solde >= self.prix_tour:
+                if case and case not in self.positions_occupees and self.joueur.argent >= self.prix_tour:
                     # 1) Marque la case occupée pour l'affichage existant
                     self.positions_occupees[case] = {"type": self.type_selectionne, "frame": 0}
                     # 2) Crée une instance de la tour correspondante (centre de case)
@@ -297,6 +329,6 @@ class Game:
                     else:
                         # Types non encore implémentés: ignorer la création logique
                         pass
-                    self.solde -= self.prix_tour
+                    self.joueur.argent -= self.prix_tour
                     self.type_selectionne = None
         return None
