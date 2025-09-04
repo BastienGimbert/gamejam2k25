@@ -138,9 +138,9 @@ class Gobelin(Ennemi):
         # Charger les spritesheets une seule fois
         if Gobelin._frames_by_dir is None:
             Gobelin._frames_by_dir = {
-                "down": charger_et_scaler("goblin", "D_Walk.png", 6, scale=SCALE_FACTOR),
-                "up": charger_et_scaler("goblin", "U_Walk.png", 6, scale=SCALE_FACTOR),
-                "side": charger_et_scaler("goblin", "S_Walk.png", 6, scale=SCALE_FACTOR),
+                "down": charger_et_scaler("goblin", "D_Walk.png", 6, scale=SCALE_FACTOR*0.8),
+                "up": charger_et_scaler("goblin", "U_Walk.png", 6, scale=SCALE_FACTOR*0.8),
+                "side": charger_et_scaler("goblin", "S_Walk.png", 6, scale=SCALE_FACTOR*0.8),
             }
 
         self.direction = "down"   # par défaut
@@ -231,9 +231,9 @@ class Loup(Ennemi):
 
         if Loup._frames_by_dir is None:
             Loup._frames_by_dir = {
-                "down": charger_et_scaler("wolf", "D_Walk.png", 6, scale=SCALE_FACTOR*1.2),
-                "up": charger_et_scaler("wolf", "U_Walk.png", 6, scale=SCALE_FACTOR*1.2),
-                "side": charger_et_scaler("wolf", "S_Walk.png", 6, scale=SCALE_FACTOR*1.2),
+                "down": charger_et_scaler("wolf", "D_Walk.png", 6, scale=SCALE_FACTOR*0.8),
+                "up": charger_et_scaler("wolf", "U_Walk.png", 6, scale=SCALE_FACTOR*0.8),
+                "side": charger_et_scaler("wolf", "S_Walk.png", 6, scale=SCALE_FACTOR*0.8),
             }
 
         self.direction = "down"
