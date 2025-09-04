@@ -1,7 +1,7 @@
 from typing import Callable, List, Optional
 from abc import ABC, abstractmethod
 from classes.position import Position
-from classes.utils import charger_chemin_tiled, distance_positions, decouper_sprite
+from classes.utils import charger_chemin_tiled, distance_positions, decouper_sprite, charger_et_scaler
 import pygame
 import os
 
@@ -137,14 +137,10 @@ class Gobelin(Ennemi):
 
         # Charger les spritesheets une seule fois
         if Gobelin._frames_by_dir is None:
-            def charger_et_scaler(image: str, nb_frames: int):
-                frames = decouper_sprite(pygame.image.load(os.path.join(base_dir, "assets", "enemy", "goblin", image)).convert_alpha(), nb_frames)
-                return [pygame.transform.scale(f, (f.get_width()*SCALE_FACTOR, f.get_height()*SCALE_FACTOR)) for f in frames]
-
             Gobelin._frames_by_dir = {
-                "down": charger_et_scaler("D_Walk.png", 6),
-                "up": charger_et_scaler("U_Walk.png", 6),
-                "side": charger_et_scaler("S_Walk.png", 6),
+                "down": charger_et_scaler("goblin", "D_Walk.png", 6, scale=SCALE_FACTOR),
+                "up": charger_et_scaler("goblin", "U_Walk.png", 6, scale=SCALE_FACTOR),
+                "side": charger_et_scaler("goblin", "S_Walk.png", 6, scale=SCALE_FACTOR),
             }
 
         self.direction = "down"   # par défaut
@@ -190,14 +186,10 @@ class Rat(Ennemi):
         super().__init__(tempsApparition=tempsApparition, vitesse=120.0, pointsDeVie=30, degats=1, chemin=chemin, **kw)
 
         if Rat._frames_by_dir is None:
-            def charger_et_scaler(image: str, nb_frames: int):
-                frames = decouper_sprite(pygame.image.load(os.path.join(base_dir, "assets", "enemy", "rat", image)).convert_alpha(), nb_frames)
-                return [pygame.transform.scale(f, (f.get_width()/1.5, f.get_height()/1.5)) for f in frames]
-
             Rat._frames_by_dir = {
-                "down": charger_et_scaler("D_Run.png", 6),
-                "up": charger_et_scaler("U_Run.png", 6),
-                "side": charger_et_scaler("S_Run.png", 6),
+                "down": charger_et_scaler("rat", "D_Run.png", 6, scale=2/3),
+                "up": charger_et_scaler("rat", "U_Run.png", 6, scale=2/3),
+                "side": charger_et_scaler("rat", "S_Run.png", 6, scale=2/3),
             }
 
         self.direction = "down"
@@ -236,14 +228,10 @@ class Loup(Ennemi):
         super().__init__(tempsApparition=tempsApparition, vitesse=100.0, pointsDeVie=90, degats=2, chemin=chemin, **kw)
 
         if Loup._frames_by_dir is None:
-            def charger_et_scaler(image: str, nb_frames: int):
-                frames = decouper_sprite(pygame.image.load(os.path.join(base_dir, "assets", "enemy", "wolf", image)).convert_alpha(), nb_frames)
-                return [pygame.transform.scale(f, (f.get_width()*SCALE_FACTOR*1.2, f.get_height()*SCALE_FACTOR*1.2)) for f in frames]
-
             Loup._frames_by_dir = {
-                "down": charger_et_scaler("D_Walk.png", 6),
-                "up": charger_et_scaler("U_Walk.png", 6),
-                "side": charger_et_scaler("S_Walk.png", 6),
+                "down": charger_et_scaler("wolf", "D_Walk.png", 6, scale=SCALE_FACTOR*1.2),
+                "up": charger_et_scaler("wolf", "U_Walk.png", 6, scale=SCALE_FACTOR*1.2),
+                "side": charger_et_scaler("wolf", "S_Walk.png", 6, scale=SCALE_FACTOR*1.2),
             }
 
         self.direction = "down"
@@ -282,14 +270,10 @@ class Mage(Ennemi):
         super().__init__(tempsApparition=tempsApparition, vitesse=70.0, pointsDeVie=120, degats=3, chemin=chemin, **kw)
 
         if Mage._frames_by_dir is None:
-            def charger_et_scaler(image: str, nb_frames: int):
-                frames = decouper_sprite(pygame.image.load(os.path.join(base_dir, "assets", "enemy", "mage", image)).convert_alpha(), nb_frames)
-                return [pygame.transform.scale(f, (f.get_width()*SCALE_FACTOR*0.6, f.get_height()*SCALE_FACTOR*0.6)) for f in frames]
-
             Mage._frames_by_dir = {
-                "down": charger_et_scaler("D_Fly.png", 6),
-                "up": charger_et_scaler("U_Fly.png", 6),
-                "side": charger_et_scaler("S_Fly.png", 6),
+                "down": charger_et_scaler("mage", "D_Fly.png", 6, scale=SCALE_FACTOR*0.6),
+                "up": charger_et_scaler("mage", "U_Fly.png", 6, scale=SCALE_FACTOR*0.6),
+                "side": charger_et_scaler("mage", "S_Fly.png", 6, scale=SCALE_FACTOR*0.6),
             }
 
         self.direction = "down"
