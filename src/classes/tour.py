@@ -23,6 +23,7 @@ class Tour(ABC):
         cooldown_s: float,
         portee: float,
         position: Position,
+        prix: int = 0,
     ) -> None:
         self.id = int(id)
         self.type_id = int(type_id)
@@ -31,6 +32,9 @@ class Tour(ABC):
         self.portee = float(portee)
         self.position = position
         self._time_since_last_shot = 0.0
+
+        # Caractéristiques de gameplay (les dégâts sont portés par les projectiles)
+        self.prix = int(prix)
 
         self._etat = "idle"
         self._cible: Optional["Ennemi"] = None
@@ -136,6 +140,9 @@ class Archer(Tour):
     TYPE_ID = 1
     TYPE_NOM = "archer"
 
+    # Prix indicatif de la tour Archer (affiché dans la boutique)
+    PRIX = 10
+
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
             id=id,
@@ -144,6 +151,7 @@ class Archer(Tour):
             cooldown_s=0.5,
             portee=160.0,
             position=position,
+            prix=self.PRIX,
         )
 
     def attaquer(self, cible: "Ennemi") -> None:
@@ -154,6 +162,9 @@ class Catapult(Tour):
     TYPE_ID = 2
     TYPE_NOM = "catapult"
 
+    # Prix indicatif de la tour Catapult (affiché dans la boutique)
+    PRIX = 20
+
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
             id=id,
@@ -162,6 +173,7 @@ class Catapult(Tour):
             cooldown_s=2.0,
             portee=200.0,
             position=position,
+            prix=self.PRIX,
         )
 
     def attaquer(self, cible: "Ennemi") -> None:

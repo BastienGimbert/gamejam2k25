@@ -1,9 +1,12 @@
 from typing import Callable, List, Optional
 from abc import ABC, abstractmethod
 from classes.position import Position
-from classes.utils import charger_chemin_tiled, distance_positions
+from classes.utils import charger_chemin_tiled, distance_positions, decouper_sprite
 import pygame
-from time import sleep  
+import os
+from time import sleep
+
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 class Ennemi(ABC):
     def __init__(
@@ -32,6 +35,7 @@ class Ennemi(ABC):
         self.visible = False
         self._on_reach_castle = on_reach_castle
         self.tempsApparition = tempsApparition
+        
 
 
     @abstractmethod
@@ -102,15 +106,70 @@ class Ennemi(ABC):
             self.set_visibilite(False)
 
     def estApparu(self, debutVague):
-        return self.tempsApparition <= round((pygame.time.get_ticks() - debutVague) / 1000) # conversion en sec
+        return self.tempsApparition <= round((pygame.time.get_ticks() - debutVague) / 1000, 1) # conversion en sec
 
 
 class Gobelin(Ennemi):
+    # Attribut de classe partagé par TOUS les gobelins
+    _frames: list[pygame.Surface] | None = None  
+
     @property
-    def type_nom(self) -> str: return "Gobelin"
+    def type_nom(self) -> str: 
+        return "Gobelin"
+
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
         super().__init__(tempsApparition=tempsApparition, vitesse=80.0, pointsDeVie=60, degats=1, chemin=chemin, **kw)
 
+        # Charger les frames si elles sont vide uniquement la première fois
+        if Gobelin._frames is None:
+            image = pygame.image.load(os.path.join(base_dir, "assets", "enemy", "goblin", "D_Walk.png")).convert_alpha()
+            Gobelin._frames = decouper_sprite(image, nb_images=6, horizontal=True)
+
+        self.frames = Gobelin._frames
+        self.frame_index = 0 
+        self.frame_timer = 0
+
+    def draw(self, ecran: pygame.Surface) -> None:
+        if self.estMort(): 
+            return
+
+        # Choisir l’image en fonction de l’animation
+        frame = self.frames[self.frame_index]
+        pos = (int(self.position.x - frame.get_width() // 2),
+               int(self.position.y - frame.get_height() // 2))
+
+        if self.visible:
+            ecran.blit(frame, pos)
+        else:
+            pygame.draw.circle(ecran, (200, 50, 50), (int(self.position.x), int(self.position.y)), 10)
+
+    def update_animation(self, dt: float):
+        """Met à jour l’index de frame en fonction du temps (dt = delta time en secondes)."""
+        self.frame_timer += dt
+        if self.frame_timer >= 0.15:  # change toutes les 150ms
+            self.frame_timer = 0
+            self.frame_index = (self.frame_index + 1) % len(self.frames)
+
+
+class Rat(Ennemi):
+    @property
+    def type_nom(self) -> str: return "Rat"
+    def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
+        super().__init__(tempsApparition=tempsApparition, vitesse=120.0, pointsDeVie=30, degats=1, chemin=chemin, **kw)
+    def draw(self, ecran: pygame.Surface) -> None:
+        if self.estMort(): 
+            return
+        pos = (int(self.position.x), int(self.position.y))
+        if self.visible:
+            pygame.draw.circle(ecran, (50, 50, 200), pos, 10)
+        else:
+            pygame.draw.circle(ecran, (200, 50, 50), pos, 10)
+
+class Loup(Ennemi):
+    @property
+    def type_nom(self) -> str: return "Loup"
+    def __init__(self,tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
+        super().__init__(tempsApparition=tempsApparition, vitesse=100.0, pointsDeVie=90, degats=2, chemin=chemin, **kw)
     def draw(self, ecran: pygame.Surface) -> None:
         if self.estMort(): 
             return
@@ -120,20 +179,16 @@ class Gobelin(Ennemi):
         else:
             pygame.draw.circle(ecran, (200, 50, 50), pos, 10)
 
-class Rat(Ennemi):
-    @property
-    def type_nom(self) -> str: return "Rat"
-    def __init__(self, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(vitesse=120.0, pointsDeVie=30, degats=1, chemin=chemin, **kw)
-
-class Loup(Ennemi):
-    @property
-    def type_nom(self) -> str: return "Loup"
-    def __init__(self, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(vitesse=100.0, pointsDeVie=90, degats=2, chemin=chemin, **kw)
-
 class Mage(Ennemi):
     @property
     def type_nom(self) -> str: return "Mage"
-    def __init__(self, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(vitesse=70.0, pointsDeVie=120, degats=3, chemin=chemin, **kw)
+    def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
+        super().__init__(tempsApparition=tempsApparition, vitesse=70.0, pointsDeVie=120, degats=3, chemin=chemin, **kw)
+    def draw(self, ecran: pygame.Surface) -> None:
+        if self.estMort(): 
+            return
+        pos = (int(self.position.x), int(self.position.y))
+        if self.visible:
+            pygame.draw.circle(ecran, (255, 255, 0), pos, 10)  # jaune
+        else:
+            pygame.draw.circle(ecran, (200, 50, 50), pos, 10)
