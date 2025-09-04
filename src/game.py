@@ -50,7 +50,7 @@ class Game:
         self.last_heart_ticks = pygame.time.get_ticks()
 
         # Types de tours
-        self.tower_types = ["archer", "catapult", "guardian", "mage"]
+        self.tower_types = ["archer", "catapult", "mage"]
         self.tower_assets = self._charger_tours()
         self.shop_items = self._creer_boutons_boutique()
         self.type_selectionne: str | None = None
@@ -220,6 +220,11 @@ class Game:
             pygame.draw.line(ecran, self.couleur_quadrillage, (x, 0), (x, self.hauteur_ecran))
         for y in range(0, self.hauteur_ecran + 1, self.taille_case):
             pygame.draw.line(ecran, self.couleur_quadrillage, (0, y), (largeur_draw, y))
+
+    def _dessiner_personnages_tours(self, ecran):
+        for t in self.tours:
+            t.draw_person(ecran)
+
 
     def _dessiner_boutique(self, ecran):
         pygame.draw.rect(ecran, self.couleur_boutique_bg, self.rect_boutique)
@@ -445,6 +450,7 @@ class Game:
         dt = self.clock.tick(60) / 1000.0
         ecran.blit(self.carte, (0, 0))
         self._dessiner_tours_placees(ecran)
+        self._dessiner_personnages_tours(ecran)
         self._dessiner_surbrillance(ecran)
         self._dessiner_boutique(ecran)
         self.dessiner_ennemis(ecran)
