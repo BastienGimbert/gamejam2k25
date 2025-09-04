@@ -1,5 +1,8 @@
 import csv
 from classes.ennemi import Gobelin, Rat, Loup, Mage
+import os
+
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 ENEMY_CLASSES = {
     1: Loup,
@@ -10,12 +13,14 @@ ENEMY_CLASSES = {
 
 def creer_liste_ennemis_depuis_csv(numVague=int, chemin_csv="src/data/jeu.csv") -> list:
     ennemis = []
+    # Split chemin_csv into parts and join with base_dir
+    chemin_csv = os.path.join(base_dir, *chemin_csv.split('/'))
     with open(chemin_csv, newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
         for row in reader:
             id_ennemi = int(row["idEnnemi"])
             vague = int(row["numVague"])
-            temps = int(row["temps"])
+            temps = float(row["temps"])
 
             if vague == numVague:
                 # On récupère la classe correspondante
@@ -27,6 +32,6 @@ def creer_liste_ennemis_depuis_csv(numVague=int, chemin_csv="src/data/jeu.csv") 
                 ennemi = cls(tempsApparition=temps)
 
                 ennemis.append(ennemi)
-                
+
 
     return ennemis

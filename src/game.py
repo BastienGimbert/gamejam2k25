@@ -9,7 +9,7 @@ from classes.joueur import Joueur
 from classes.position import Position
 from classes.tour import Archer, Catapult, Tour
 from classes.projectile import ProjectileFleche, ProjectilePierre
-from classes.utils import charger_chemin_tiled
+from classes.utils import charger_chemin_tiled, decouper_sprite
 from classes.csv import creer_liste_ennemis_depuis_csv
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -67,6 +67,12 @@ class Game:
         self.image_pierre = self._charger_image_projectile(getattr(ProjectilePierre, "CHEMIN_IMAGE", ""))
 
         # Couleurs UI
+        # Projectiles actifs (flèches, etc.)
+        # Peut contenir ProjectileFleche et ProjectilePierre
+        self.projectiles: list = []
+        # Images de base des projectiles (chargées via une fonction générique)
+        self.image_fleche = self._charger_image_projectile(ProjectileFleche.CHEMIN_IMAGE)
+        self.image_pierre = self._charger_image_projectile(ProjectilePierre.CHEMIN_IMAGE)
         self.couleur_quadrillage = (100, 100, 100)
         self.couleur_surbrillance = (255, 255, 0)
         self.couleur_surbrillance_interdite = (255, 80, 80)
@@ -121,9 +127,7 @@ class Game:
         coinImg = os.path.join(base_dir, "assets", "money", "MonedaD.png")
         if os.path.exists(coinImg):
             img = pygame.image.load(coinImg).convert_alpha()
-            w, h = img.get_width(), img.get_height()
-            col_w = max(1, w // 5)
-            frames = [img.subsurface(pygame.Rect(col_w * i, 0, col_w, h)).copy() for i in range(5)]
+            frames = decouper_sprite(img, 5, horizontal=True, copy=True)
             frames = [pygame.transform.smoothscale(f, (24, 24)) for f in frames]
             return frames
         return []
@@ -160,9 +164,7 @@ class Game:
             chemins.sort()
             dernier_chemin = os.path.join(dossier_absolu, chemins[-1])
             image = pygame.image.load(dernier_chemin).convert_alpha()
-            w, h = image.get_width(), image.get_height()
-            col_w = w // 4
-            slices = [image.subsurface(pygame.Rect(col_w * i, 0, col_w, h)) for i in range(4)]
+            slices = decouper_sprite(image, 4, horizontal=True, copy=False)
             frames = [slices]
             icon = pygame.transform.smoothscale(slices[2], (48, 48))
             assets[tower_type] = {"frames": frames, "icon": icon}
@@ -264,15 +266,63 @@ class Game:
             )
             pygame.draw.rect(ecran, self.couleur_boutique_border, rect, 2, border_radius=6)
             t = item["type"]
+
+            # label centré verticalement
             label = self.police.render(t.capitalize(), True, self.couleur_texte)
+
             ecran.blit(label, (rect.x + 70, rect.y + 10))
             # Affiche le prix propre au type si disponible
             prix_val = self.prix_par_type.get(t)
             if prix_val is not None:
                 prix_surf = self.police.render(f"{prix_val}", True, self.couleur_texte)
                 ecran.blit(prix_surf, (rect.right - 30, rect.y + 10))
+
+            label_y = rect.y + (rect.h - label.get_height()) // 2
+
+            # icône (si disponible) centrée verticalement
+            icon = None
+
             if t in self.tower_assets:
-                ecran.blit(self.tower_assets[t]["icon"], (rect.x + 10, rect.y + 10))
+                icon = self.tower_assets[t].get("icon")
+            if icon:
+                icon_y = rect.y + (rect.h - icon.get_height()) // 2
+                ecran.blit(icon, (rect.x + 10, icon_y))
+
+            # position du label (après icône)
+            label_x = rect.x + 70
+            ecran.blit(label, (label_x, label_y))
+
+            # prix : aligné à droite et centré verticalement, couleur selon solvabilité
+            prix_val = self.prix_tour
+            can_buy = self.joueur.argent >= prix_val
+            prix_color = (240, 240, 240) if can_buy else (220, 80, 80)
+            prix = self.police.render(f"{prix_val}", True, prix_color)
+
+            # icône de pièce : utilise frames chargées si disponibles, sinon fallback circulaire
+            coin_w, coin_h = 20, 20
+            if self.coin_frames:
+                coin_frame = self.coin_frames[self.coin_frame_idx % len(self.coin_frames)]
+                try:
+                    coin_surf = pygame.transform.smoothscale(coin_frame, (coin_w, coin_h))
+                except Exception:
+                    coin_surf = coin_frame
+            else:
+                coin_surf = pygame.Surface((coin_w, coin_h), pygame.SRCALPHA)
+                pygame.draw.circle(coin_surf, (220, 200, 40), (coin_w // 2, coin_h // 2), coin_w // 2)
+
+            # aligne coin au bord droit du bouton, prix à sa gauche
+            gap = 6
+            coin_x = rect.right - 10 - coin_surf.get_width()
+            prix_x = coin_x - gap - prix.get_width()
+
+            # centrage vertical
+            prix_y = rect.y + (rect.h - prix.get_height()) // 2
+            coin_y = rect.y + (rect.h - coin_surf.get_height()) // 2
+
+            # dessin: prix puis icône (icône à droite)
+            ecran.blit(prix, (prix_x, prix_y))
+            if coin_surf:
+                ecran.blit(coin_surf, (coin_x, coin_y))
 
         if self.type_selectionne:
             info = self.police.render(f"Place: {self.type_selectionne}", True, (200, 220, 255))
@@ -335,6 +385,7 @@ class Game:
             try:
                 if not hasattr(e, "estApparu") or e.estApparu(self.debutVague):
                     e.seDeplacer(dt)
+                    e.update_animation(dt)
             except Exception:
                 # Si l'ennemi ne supporte pas le timing des vagues, on le met à jour quand même
                 if hasattr(e, "seDeplacer"):
@@ -535,7 +586,7 @@ class Game:
         if not self.ennemis:
             return
         now = pygame.time.get_ticks()
-        elapsed_s = round((now - self.debutVague) / 1000)
+        elapsed_s = round((now - self.debutVague) / 1000, 1)
         for e in self.ennemis:
             try:
                 if getattr(e, "tempsApparition", None) is not None and elapsed_s == e.tempsApparition:
@@ -577,3 +628,4 @@ class Game:
                     bannies.add((x_case, y_case))
 
         return bannies
+
