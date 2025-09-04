@@ -102,7 +102,6 @@ class Ennemi(ABC):
             self.set_visibilite(False)
 
     def estApparu(self, debutVague):
-        print("estApparu ", self.tempsApparition, " >= ", round((pygame.time.get_ticks() - debutVague) / 1000))
         return self.tempsApparition <= round((pygame.time.get_ticks() - debutVague) / 1000) # conversion en sec
 
 
