@@ -93,7 +93,7 @@ class ProjectileFleche(Projectile):
     CHEMIN_IMAGE: ClassVar[str] = "assets/tower/archer/Arrow/1.png"
 
     def __init__(self, origine: Position, cible_pos: Position) -> None:
-        super().__init__(origine=origine, cible_pos=cible_pos, degats=1, vitesse=720.0, rayon_collision=12.0)
+        super().__init__(origine=origine, cible_pos=cible_pos, degats=20, vitesse=720.0, rayon_collision=12.0)
         self.image_base: Optional[pygame.Surface] = None
 
     def dessiner(self, ecran: pygame.Surface) -> None:
@@ -115,7 +115,7 @@ class ProjectilePierre(Projectile):
     CHEMIN_IMAGE: ClassVar[str] = "assets/tower/catapult/projectiles/1.png"
 
     def __init__(self, origine: Position, cible_pos: Position) -> None:
-        super().__init__(origine=origine, cible_pos=cible_pos, degats=2, vitesse=360.0, rayon_collision=16.0)
+        super().__init__(origine=origine, cible_pos=cible_pos, degats=70, vitesse=360.0, rayon_collision=16.0)
         self.image_base: Optional[pygame.Surface] = None
 
     def dessiner(self, ecran: pygame.Surface) -> None:

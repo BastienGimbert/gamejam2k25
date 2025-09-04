@@ -149,7 +149,7 @@ class Archer(Tour):
             type_id=self.TYPE_ID,
             type_nom=self.TYPE_NOM,
             cooldown_s=0.5,
-            portee=160.0,
+            portee=150.0,
             position=position,
             prix=self.PRIX,
         )
@@ -163,7 +163,7 @@ class Catapult(Tour):
     TYPE_NOM = "catapult"
 
     # Prix indicatif de la tour Catapult (affiché dans la boutique)
-    PRIX = 20
+    PRIX = 40
 
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
@@ -171,7 +171,7 @@ class Catapult(Tour):
             type_id=self.TYPE_ID,
             type_nom=self.TYPE_NOM,
             cooldown_s=2.0,
-            portee=200.0,
+            portee=400.0,
             position=position,
             prix=self.PRIX,
         )

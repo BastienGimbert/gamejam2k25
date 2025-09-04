@@ -133,7 +133,7 @@ class Gobelin(Ennemi):
         return "Gobelin"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=80.0, pointsDeVie=60, degats=1, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=50.0, pointsDeVie=70, degats=1, chemin=chemin, **kw)
 
         # Charger les spritesheets une seule fois
         if Gobelin._frames_by_dir is None:
@@ -184,7 +184,7 @@ class Rat(Ennemi):
     def type_nom(self) -> str: return "Rat"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=120.0, pointsDeVie=30, degats=1, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=120.0, pointsDeVie=20, degats=1, chemin=chemin, **kw)
 
         if Rat._frames_by_dir is None:
             Rat._frames_by_dir = {
@@ -270,7 +270,7 @@ class Mage(Ennemi):
     def type_nom(self) -> str: return "Mage"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=70.0, pointsDeVie=120, degats=3, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=70.0, pointsDeVie=180, degats=3, chemin=chemin, **kw)
 
         if Mage._frames_by_dir is None:
             Mage._frames_by_dir = {
