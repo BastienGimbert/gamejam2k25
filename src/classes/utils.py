@@ -1,9 +1,10 @@
-
-
 import json
 from math import hypot
 from typing import List
 from classes.position import Position
+import os
+
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 def distance_positions(a: Position, b: Position) -> float:
     return hypot(a.x - b.x, a.y - b.y)
@@ -12,6 +13,8 @@ def charger_chemin_tiled(tmj_path: str, layer_name: str = "path") -> List[Positi
     """
     Charge les points d'un polygon depuis un calque d'objets dans un fichier .tmj.
     """
+    if not os.path.isabs(tmj_path):
+        tmj_path = os.path.join(base_dir, tmj_path)
     with open(tmj_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
