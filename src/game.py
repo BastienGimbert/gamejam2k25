@@ -6,6 +6,7 @@ from classes.ennemi import Gobelin
 from classes.position import Position
 from classes.tour import Archer, Catapult, Tour
 from classes.projectile import ProjectileFleche, ProjectilePierre
+from classes.utils import charger_chemin_tiled
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 
@@ -44,6 +45,7 @@ class Game:
         self.image_pierre = self._charger_image_projectile(ProjectilePierre.CHEMIN_IMAGE)
         self.couleur_quadrillage = (100, 100, 100)
         self.couleur_surbrillance = (255, 255, 0)
+        self.couleur_surbrillance_interdite = (255, 80, 80)
         self.couleur_boutique_bg = (30, 30, 30)
         self.couleur_boutique_border = (80, 80, 80)
         self.couleur_bouton_bg = (60, 60, 60)
@@ -51,6 +53,15 @@ class Game:
         self.couleur_texte = (240, 240, 240)
         self.pointeur = Pointeur()
         tmj_path = os.path.join(base_dir, "assets", "tilesets", "carte.tmj")
+        # Calcule les cases interdites de placement (cases du chemin)
+        chemin_positions = charger_chemin_tiled(tmj_path, layer_name="path")
+        self.cases_bannies = self._cases_depuis_chemin(chemin_positions)
+        # Ajoute aussi les 6 cases (x=0..5) des deux premières lignes (y=0 et y=1)
+        for y in (0, 1):
+            for x in range(0, 6):
+                if 0 <= x < self.colonnes and 0 <= y < self.lignes:
+                    self.cases_bannies.add((x, y))
+
         gob = Gobelin(id=1, tmj_path=tmj_path)
         gob.apparaitre()
         self.ennemis = [gob]
@@ -175,7 +186,10 @@ class Game:
         x_case, y_case = self.case_survolee
         rect = pygame.Rect(x_case * self.taille_case, y_case * self.taille_case, self.taille_case, self.taille_case)
         overlay = pygame.Surface((self.taille_case, self.taille_case), pygame.SRCALPHA)
-        overlay.fill((*self.couleur_surbrillance, 80))
+        # Rouge translucide si interdit (chemin) ou déjà occupé
+        interdit = (x_case, y_case) in getattr(self, 'cases_bannies', set()) or (x_case, y_case) in self.positions_occupees
+        couleur = self.couleur_surbrillance_interdite if interdit else self.couleur_surbrillance
+        overlay.fill((*couleur, 80))
         if rect.right <= self.largeur_ecran:
             ecran.blit(overlay, rect)
 
@@ -281,7 +295,7 @@ class Game:
                 return None
             if self.type_selectionne and self._position_dans_grille(pos):
                 case = self._case_depuis_pos(pos)
-                if case and case not in self.positions_occupees and self.solde >= self.prix_tour:
+                if case and case not in self.positions_occupees and self.solde >= self.prix_tour and case not in getattr(self, 'cases_bannies', set()):
                     # 1) Marque la case occupée pour l'affichage existant
                     self.positions_occupees[case] = {"type": self.type_selectionne, "frame": 0}
                     # 2) Crée une instance de la tour correspondante (centre de case)
@@ -300,3 +314,35 @@ class Game:
                     self.solde -= self.prix_tour
                     self.type_selectionne = None
         return None
+
+    def _cases_depuis_chemin(self, chemin_positions: list[Position]) -> set[tuple[int, int]]:
+        """Approxime les cases de grille traversées par le polygon du chemin.
+
+        Echantillonne chaque segment du chemin pour marquer les cases touchées.
+        """
+        bannies: set[tuple[int, int]] = set()
+        if not chemin_positions:
+            return bannies
+        # Ajoute les cases des points eux-mêmes
+        for p in chemin_positions:
+            x_case = int(p.x) // self.taille_case
+            y_case = int(p.y) // self.taille_case
+            if 0 <= x_case < self.colonnes and 0 <= y_case < self.lignes:
+                bannies.add((x_case, y_case))
+        # Echantillonne les segments
+        for i in range(len(chemin_positions) - 1):
+            p0 = chemin_positions[i]
+            p1 = chemin_positions[i + 1]
+            dx = p1.x - p0.x
+            dy = p1.y - p0.y
+            dist = max(1.0, (dx*dx + dy*dy) ** 0.5)
+            pas = max(1, int(dist / (self.taille_case / 4)))  # échantillonne finement
+            for s in range(pas + 1):
+                t = s / pas
+                x = p0.x + dx * t
+                y = p0.y + dy * t
+                x_case = int(x) // self.taille_case
+                y_case = int(y) // self.taille_case
+                if 0 <= x_case < self.colonnes and 0 <= y_case < self.lignes:
+                    bannies.add((x_case, y_case))
+        return bannies
