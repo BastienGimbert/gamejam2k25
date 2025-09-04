@@ -171,8 +171,9 @@ class Gobelin(Ennemi):
         if self.visible:
             ecran.blit(frame, pos)
         else:
-            pygame.draw.circle(ecran, (200, 50, 50), (int(self.position.x), int(self.position.y)), 10)
-
+            temp = frame.copy()          # Copier pour ne pas modifier l'original
+            temp.set_alpha(90)
+            ecran.blit(temp, pos)
 
 SCALE_FACTOR = 2  # redimensionne toutes les frames
 
@@ -215,8 +216,9 @@ class Rat(Ennemi):
         if self.visible:
             ecran.blit(frame, pos)
         else:
-            pygame.draw.circle(ecran, (200, 50, 50), (int(self.position.x), int(self.position.y)), 10)
-
+            temp = frame.copy()          # Copier pour ne pas modifier l'original
+            temp.set_alpha(90)
+            ecran.blit(temp, pos)
 
 class Loup(Ennemi):
     _frames_by_dir: dict[str, list[pygame.Surface]] | None = None
@@ -257,8 +259,9 @@ class Loup(Ennemi):
         if self.visible:
             ecran.blit(frame, pos)
         else:
-            pygame.draw.circle(ecran, (200, 50, 50), (int(self.position.x), int(self.position.y)), 10)
-
+            temp = frame.copy()          # Copier pour ne pas modifier l'original
+            temp.set_alpha(90)
+            ecran.blit(temp, pos)
 
 class Mage(Ennemi):
     _frames_by_dir: dict[str, list[pygame.Surface]] | None = None
@@ -299,5 +302,6 @@ class Mage(Ennemi):
         if self.visible:
             ecran.blit(frame, pos)
         else:
-            pygame.draw.circle(ecran, (200, 50, 50), (int(self.position.x), int(self.position.y)), 10)
-
+            temp = frame.copy()          # Copier pour ne pas modifier l'original
+            temp.set_alpha(90)
+            ecran.blit(temp, pos)

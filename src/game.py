@@ -474,6 +474,10 @@ class Game:
 
         self.pointeur.draw(ecran)
         self.maj(dt)
+    
+    def decompte_dt(self) -> None:
+        dt = self.clock.tick(60) / 1000.0
+    
 
     # ---------- Evénements ----------
     def gerer_evenement(self, event: pygame.event.Event) -> str | None:

@@ -175,6 +175,7 @@ def main() -> None:
         if ETAT == "MENU":
             dessiner_menu(ECRAN, BOUTONS_MENU)
         elif ETAT == "PAUSE":
+            scene_jeu.decompte_dt()
             dessiner_menu(ECRAN, BOUTONS_PAUSE)
         elif ETAT == "CREDITS":
             dessiner_credits(ECRAN, POLICE, LARGEUR)
