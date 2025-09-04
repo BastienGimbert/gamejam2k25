@@ -112,7 +112,7 @@ class Game:
         }
         police_medievale = pygame.font.Font(None, 38)  # police plus grande, à adapter si tu as une police médiévale
         self.bouton_vague = Bouton(
-            "Vague suivante",
+            "Lancer la vague",
             self.rect_boutique.x + 20,
             self.hauteur_ecran - 70,
             self.largeur_boutique - 40,
