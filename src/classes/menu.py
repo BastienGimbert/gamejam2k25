@@ -1,3 +1,5 @@
+import os
+
 import pygame
 from .bouton import Bouton
 
@@ -5,6 +7,9 @@ from .bouton import Bouton
 BLANC = (255, 255, 255)
 GRIS = (200, 200, 200)
 NOIR = (0, 0, 0)
+
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+
 
 COULEURS_BOUTON = {
     "fond_normal": BLANC,
@@ -44,7 +49,7 @@ FOND = None
 def charger_fond(ecran: pygame.Surface):
     global FOND
     if FOND is None:  # on le fait une seule fois
-        image = pygame.image.load("assets/fond.png").convert()
+        image = pygame.image.load(os.path.join(base_dir, "assets", "fond.png")).convert()
         FOND = pygame.transform.scale(image, ecran.get_size())
 
 # ------------------- CRÉDITS -------------------
