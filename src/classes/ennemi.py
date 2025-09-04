@@ -1,9 +1,12 @@
 from typing import Callable, List, Optional
 from abc import ABC, abstractmethod
 from classes.position import Position
-from classes.utils import charger_chemin_tiled, distance_positions
+from classes.utils import charger_chemin_tiled, distance_positions, decouper_sprite
 import pygame
-from time import sleep  
+import os
+from time import sleep
+
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 class Ennemi(ABC):
     def __init__(
@@ -119,8 +122,7 @@ class Gobelin(Ennemi):
 
         # Charger les frames si elles sont vide uniquement la première fois
         if Gobelin._frames is None:
-            image = pygame.image.load("assets/enemy/goblin/D_Walk.png").convert_alpha()
-            from classes.utils import decouper_sprite
+            image = pygame.image.load(os.path.join(base_dir, "assets", "enemy", "goblin", "D_Walk.png")).convert_alpha()
             Gobelin._frames = decouper_sprite(image, nb_images=6, horizontal=True)
 
         self.frames = Gobelin._frames
