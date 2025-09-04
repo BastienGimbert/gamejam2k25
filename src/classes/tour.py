@@ -26,6 +26,7 @@ class Tour(ABC):
         cooldown_s: float,
         portee: float,
         position: Position,
+        prix: int = 0,
     ) -> None:
         # Identifiants et métadonnées
         self.id = int(id)  # Identifiant unique de l'instance de tour
@@ -36,6 +37,8 @@ class Tour(ABC):
         self.cooldown_s = float(cooldown_s)  # Temps entre deux tirs (en secondes)
         self.portee = float(portee)  # Portée de tir en pixels
         self.position = position  # Centre de la tour (pixels)
+        # Coût d'achat de la tour
+        self.prix = int(prix)
 
         # Etat interne: accumulateur de temps depuis le dernier tir
         self._time_since_last_shot = 0.0
@@ -106,6 +109,9 @@ class Archer(Tour):
     TYPE_ID = 1
     TYPE_NOM = "archer"
 
+    # Prix indicatif de la tour Archer (affiché dans la boutique)
+    PRIX = 10
+
     def __init__(self, id: int, position: Position) -> None:
         # Dégâts et cadence de tir équilibrés pour un début
         super().__init__(
@@ -115,6 +121,7 @@ class Archer(Tour):
             cooldown_s=0.5,  # tire 2 fois par seconde
             portee=160.0,
             position=position,
+            prix=self.PRIX,
         )
 
     def attaquer(self, cible: Ennemi) -> None:
@@ -132,6 +139,9 @@ class Catapult(Tour):
     TYPE_ID = 2
     TYPE_NOM = "catapult"
 
+    # Prix indicatif de la tour Catapult (affiché dans la boutique)
+    PRIX = 20
+
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
             id=id,
@@ -140,6 +150,7 @@ class Catapult(Tour):
             cooldown_s=2.0,  # tire toutes les 2 secondes
             portee=200.0,
             position=position,
+            prix=self.PRIX,
         )
 
     def attaquer(self, cible: Ennemi) -> None:

@@ -31,7 +31,11 @@ class Game:
         # Boutique (à droite de la carte)
         self.largeur_boutique = 400
         self.rect_boutique = pygame.Rect(self.largeur_ecran, 0, self.largeur_boutique, self.hauteur_ecran)
-        self.prix_tour = 10
+        # Prix par type de tour (affichage et logique d'achat/vente)
+        self.prix_par_type: dict[str, int] = {
+            "archer": getattr(Archer, "PRIX", 10),
+            "catapult": getattr(Catapult, "PRIX", 20),
+        }
 
         # Animation monnaie
         self.coin_frames = self._charger_piece()
@@ -97,6 +101,19 @@ class Game:
         self.numVague = 0
         self.debutVague = 0
         self.ennemis: list[Ennemi] = []  # Rempli lors du lancement de vague
+
+    def _ennemi_atteint_chateau(self, ennemi: Ennemi) -> None:
+        # Inflige les dégâts de l'ennemi au joueur lorsque l'ennemi atteint la fin
+        try:
+            deg = getattr(ennemi, "degats", 1)
+        except Exception:
+            deg = 1
+        self.joueur.point_de_vie = max(0, int(self.joueur.point_de_vie) - int(deg))
+        # Le marquer comme "mort" pour que les tours cessent de le cibler
+        try:
+            ennemi.pointsDeVie = 0
+        except Exception:
+            pass
 
     # ---------- Chargements ----------
     def _charger_carte(self):
@@ -252,10 +269,19 @@ class Game:
 
             # label centré verticalement
             label = self.police.render(t.capitalize(), True, self.couleur_texte)
+
+            ecran.blit(label, (rect.x + 70, rect.y + 10))
+            # Affiche le prix propre au type si disponible
+            prix_val = self.prix_par_type.get(t)
+            if prix_val is not None:
+                prix_surf = self.police.render(f"{prix_val}", True, self.couleur_texte)
+                ecran.blit(prix_surf, (rect.right - 30, rect.y + 10))
+
             label_y = rect.y + (rect.h - label.get_height()) // 2
 
             # icône (si disponible) centrée verticalement
             icon = None
+
             if t in self.tower_assets:
                 icon = self.tower_assets[t].get("icon")
             if icon:
@@ -303,7 +329,8 @@ class Game:
             ecran.blit(info, (self.rect_boutique.x + 20, self.hauteur_ecran - 40))
 
     def _dessiner_surbrillance(self, ecran):
-        if not self.case_survolee:
+        # Ne montrer la surbrillance que si une tour est sélectionnée pour placement
+        if not self.case_survolee or not self.type_selectionne:
             return
         x_case, y_case = self.case_survolee
         rect = pygame.Rect(x_case * self.taille_case, y_case * self.taille_case, self.taille_case, self.taille_case)
@@ -364,6 +391,25 @@ class Game:
                 if hasattr(e, "seDeplacer"):
                     e.seDeplacer(dt)
 
+        # Perte de PV si un ennemi touche la 3e ou 4e case de la 1ère ligne (cases (2,0) et (3,0))
+        for e in self.ennemis:
+            try:
+                pos_px = (int(e.position.x), int(e.position.y))
+                case = self._case_depuis_pos(pos_px)
+                if case in {(2, 0), (3, 0)}:
+                    # Infliger les dégâts de l'ennemi au joueur puis le retirer
+                    deg = getattr(e, "degats", 1)
+                    self.joueur.point_de_vie = max(0, int(self.joueur.point_de_vie) - int(deg))
+                    if hasattr(e, "perdreVie"):
+                        e.perdreVie(getattr(e, "pointsDeVie", 1))
+                    else:
+                        try:
+                            e.pointsDeVie = 0
+                        except Exception:
+                            pass
+            except Exception:
+                continue
+
         # Mise à jour des tours (acquisitions + tirs)
         for t in self.tours:
             def au_tir(tour: Tour, cible: Gobelin):
@@ -398,6 +444,9 @@ class Game:
         # Nettoyage projectiles
         self.projectiles = [p for p in self.projectiles if not getattr(p, "detruit", False)]
 
+        # Nettoyage des ennemis (retirer ceux qui sont morts ou arrivés au bout)
+        self.ennemis = [e for e in self.ennemis if not (getattr(e, "estMort", lambda: False)() or getattr(e, "a_atteint_le_bout", lambda: False)())]
+
     def dessiner(self, ecran: pygame.Surface) -> None:
         dt = self.clock.tick(60) / 1000.0
         ecran.blit(self.carte, (0, 0))
@@ -426,14 +475,18 @@ class Game:
             else:
                 self.case_survolee = None
 
+        # Clic gauche: sélection dans la boutique et placement d'une tour
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             pos = event.pos
             # Clic dans la boutique
             if self.rect_boutique.collidepoint(pos):
                 for item in self.shop_items:
                     if item["rect"].collidepoint(pos):
-                        if self.joueur.argent >= self.prix_tour:
-                            self.type_selectionne = item["type"]
+                        # Sélectionne le type uniquement si le joueur a assez d'argent
+                        t = item["type"]
+                        prix_t = self.prix_par_type.get(t, 0)
+                        if self.joueur.argent >= prix_t:
+                            self.type_selectionne = t
                         else:
                             self.type_selectionne = None
                         break
@@ -445,7 +498,7 @@ class Game:
                 if (
                     case
                     and case not in self.positions_occupees
-                    and self.joueur.argent >= self.prix_tour
+                    and self.joueur.argent >= self.prix_par_type.get(self.type_selectionne, 0)
                     and case not in getattr(self, "cases_bannies", set())
                 ):
                     # 1) Marque la case occupée (affichage)
@@ -457,16 +510,46 @@ class Game:
                     cy = y_case * self.taille_case + self.taille_case // 2
                     pos_tour = Position(cx, cy)
                     tour_id = len(self.tours) + 1
+                    nouvelle_tour = None
                     if self.type_selectionne == "archer":
-                        self.tours.append(Archer(id=tour_id, position=pos_tour))
+                        nouvelle_tour = Archer(id=tour_id, position=pos_tour)
                     elif self.type_selectionne == "catapult":
-                        self.tours.append(Catapult(id=tour_id, position=pos_tour))
+                        nouvelle_tour = Catapult(id=tour_id, position=pos_tour)
                     else:
                         # Types non encore implémentés
-                        pass
+                        nouvelle_tour = None
+                    if nouvelle_tour is not None:
+                        self.tours.append(nouvelle_tour)
+                        # Mémorise le prix d'achat pour revente éventuelle
+                        self.positions_occupees[case]["prix"] = getattr(
+                            nouvelle_tour,
+                            "prix",
+                            self.prix_par_type.get(self.type_selectionne, 0),
+                        )
 
-                    self.joueur.argent -= self.prix_tour
+                    # Débiter le prix correspondant
+                    self.joueur.argent -= self.prix_par_type.get(self.type_selectionne, 0)
                     self.type_selectionne = None
+
+        # Clic droit: vendre une tour posée (si on clique sur une case occupée)
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+            pos = event.pos
+            # On ignore si on clique dans la zone boutique
+            if self.rect_boutique.collidepoint(pos):
+                return None
+            if self._position_dans_grille(pos):
+                case = self._case_depuis_pos(pos)
+                if case and case in self.positions_occupees:
+                    # Prix payé mémorisé au placement; remboursement = moitié (arrondi bas)
+                    prix_achat = int(self.positions_occupees[case].get("prix", 0))
+                    remboursement = prix_achat // 2
+                    self.joueur.argent += remboursement
+                    # Retire l'instance de tour à cet emplacement (centre de case)
+                    cx = case[0] * self.taille_case + self.taille_case // 2
+                    cy = case[1] * self.taille_case + self.taille_case // 2
+                    self.tours = [t for t in self.tours if not (int(t.position.x) == cx and int(t.position.y) == cy)]
+                    # Libère la case pour placement futur
+                    del self.positions_occupees[case]
 
         return None
 
@@ -479,12 +562,23 @@ class Game:
 
         # Génère la liste d'ennemis depuis le CSV (la fabrique gère leurs types)
         self.ennemis = creer_liste_ennemis_depuis_csv(self.numVague)
+        # Désactive le callback d'arrivée au château (les dégâts sont gérés sur les cases (3,0) et (4,0))
+        for e in self.ennemis:
+            try:
+                setattr(e, "_on_reach_castle", None)
+            except Exception:
+                pass
 
         # Si aucune donnée CSV, on peut au moins spawner un gobelin de base
         if not self.ennemis:
             gob = Gobelin(id=1, tmj_path=self.tmj_path)
             if hasattr(gob, "apparaitre"):
                 gob.apparaitre()
+            # Désactive le callback d'arrivée pour le fallback
+            try:
+                setattr(gob, "_on_reach_castle", None)
+            except Exception:
+                pass
             self.ennemis = [gob]
 
     def majvague(self):
