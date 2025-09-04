@@ -362,6 +362,7 @@ class Game:
             try:
                 if not hasattr(e, "estApparu") or e.estApparu(self.debutVague):
                     e.seDeplacer(dt)
+                    e.update_animation(dt)
             except Exception:
                 # Si l'ennemi ne supporte pas le timing des vagues, on le met à jour quand même
                 if hasattr(e, "seDeplacer"):
