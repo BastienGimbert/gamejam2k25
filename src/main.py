@@ -19,7 +19,7 @@ except Exception:
 
 LARGEUR, HAUTEUR = 1168, 768
 ECRAN = pygame.display.set_mode((LARGEUR, HAUTEUR))
-pygame.display.set_caption("Tower Defense")
+pygame.display.set_caption("Protect The Castle")
 
 POLICE = pygame.font.Font(None, 50)
 HORLOGE = pygame.time.Clock()
