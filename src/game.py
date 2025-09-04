@@ -63,6 +63,12 @@ class Game:
         self.image_pierre = self._charger_image_projectile(getattr(ProjectilePierre, "CHEMIN_IMAGE", ""))
 
         # Couleurs UI
+        # Projectiles actifs (flèches, etc.)
+        # Peut contenir ProjectileFleche et ProjectilePierre
+        self.projectiles: list = []
+        # Images de base des projectiles (chargées via une fonction générique)
+        self.image_fleche = self._charger_image_projectile(ProjectileFleche.CHEMIN_IMAGE)
+        self.image_pierre = self._charger_image_projectile(ProjectilePierre.CHEMIN_IMAGE)
         self.couleur_quadrillage = (100, 100, 100)
         self.couleur_surbrillance = (255, 255, 0)
         self.couleur_surbrillance_interdite = (255, 80, 80)
@@ -247,12 +253,54 @@ class Game:
             )
             pygame.draw.rect(ecran, self.couleur_boutique_border, rect, 2, border_radius=6)
             t = item["type"]
+
+            # label centré verticalement
             label = self.police.render(t.capitalize(), True, self.couleur_texte)
-            ecran.blit(label, (rect.x + 70, rect.y + 10))
-            prix = self.police.render(f"{self.prix_tour}", True, self.couleur_texte)
-            ecran.blit(prix, (rect.right - 30, rect.y + 10))
+            label_y = rect.y + (rect.h - label.get_height()) // 2
+
+            # icône (si disponible) centrée verticalement
+            icon = None
             if t in self.tower_assets:
-                ecran.blit(self.tower_assets[t]["icon"], (rect.x + 10, rect.y + 10))
+                icon = self.tower_assets[t].get("icon")
+            if icon:
+                icon_y = rect.y + (rect.h - icon.get_height()) // 2
+                ecran.blit(icon, (rect.x + 10, icon_y))
+
+            # position du label (après icône)
+            label_x = rect.x + 70
+            ecran.blit(label, (label_x, label_y))
+
+            # prix : aligné à droite et centré verticalement, couleur selon solvabilité
+            prix_val = self.prix_tour
+            can_buy = self.joueur.argent >= prix_val
+            prix_color = (240, 240, 240) if can_buy else (220, 80, 80)
+            prix = self.police.render(f"{prix_val}", True, prix_color)
+
+            # icône de pièce : utilise frames chargées si disponibles, sinon fallback circulaire
+            coin_w, coin_h = 20, 20
+            if self.coin_frames:
+                coin_frame = self.coin_frames[self.coin_frame_idx % len(self.coin_frames)]
+                try:
+                    coin_surf = pygame.transform.smoothscale(coin_frame, (coin_w, coin_h))
+                except Exception:
+                    coin_surf = coin_frame
+            else:
+                coin_surf = pygame.Surface((coin_w, coin_h), pygame.SRCALPHA)
+                pygame.draw.circle(coin_surf, (220, 200, 40), (coin_w // 2, coin_h // 2), coin_w // 2)
+
+            # aligne coin au bord droit du bouton, prix à sa gauche
+            gap = 6
+            coin_x = rect.right - 10 - coin_surf.get_width()
+            prix_x = coin_x - gap - prix.get_width()
+
+            # centrage vertical
+            prix_y = rect.y + (rect.h - prix.get_height()) // 2
+            coin_y = rect.y + (rect.h - coin_surf.get_height()) // 2
+
+            # dessin: prix puis icône (icône à droite)
+            ecran.blit(prix, (prix_x, prix_y))
+            if coin_surf:
+                ecran.blit(coin_surf, (coin_x, coin_y))
 
         if self.type_selectionne:
             info = self.police.render(f"Place: {self.type_selectionne}", True, (200, 220, 255))
