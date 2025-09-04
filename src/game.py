@@ -270,12 +270,6 @@ class Game:
             # label centré verticalement
             label = self.police.render(t.capitalize(), True, self.couleur_texte)
 
-            ecran.blit(label, (rect.x + 70, rect.y + 10))
-            # Affiche le prix propre au type si disponible
-            prix_val = self.prix_par_type.get(t)
-            if prix_val is not None:
-                prix_surf = self.police.render(f"{prix_val}", True, self.couleur_texte)
-                ecran.blit(prix_surf, (rect.right - 30, rect.y + 10))
 
             label_y = rect.y + (rect.h - label.get_height()) // 2
 
@@ -293,7 +287,7 @@ class Game:
             ecran.blit(label, (label_x, label_y))
 
             # prix : aligné à droite et centré verticalement, couleur selon solvabilité
-            prix_val = self.prix_tour
+            prix_val = self.prix_par_type.get(t, 0)
             can_buy = self.joueur.argent >= prix_val
             prix_color = (240, 240, 240) if can_buy else (220, 80, 80)
             prix = self.police.render(f"{prix_val}", True, prix_color)
