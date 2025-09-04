@@ -1,9 +1,9 @@
 from typing import Callable, List, Optional
 from abc import ABC, abstractmethod
 from classes.position import Position
-from classes.utils import charger_chemin_tiled, distance_positions
+from classes.utils import charger_chemin_tiled, distance_positions, decouper_sprite
 import pygame
-
+import os
 
 SCALE_FACTOR = 2
 
