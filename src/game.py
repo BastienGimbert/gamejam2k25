@@ -7,7 +7,7 @@ from classes.pointeur import Pointeur
 from classes.ennemi import Gobelin, Ennemi  # Gobelin + type de base
 from classes.joueur import Joueur
 from classes.position import Position
-from classes.tour import Archer, Catapult, Tour
+from classes.tour import Archer, Catapult, Mage, Tour
 from classes.projectile import ProjectileFleche, ProjectilePierre
 from classes.utils import charger_chemin_tiled, decouper_sprite
 from classes.csv import creer_liste_ennemis_depuis_csv
@@ -33,8 +33,9 @@ class Game:
         self.rect_boutique = pygame.Rect(self.largeur_ecran, 0, self.largeur_boutique, self.hauteur_ecran)
         # Prix par type de tour (affichage et logique d'achat/vente)
         self.prix_par_type: dict[str, int] = {
-            "archer": getattr(Archer, "PRIX", 10),
-            "catapult": getattr(Catapult, "PRIX", 20),
+            "archer": getattr(Archer, "PRIX"),
+            "catapult": getattr(Catapult, "PRIX"),
+            "mage": getattr(Mage, "PRIX"),
         }
 
         # Animation monnaie
