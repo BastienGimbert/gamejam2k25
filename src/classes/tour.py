@@ -98,7 +98,7 @@ class Tour(ABC):
                 d, fx = self._best_orient(self._cible)
                 self._anim.set_orientation(d, fx)
             if self._anim.update(dt):
-                if self._cible is not None and not self._cible.estMort():
+                if self._cible is not None and not self._cible.estMort() and self._cible.visible:
                     if distance_positions(self.position, self._cible.position) <= self.portee:
                         if self._au_tir is not None:
                             self._au_tir(self, self._cible)
@@ -117,7 +117,7 @@ class Tour(ABC):
         from classes.ennemi import Ennemi  # type: ignore
         candidats: List[tuple[float, Ennemi]] = []
         for e in ennemis:
-            if e.estMort():
+            if e.estMort() or not e.visible:
                 continue
             if distance_positions(self.position, e.position) <= self.portee:
                 try:
