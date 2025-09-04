@@ -11,6 +11,7 @@ from classes.tour import Archer, Catapult, Tour
 from classes.projectile import ProjectileFleche, ProjectilePierre
 from classes.utils import charger_chemin_tiled, decouper_sprite
 from classes.csv import creer_liste_ennemis_depuis_csv
+from classes.bouton import Bouton
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 
@@ -19,6 +20,12 @@ class Game:
     def __init__(self, police: pygame.font.Font):
         self.joueur = Joueur(argent=100, point_de_vie=100, sort="feu", etat="normal")
         self.police = police
+        self.couleurs = {
+            "fond": (30, 30, 30),
+            "bordure": (80, 80, 80),
+            "texte": (240, 240, 240),
+        }
+        
 
         # Grille / carte
         self.taille_case = 64
@@ -93,14 +100,34 @@ class Game:
             for x in range(0, 6):
                 if 0 <= x < self.colonnes and 0 <= y < self.lignes:
                     self.cases_bannies.add((x, y))
-
+        
         # Pointeur
         self.pointeur = Pointeur()
+        medieval_couleurs = {
+            "fond_normal": (110, 70, 30),      # brun
+            "fond_survol": (150, 100, 40),    # brun clair
+            "contour": (220, 180, 60),        # doré
+            "texte": (240, 220, 180),         # beige
+        }
+        police_medievale = pygame.font.Font(None, 38)  # police plus grande, à adapter si tu as une police médiévale
+        self.bouton_vague = Bouton(
+            "Vague suivante",
+            self.rect_boutique.x + 20,
+            self.hauteur_ecran - 70,
+            self.largeur_boutique - 40,
+            50,
+            self.lancerVague,
+            police_medievale,
+            medieval_couleurs
+        )
 
         # Gestion des vagues
         self.numVague = 0
         self.debutVague = 0
         self.ennemis: list[Ennemi] = []  # Rempli lors du lancement de vague
+        
+        #self.action_bouton= self.lancerVague()            
+        #self.bouton = Bouton("Bouton", 100, 100, 200, 50, self.action_bouton, self.police, self.couleurs)
 
     def _ennemi_atteint_chateau(self, ennemi: Ennemi) -> None:
         # Inflige les dégâts de l'ennemi au joueur lorsque l'ennemi atteint la fin
@@ -204,6 +231,7 @@ class Game:
         return surf
 
     # ---------- Utilitaires ----------
+    
     def _position_dans_grille(self, pos):
         return pos[0] < self.largeur_ecran and 0 <= pos[1] < self.hauteur_ecran
 
@@ -326,6 +354,17 @@ class Game:
         if self.type_selectionne:
             info = self.police.render(f"Place: {self.type_selectionne}", True, (200, 220, 255))
             ecran.blit(info, (self.rect_boutique.x + 20, self.hauteur_ecran - 40))
+        bouton_actif = self.vague_terminee()
+        if bouton_actif:
+            self.bouton_vague.dessiner(ecran)
+        else:
+            # Dessin grisé
+            old_couleurs = self.bouton_vague.couleurs.copy()
+            self.bouton_vague.couleurs["fond_normal"] = (120, 120, 120)
+            self.bouton_vague.couleurs["fond_survol"] = (160, 160, 160)
+            self.bouton_vague.couleurs["texte"] = (180, 180, 180)
+            self.bouton_vague.dessiner(ecran)
+            self.bouton_vague.couleurs = old_couleurs
 
     def _dessiner_surbrillance(self, ecran):
         # Ne montrer la surbrillance que si une tour est sélectionnée pour placement
@@ -491,6 +530,9 @@ class Game:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             pos = event.pos
             # Clic dans la boutique
+            if self.bouton_vague.rect.collidepoint(pos) and self.vague_terminee():
+                self.bouton_vague.action()
+                return None
             if self.rect_boutique.collidepoint(pos):
                 for item in self.shop_items:
                     if item["rect"].collidepoint(pos):
@@ -640,4 +682,15 @@ class Game:
                     bannies.add((x_case, y_case))
 
         return bannies
+
+    def vague_terminee(self) -> bool:
+        """Retourne True si tous les ennemis sont morts ou arrivés au bout."""
+        if not self.ennemis:
+            return True
+        for e in self.ennemis:
+            est_mort = getattr(e, "estMort", lambda: False)()
+            au_bout = getattr(e, "a_atteint_le_bout", lambda: False)()
+            if not (est_mort or au_bout):
+                return False
+        return True
 
