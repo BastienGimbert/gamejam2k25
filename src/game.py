@@ -9,7 +9,7 @@ from classes.joueur import Joueur
 from classes.position import Position
 from classes.tour import Archer, Catapult, Tour
 from classes.projectile import ProjectileFleche, ProjectilePierre
-from classes.utils import charger_chemin_tiled
+from classes.utils import charger_chemin_tiled, decouper_sprite
 from classes.csv import creer_liste_ennemis_depuis_csv
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
@@ -110,9 +110,7 @@ class Game:
         coinImg = os.path.join(base_dir, "assets", "money", "MonedaD.png")
         if os.path.exists(coinImg):
             img = pygame.image.load(coinImg).convert_alpha()
-            w, h = img.get_width(), img.get_height()
-            col_w = max(1, w // 5)
-            frames = [img.subsurface(pygame.Rect(col_w * i, 0, col_w, h)).copy() for i in range(5)]
+            frames = decouper_sprite(img, 5, horizontal=True, copy=True)
             frames = [pygame.transform.smoothscale(f, (24, 24)) for f in frames]
             return frames
         return []
@@ -149,9 +147,7 @@ class Game:
             chemins.sort()
             dernier_chemin = os.path.join(dossier_absolu, chemins[-1])
             image = pygame.image.load(dernier_chemin).convert_alpha()
-            w, h = image.get_width(), image.get_height()
-            col_w = w // 4
-            slices = [image.subsurface(pygame.Rect(col_w * i, 0, col_w, h)) for i in range(4)]
+            slices = decouper_sprite(image, 4, horizontal=True, copy=False)
             frames = [slices]
             icon = pygame.transform.smoothscale(slices[2], (48, 48))
             assets[tower_type] = {"frames": frames, "icon": icon}
@@ -538,3 +534,4 @@ class Game:
                     bannies.add((x_case, y_case))
 
         return bannies
+
