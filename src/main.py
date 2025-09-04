@@ -86,6 +86,7 @@ demarrer_musique_de_fond()
 def demarrer_jeu():
     global ETAT
     ETAT = "JEU"
+    scene_jeu.lancerVague()
 
 
 def reprendre_jeu():

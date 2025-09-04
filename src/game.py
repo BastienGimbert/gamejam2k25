@@ -3,6 +3,9 @@ import os
 
 from classes.pointeur import Pointeur
 from classes.ennemi import Gobelin
+from time import sleep  
+from classes.csv import creer_liste_ennemis_depuis_csv
+from classes.ennemi import Ennemi
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 
@@ -39,9 +42,14 @@ class Game:
         self.couleur_texte = (240, 240, 240)
         self.pointeur = Pointeur()
         tmj_path = os.path.join(base_dir, "assets", "tilesets", "carte.tmj")
-        gob = Gobelin(id=1, tmj_path=tmj_path)
-        gob.apparaitre()
-        self.ennemis = [gob]
+        #PROVISOIRE
+        #gob = Gobelin(id=1, tempsApparition=5, tmj_path=tmj_path)
+        #self.ennemis = [gob]
+
+        self.numVague = 0
+        self.debutVague = 0
+
+
 
     def _charger_carte(self):
         chemin_carte = os.path.join(base_dir, "assets", "tilesets", "carte.png")
@@ -165,9 +173,9 @@ class Game:
 
     def dessiner_ennemis(self, ecran):
         for e in self.ennemis:
-            e.majVisible()
-            e.draw(ecran)
- 
+            if e.estApparu(self.debutVague) and not e.estMort() and not e.a_atteint_le_bout():
+                e.majVisible()
+                e.draw(ecran)
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         self.dessiner_carte(ecran)
@@ -178,8 +186,10 @@ class Game:
 
     
     def maj(self, dt: float):
+        self.majvague() # fait apparaitre les nouveaux ennemis
         for e in self.ennemis:
-            e.seDeplacer(dt)
+            if e.estApparu(self.debutVague):
+                e.seDeplacer(dt)
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         dt = self.clock.tick(60) / 1000.0
@@ -218,3 +228,17 @@ class Game:
                     self.solde -= self.prix_tour
                     self.type_selectionne = None
         return None
+    
+    def lancerVague(self):
+        self.numVague += 1
+        self.debutVague = pygame.time.get_ticks()
+
+        print("vague num ", self.numVague, "lancée")
+        
+        self.ennemis = creer_liste_ennemis_depuis_csv(self.numVague)
+
+    def majvague(self):
+        """Methode pour faire apparaître les ennemis au moment de leur temps d'apparition"""
+        for e in self.ennemis:
+            if round((pygame.time.get_ticks() - self.debutVague) / 1000) == e.tempsApparition:
+                e.apparaitre()

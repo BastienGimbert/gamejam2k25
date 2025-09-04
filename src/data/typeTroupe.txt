@@ -1,0 +1,5 @@
+id;type;
+1;Loup;
+2;Rat;
+3;Gobelin;
+4;Mage;
