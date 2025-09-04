@@ -6,6 +6,10 @@ from abc import ABC, abstractmethod
 
 from classes.position import Position
 from classes.ennemi import Ennemi
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from game import Game
 
 
 class Projectile(ABC):
@@ -23,6 +27,7 @@ class Projectile(ABC):
         # Position courante
         self.x = float(origine.x)
         self.y = float(origine.y)
+        self.position = Position(self.x, self.y)
 
         # Caractéristiques
         self.degats = int(degats)
@@ -88,7 +93,7 @@ class Projectile(ABC):
 
 
 class ProjectileFleche(Projectile):
-    """Flèche: rapide, dégâts fixes = 1."""
+    """Flèche: rapide, dégâts fixes = 20."""
 
     CHEMIN_IMAGE: ClassVar[str] = "assets/tower/archer/Arrow/1.png"
 
@@ -110,11 +115,11 @@ class ProjectileFleche(Projectile):
 
 
 class ProjectilePierre(Projectile):
-    """Pierre: lente, dégâts fixes = 2."""
+    """Pierre: lente, dégâts fixes = 70."""
 
     CHEMIN_IMAGE: ClassVar[str] = "assets/tower/catapult/projectiles/1.png"
 
-    def __init__(self, origine: Position, cible_pos: Position) -> None:
+    def __init__(self, origine: Position, cible_pos: Position, game_ref:  Optional["Game"]) -> None:
         super().__init__(origine=origine, cible_pos=cible_pos, degats=70, vitesse=360.0, rayon_collision=16.0)
         self.image_base: Optional[pygame.Surface] = None
 
@@ -128,4 +133,56 @@ class ProjectilePierre(Projectile):
         rect = sprite.get_rect(center=(int(self.x), int(self.y)))
         ecran.blit(sprite, rect)
 
+
+
+class ProjectileMageEnnemi(Projectile):
+    """Projectile du mage qui suit un projectile de pierre."""
+
+    CHEMIN_IMAGE: ClassVar[str] = "assets\enemy\mage\Projectile2.png"
+
+    def __init__(self, origine: Position, cible_proj: "ProjectilePierre", vitesse: float = 500.0):
+        # On initialise avec la position initiale du projectile
+        super().__init__(origine=origine, cible_pos=Position(cible_proj.x, cible_proj.y),
+                         degats=50, vitesse=vitesse, rayon_collision=12.0)
+        self.image_base: Optional[pygame.Surface] = None
+        self.cible_proj = cible_proj  # On garde la référence pour le guidage
+
+    def mettreAJour(self, dt: float) -> None:
+        if self.detruit:
+            return
+        # recalcul de la direction vers le projectilePierre
+        if self.cible_proj is not None and not getattr(self.cible_proj, "detruit", True):
+            dx = self.cible_proj.x - self.x
+            dy = self.cible_proj.y - self.y
+            dist = max(1e-6, hypot(dx, dy))
+            self.vx = self.vitesse * dx / dist
+            self.vy = self.vitesse * dy / dist
+
+        # déplacement
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self._distance_parcourue += hypot(self.vx * dt, self.vy * dt)
+
+        # optionnel : détruit si dépasse la portée max
+        if self.portee_max is not None and self._distance_parcourue >= self.portee_max:
+            self.detruit = True
+
+        # optionnel : détruit si la cible est détruite
+        if getattr(self.cible_proj, "detruit", False):
+            self.detruit = True
+
+    def aTouche(self, p: "ProjectilePierre") -> bool:
+        # collision simple cercle → cercle
+        if getattr(p, "detruit", True):
+            return False
+        return hypot(self.x - p.x, self.y - p.y) <= self.rayon_collision
+
+    def dessiner(self, ecran: pygame.Surface) -> None:
+        if self.detruit or self.image_base is None:
+            return
+        angle = self._angle_degres()
+        sprite = pygame.transform.rotate(self.image_base, 90 - angle)
+        sprite = pygame.transform.smoothscale(sprite, (28, 28))
+        rect = sprite.get_rect(center=(int(self.x), int(self.y)))
+        ecran.blit(sprite, rect)
 

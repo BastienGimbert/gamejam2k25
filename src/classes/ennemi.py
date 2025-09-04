@@ -264,13 +264,16 @@ class Loup(Ennemi):
             ecran.blit(temp, pos)
 
 class Mage(Ennemi):
+
+    ATTACK_COOLDOWN = 2.5     # en secondes
+
     _frames_by_dir: dict[str, list[pygame.Surface]] | None = None
 
     @property
     def type_nom(self) -> str: return "Mage"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=70.0, pointsDeVie=180, degats=15, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=50.0, pointsDeVie=180, degats=15, chemin=chemin, **kw)
 
         if Mage._frames_by_dir is None:
             Mage._frames_by_dir = {
@@ -284,11 +287,17 @@ class Mage(Ennemi):
         self.frame_timer = 0
         self.flip = False
 
+        self._time_since_last_attack = 10.0
+
+
     def update_animation(self, dt: float):
         self.frame_timer += dt
+        self._time_since_last_attack += dt
+
         if self.frame_timer >= 0.15:
             self.frame_timer = 0
             self.frame_index = (self.frame_index + 1) % len(Mage._frames_by_dir[self.direction])
+        
 
     def draw(self, ecran: pygame.Surface) -> None:
         if self.estMort():
@@ -305,3 +314,21 @@ class Mage(Ennemi):
             temp = frame.copy()          # Copier pour ne pas modifier l'original
             temp.set_alpha(90)
             ecran.blit(temp, pos)
+
+    def ready_to_attack(self) -> bool:
+        """Retourne True si le cooldown est écoulé et que le mage peut attaquer."""
+        return self._time_since_last_attack >= Mage.ATTACK_COOLDOWN
+
+    def react_to_projectile(self):
+        """Déclenche l'animation d'attaque du mage."""
+        if not self.ready_to_attack():
+            return  # ignore si le cooldown n'est pas fini
+        print("Mage attaque !")
+        # reset du timer
+        self._time_since_last_attack = 0.0
+        self.frame_index = 0
+        self.frame_timer = 0
+
+        
+
+        

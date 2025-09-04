@@ -4,12 +4,13 @@ import os
 import pygame
 
 from classes.pointeur import Pointeur
-from classes.ennemi import Gobelin, Ennemi  # Gobelin + type de base
+from classes.ennemi import Gobelin, Mage, Ennemi 
 from classes.joueur import Joueur
 from classes.position import Position
-from classes.tour import Archer, Catapult, Mage, Tour
-from classes.projectile import ProjectileFleche, ProjectilePierre
-from classes.utils import charger_chemin_tiled, decouper_sprite
+from classes.tour import Archer, Catapult, Tour
+from classes.tour import Mage as TourMage
+from classes.projectile import ProjectileFleche, ProjectileMageEnnemi, ProjectilePierre
+from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positions
 from classes.csv import creer_liste_ennemis_depuis_csv
 from classes.bouton import Bouton
 
@@ -18,7 +19,7 @@ base_dir = os.path.dirname(os.path.dirname(__file__))
 
 class Game:
     def __init__(self, police: pygame.font.Font):
-        self.joueur = Joueur(argent=30, point_de_vie=100, sort="feu", etat="normal")
+        self.joueur = Joueur(argent=1030, point_de_vie=100, sort="feu", etat="normal")
         self.police = police
         self.couleurs = {
             "fond": (30, 30, 30),
@@ -42,7 +43,7 @@ class Game:
         self.prix_par_type: dict[str, int] = {
             "archer": getattr(Archer, "PRIX"),
             "catapult": getattr(Catapult, "PRIX"),
-            "mage": getattr(Mage, "PRIX"),
+            "mage": getattr(TourMage, "PRIX"),
         }
 
         # Animation monnaie
@@ -70,9 +71,6 @@ class Game:
         self.tours: list[Tour] = []
         self.projectiles: list[ProjectileFleche | ProjectilePierre] = []
 
-        # Images projectiles
-        self.image_fleche = self._charger_image_projectile(getattr(ProjectileFleche, "CHEMIN_IMAGE", ""))
-        self.image_pierre = self._charger_image_projectile(getattr(ProjectilePierre, "CHEMIN_IMAGE", ""))
 
         # Couleurs UI
         # Projectiles actifs (flèches, etc.)
@@ -81,6 +79,9 @@ class Game:
         # Images de base des projectiles (chargées via une fonction générique)
         self.image_fleche = self._charger_image_projectile(ProjectileFleche.CHEMIN_IMAGE)
         self.image_pierre = self._charger_image_projectile(ProjectilePierre.CHEMIN_IMAGE)
+        self.image_projectileMageEnnemi = self._charger_image_projectile(ProjectileMageEnnemi.CHEMIN_IMAGE)
+
+
         self.couleur_quadrillage = (100, 100, 100)
         self.couleur_surbrillance = (255, 255, 0)
         self.couleur_surbrillance_interdite = (255, 80, 80)
@@ -463,10 +464,18 @@ class Game:
                     p.image_base = self.image_fleche
                     self.projectiles.append(p)
                 elif isinstance(tour, Catapult) and self.image_pierre is not None:
-                    p = ProjectilePierre(origine=tour.position, cible_pos=cible.position.copy())
+                    p = ProjectilePierre(origine=tour.position, cible_pos=cible.position.copy(), game_ref=self)
                     p.cible = cible
                     p.image_base = self.image_pierre
                     self.projectiles.append(p)
+
+                    if p and hasattr(self, "get_closest_mage"):
+                        mage = self.get_closest_mage(p.position)
+                        if mage:
+                            mage.react_to_projectile()
+                            pm = ProjectileMageEnnemi(origine=mage.position.copy(), cible_proj=p, vitesse=600.0)
+                            pm.image_base = self.image_projectileMageEnnemi 
+                            self.projectiles.append(pm)
 
             if hasattr(t, "maj"):
                 t.maj(dt, self.ennemis, au_tir=au_tir)
@@ -477,26 +486,50 @@ class Game:
                 pr.mettreAJour(dt)
             if getattr(pr, "detruit", False):
                 continue
-            for e in self.ennemis:
-                if hasattr(e, "estMort") and e.estMort():
-                    continue
-                if hasattr(pr, "aTouche") and pr.aTouche(e):
-                    if hasattr(pr, "appliquerDegats"):
-                        pr.appliquerDegats(e)
-                        # Si l'ennemi vient de mourir suite à ce projectile, créditer la récompense
-                        try:
-                            if e.estMort() and not getattr(e, "_recompense_donnee", False) and not getattr(e, "_ne_pas_recompenser", False):
-                                self.joueur.argent += int(getattr(e, "valeur", 0))
-                                setattr(e, "_recompense_donnee", True)
-                        except Exception:
-                            pass
-                    break
+            if not isinstance(pr, ProjectileMageEnnemi):
+                for e in self.ennemis:
+                    if hasattr(e, "estMort") and e.estMort():
+                        continue
+                    if hasattr(pr, "aTouche") and pr.aTouche(e):
+                        if hasattr(pr, "appliquerDegats"):
+                            pr.appliquerDegats(e)
+                            # Si l'ennemi vient de mourir suite à ce projectile, créditer la récompense
+                            try:
+                                if e.estMort() and not getattr(e, "_recompense_donnee", False) and not getattr(e, "_ne_pas_recompenser", False):
+                                    self.joueur.argent += int(getattr(e, "valeur", 0))
+                                    setattr(e, "_recompense_donnee", True)
+                            except Exception:
+                                pass
+                        break
+            # --- Collision spécifique pour ProjectileMageEnnemi ---
+            else:
+                cible = getattr(pr, "cible_proj", None)
+                if cible and hasattr(pr, "aTouche") and pr.aTouche(cible):
+                    # détruit la pierre
+                    cible.detruit = True
+                    # détruit le projectile du mage 
+                    pr.detruit = True
 
         # Nettoyage projectiles
         self.projectiles = [p for p in self.projectiles if not getattr(p, "detruit", False)]
 
         # Nettoyage des ennemis (retirer ceux qui sont morts ou arrivés au bout)
         self.ennemis = [e for e in self.ennemis if not (getattr(e, "estMort", lambda: False)() or getattr(e, "a_atteint_le_bout", lambda: False)())]
+
+    def get_closest_mage(self, pos: Position) -> None | Mage:
+        """Retourne le mage le plus proche de la position pos."""
+        mages = [e for e in self.ennemis if isinstance(e, Mage) and not e.estMort() and e.estApparu(self.debutVague) and e.ready_to_attack()]
+        if not mages:
+            return None
+        nearestMage = mages[0]
+        distance = distance_positions(nearestMage.position, pos)
+        for m in mages :
+            if distance_positions(m.position, pos) < distance:
+                nearestMage = m
+                distance = distance_positions(m.position, pos)
+        
+        return nearestMage
+
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         dt = self.clock.tick(60) / 1000.0

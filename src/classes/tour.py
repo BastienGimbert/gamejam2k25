@@ -163,7 +163,7 @@ class Catapult(Tour):
     TYPE_NOM = "catapult"
 
     # Prix indicatif de la tour Catapult (affiché dans la boutique)
-    PRIX = 40
+    PRIX = 30
 
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
