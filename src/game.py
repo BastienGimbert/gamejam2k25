@@ -3,6 +3,9 @@ import os
 
 from classes.pointeur import Pointeur
 from classes.ennemi import Gobelin
+from classes.position import Position
+from classes.tour import Archer, Catapult, Tour
+from classes.projectile import ProjectileFleche, ProjectilePierre
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
 
@@ -18,18 +21,27 @@ class Game:
         self.largeur_ecran = 768
         self.hauteur_ecran = 768
         self.largeur_boutique = 400
-        self.rect_boutique = pygame.Rect(768, 16, 400, 736)
+        # La boutique occupe toute la hauteur de l'écran, collée à droite de la carte
+        self.rect_boutique = pygame.Rect(self.largeur_ecran, 0, self.largeur_boutique, self.hauteur_ecran)
         self.solde = 100
         self.prix_tour = 10
         self.coin_frames = self._charger_piece()
         self.coin_frame_idx = 0
         self.COIN_ANIM_INTERVAL = 120
         self.last_coin_ticks = pygame.time.get_ticks()
+        # Types de tours disponibles dans la boutique
         self.tower_types = ["archer", "catapult", "guardian", "mage"]
         self.tower_assets = self._charger_tours()
         self.shop_items = self._creer_boutons_boutique()
         self.type_selectionne = None
         self.positions_occupees = {}
+        # Liste réelle des instances de tours posées (logique d'attaque)
+        self.tours: list[Tour] = []
+        # Projectiles actifs (flèches, etc.)
+        self.projectiles: list[ProjectileFleche] = []
+        # Images de base des projectiles (chargées via une fonction générique)
+        self.image_fleche = self._charger_image_projectile(ProjectileFleche.CHEMIN_IMAGE)
+        self.image_pierre = self._charger_image_projectile(ProjectilePierre.CHEMIN_IMAGE)
         self.couleur_quadrillage = (100, 100, 100)
         self.couleur_surbrillance = (255, 255, 0)
         self.couleur_boutique_bg = (30, 30, 30)
@@ -93,6 +105,23 @@ class Game:
             y += espace_y
         return boutons
 
+    def _charger_image_projectile(self, chemin_relatif: str):
+        p = os.path.join(base_dir, chemin_relatif)
+        if os.path.exists(p):
+            try:
+                return pygame.image.load(p).convert_alpha()
+            except Exception:
+                pass
+        # Fallback simple si l'image n'existe pas
+        if "archer" in chemin_relatif:
+            surf = pygame.Surface((24, 24), pygame.SRCALPHA)
+            pygame.draw.line(surf, (220, 220, 50), (12, 2), (12, 22), 3)
+            return surf
+        # pierre
+        surf = pygame.Surface((22, 22), pygame.SRCALPHA)
+        pygame.draw.circle(surf, (120, 120, 120), (11, 11), 10)
+        return surf
+
     def _position_dans_grille(self, pos):
         return pos[0] < self.largeur_ecran and 0 <= pos[1] < self.hauteur_ecran
 
@@ -151,6 +180,10 @@ class Game:
             ecran.blit(overlay, rect)
 
     def _dessiner_tours_placees(self, ecran):
+        """Dessine l'apparence des tours sur la grille (assets ou fallback).
+
+        L'affichage est découplé de la logique d'attaque pour rester simple.
+        """
         for (x_case, y_case), data in self.positions_occupees.items():
             ttype = data["type"]
             surf = None
@@ -162,6 +195,9 @@ class Game:
                 surf = pygame.Surface((self.taille_case, self.taille_case))
                 surf.fill((150, 150, 180))
             ecran.blit(surf, (x_case * self.taille_case, y_case * self.taille_case))
+        # dessin de la portée pour debug
+        # for t in self.tours:
+        #     pygame.draw.circle(ecran, (0, 0, 0, 30), (int(t.position.x), int(t.position.y)), int(t.portee), 1)
 
     def dessiner_ennemis(self, ecran):
         for e in self.ennemis:
@@ -180,6 +216,35 @@ class Game:
     def maj(self, dt: float):
         for e in self.ennemis:
             e.seDeplacer(dt)
+        # Mise à jour des tours (attaques selon cooldown/portée)
+        for t in self.tours:
+            # Callback de création de projectile si Archer
+            def au_tir(tour: Tour, cible: Gobelin):
+                if isinstance(tour, Archer) and self.image_fleche is not None:
+                    p = ProjectileFleche(origine=tour.position, cible_pos=cible.position.copy())
+                    p.cible = cible  # head-seeking: suit la position en temps réel
+                    p.image_base = self.image_fleche
+                    self.projectiles.append(p)
+                elif isinstance(tour, Catapult) and self.image_pierre is not None:
+                    p = ProjectilePierre(origine=tour.position, cible_pos=cible.position.copy())
+                    p.cible = cible
+                    p.image_base = self.image_pierre
+                    self.projectiles.append(p)
+            t.maj(dt, self.ennemis, au_tir=au_tir)
+
+        # Mise à jour projectiles et collisions
+        for pr in self.projectiles:
+            pr.mettreAJour(dt)
+            if pr.detruit:
+                continue
+            for e in self.ennemis:
+                if e.estMort():
+                    continue
+                if pr.aTouche(e):
+                    pr.appliquerDegats(e)
+                    break
+        # Nettoyage projectiles détruits
+        self.projectiles = [p for p in self.projectiles if not p.detruit]
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         dt = self.clock.tick(60) / 1000.0
@@ -188,6 +253,9 @@ class Game:
         self._dessiner_surbrillance(ecran)
         self._dessiner_boutique(ecran)
         self.dessiner_ennemis(ecran)
+        # Dessine les projectiles par-dessus la carte et sous le pointeur
+        for pr in self.projectiles:
+            pr.dessiner(ecran)
         self.pointeur.draw(ecran)
         self.maj(dt)
 
@@ -214,7 +282,21 @@ class Game:
             if self.type_selectionne and self._position_dans_grille(pos):
                 case = self._case_depuis_pos(pos)
                 if case and case not in self.positions_occupees and self.solde >= self.prix_tour:
+                    # 1) Marque la case occupée pour l'affichage existant
                     self.positions_occupees[case] = {"type": self.type_selectionne, "frame": 0}
+                    # 2) Crée une instance de la tour correspondante (centre de case)
+                    x_case, y_case = case
+                    cx = x_case * self.taille_case + self.taille_case // 2
+                    cy = y_case * self.taille_case + self.taille_case // 2
+                    pos_tour = Position(cx, cy)
+                    tour_id = len(self.tours) + 1
+                    if self.type_selectionne == "archer":
+                        self.tours.append(Archer(id=tour_id, position=pos_tour))
+                    elif self.type_selectionne == "catapult":
+                        self.tours.append(Catapult(id=tour_id, position=pos_tour))
+                    else:
+                        # Types non encore implémentés: ignorer la création logique
+                        pass
                     self.solde -= self.prix_tour
                     self.type_selectionne = None
         return None
