@@ -178,3 +178,25 @@ class Catapult(Tour):
 
     def attaquer(self, cible: "Ennemi") -> None:
         return
+
+
+class Mage(Tour):
+    TYPE_ID = 3
+    TYPE_NOM = "mage"
+
+    # Prix indicatif de la tour Catapult (affiché dans la boutique)
+    PRIX = 50
+
+    def __init__(self, id: int, position: Position) -> None:
+        super().__init__(
+            id=id,
+            type_id=self.TYPE_ID,
+            type_nom=self.TYPE_NOM,
+            cooldown_s=1.5,
+            portee=150.0,
+            position=position,
+            prix=self.PRIX,
+        )
+
+    def attaquer(self, cible: "Ennemi") -> None:
+        return

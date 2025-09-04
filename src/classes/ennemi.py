@@ -1,11 +1,13 @@
 from typing import Callable, List, Optional
 from abc import ABC, abstractmethod
 from classes.position import Position
-from classes.utils import charger_chemin_tiled, distance_positions, decouper_sprite
+from classes.utils import charger_chemin_tiled, distance_positions, decouper_sprite, charger_et_scaler
 import pygame
 import os
 
 SCALE_FACTOR = 2
+
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 
 class Ennemi(ABC):
@@ -124,10 +126,10 @@ class Ennemi(ABC):
 
 class Gobelin(Ennemi):
     # Attributs de classe : frames par direction
-    _frames_by_dir: dict[str, list[pygame.Surface]] | None = None  
+    _frames_by_dir: dict[str, list[pygame.Surface]] | None = None
 
     @property
-    def type_nom(self) -> str: 
+    def type_nom(self) -> str:
         return "Gobelin"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
@@ -135,11 +137,10 @@ class Gobelin(Ennemi):
 
         # Charger les spritesheets une seule fois
         if Gobelin._frames_by_dir is None:
-            from classes.utils import decouper_sprite
             Gobelin._frames_by_dir = {
-                "down": [pygame.transform.scale(f, (f.get_width()*SCALE_FACTOR, f.get_height()*SCALE_FACTOR)) for f in decouper_sprite(pygame.image.load("assets/enemy/goblin/D_Walk.png").convert_alpha(), 6)],
-                "up":   [pygame.transform.scale(f, (f.get_width()*SCALE_FACTOR, f.get_height()*SCALE_FACTOR)) for f in decouper_sprite(pygame.image.load("assets/enemy/goblin/U_Walk.png").convert_alpha(), 6)],
-                "side": [pygame.transform.scale(f, (f.get_width()*SCALE_FACTOR, f.get_height()*SCALE_FACTOR)) for f in decouper_sprite(pygame.image.load("assets/enemy/goblin/S_Walk.png").convert_alpha(), 6)],
+                "down": charger_et_scaler("goblin", "D_Walk.png", 6, scale=SCALE_FACTOR*0.8),
+                "up": charger_et_scaler("goblin", "U_Walk.png", 6, scale=SCALE_FACTOR*0.8),
+                "side": charger_et_scaler("goblin", "S_Walk.png", 6, scale=SCALE_FACTOR*0.8),
             }
 
         self.direction = "down"   # par défaut
@@ -165,14 +166,8 @@ class Gobelin(Ennemi):
         # Flip horizontal si besoin (uniquement pour "side")
         if self.direction == "side" and self.flip:
             frame = pygame.transform.flip(frame, True, False)
-
-        # Calcul position centrée
-        pos = (
-            int(self.position.x - frame.get_width() // 2),
-            int(self.position.y - frame.get_height() // 2),
-        )
-
-        # Dessin
+        pos = (int(self.position.x - frame.get_width()//2),
+               int(self.position.y - frame.get_height()//2))
         if self.visible:
             ecran.blit(frame, pos)
         else:
@@ -192,15 +187,10 @@ class Rat(Ennemi):
         super().__init__(tempsApparition=tempsApparition, vitesse=120.0, pointsDeVie=30, degats=1, chemin=chemin, **kw)
 
         if Rat._frames_by_dir is None:
-            from classes.utils import decouper_sprite
-            def charger_et_scaler(path: str, nb_frames: int):
-                frames = decouper_sprite(pygame.image.load(path).convert_alpha(), nb_frames)
-                return [pygame.transform.scale(f, (f.get_width()/1.5, f.get_height()/1.5)) for f in frames]
-
             Rat._frames_by_dir = {
-                "down": charger_et_scaler("assets/enemy/rat/D_Run.png", 6),
-                "up": charger_et_scaler("assets/enemy/rat/U_Run.png", 6),
-                "side": charger_et_scaler("assets/enemy/rat/S_Run.png", 6),
+                "down": charger_et_scaler("rat", "D_Run.png", 6, scale=2/3),
+                "up": charger_et_scaler("rat", "U_Run.png", 6, scale=2/3),
+                "side": charger_et_scaler("rat", "S_Run.png", 6, scale=2/3),
             }
 
         self.direction = "down"
@@ -240,15 +230,10 @@ class Loup(Ennemi):
         super().__init__(tempsApparition=tempsApparition, vitesse=100.0, pointsDeVie=90, degats=2, chemin=chemin, **kw)
 
         if Loup._frames_by_dir is None:
-            from classes.utils import decouper_sprite
-            def charger_et_scaler(path: str, nb_frames: int):
-                frames = decouper_sprite(pygame.image.load(path).convert_alpha(), nb_frames)
-                return [pygame.transform.scale(f, (f.get_width()*SCALE_FACTOR*1.2, f.get_height()*SCALE_FACTOR*1.2)) for f in frames]
-
             Loup._frames_by_dir = {
-                "down": charger_et_scaler("assets/enemy/wolf/D_Walk.png", 6),
-                "up": charger_et_scaler("assets/enemy/wolf/U_Walk.png", 6),
-                "side": charger_et_scaler("assets/enemy/wolf/S_Walk.png", 6),
+                "down": charger_et_scaler("wolf", "D_Walk.png", 6, scale=SCALE_FACTOR*0.8),
+                "up": charger_et_scaler("wolf", "U_Walk.png", 6, scale=SCALE_FACTOR*0.8),
+                "side": charger_et_scaler("wolf", "S_Walk.png", 6, scale=SCALE_FACTOR*0.8),
             }
 
         self.direction = "down"
@@ -288,15 +273,10 @@ class Mage(Ennemi):
         super().__init__(tempsApparition=tempsApparition, vitesse=70.0, pointsDeVie=120, degats=3, chemin=chemin, **kw)
 
         if Mage._frames_by_dir is None:
-            from classes.utils import decouper_sprite
-            def charger_et_scaler(path: str, nb_frames: int):
-                frames = decouper_sprite(pygame.image.load(path).convert_alpha(), nb_frames)
-                return [pygame.transform.scale(f, (f.get_width()*SCALE_FACTOR*0.6, f.get_height()*SCALE_FACTOR*0.6)) for f in frames]
-
             Mage._frames_by_dir = {
-                "down": charger_et_scaler("assets/enemy/mage/D_Fly.png", 6),
-                "up": charger_et_scaler("assets/enemy/mage/U_Fly.png", 6),
-                "side": charger_et_scaler("assets/enemy/mage/S_Fly.png", 6),
+                "down": charger_et_scaler("mage", "D_Fly.png", 6, scale=SCALE_FACTOR*0.6),
+                "up": charger_et_scaler("mage", "U_Fly.png", 6, scale=SCALE_FACTOR*0.6),
+                "side": charger_et_scaler("mage", "S_Fly.png", 6, scale=SCALE_FACTOR*0.6),
             }
 
         self.direction = "down"
