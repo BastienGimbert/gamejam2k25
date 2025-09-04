@@ -3,7 +3,10 @@ from abc import ABC, abstractmethod
 from classes.position import Position
 from classes.utils import charger_chemin_tiled, distance_positions
 import pygame
-from time import sleep  
+
+
+SCALE_FACTOR = 2
+
 
 class Ennemi(ABC):
     def __init__(
@@ -55,15 +58,27 @@ class Ennemi(ABC):
             if self._segment_index >= len(self._chemin) - 1:
                 self._arrive()
                 break
+
             p0 = self._chemin[self._segment_index]
             p1 = self._chemin[self._segment_index + 1]
+
+            dx = p1.x - p0.x
+            dy = p1.y - p0.y
+            if abs(dx) > abs(dy):
+                self.direction = "side"
+                self.flip = dx > 0   # flip horizontal si on va vers la gauche
+            else:
+                self.direction = "down" if dy > 0 else "up"
+                self.flip = False
+
             seg_len = max(1e-9, distance_positions(p0, p1))
             reste = seg_len - self._dist_on_segment
+
             if d < reste:
                 self._dist_on_segment += d
                 t = self._dist_on_segment / seg_len
-                self.position.x = p0.x + (p1.x - p0.x) * t
-                self.position.y = p0.y + (p1.y - p0.y) * t
+                self.position.x = p0.x + (dx * t)
+                self.position.y = p0.y + (dy * t)
                 d = 0.0
             else:
                 self.position.x, self.position.y = p1.x, p1.y
@@ -73,6 +88,7 @@ class Ennemi(ABC):
                 if self._segment_index >= len(self._chemin) - 1:
                     self._arrive()
                     break
+
 
     def perdreVie(self, degats: int):
         self.pointsDeVie = max(0, self.pointsDeVie - int(degats))
@@ -107,8 +123,8 @@ class Ennemi(ABC):
 
 
 class Gobelin(Ennemi):
-    # Attribut de classe partagé par TOUS les gobelins
-    _frames: list[pygame.Surface] | None = None  
+    # Attributs de classe : frames par direction
+    _frames_by_dir: dict[str, list[pygame.Surface]] | None = None  
 
     @property
     def type_nom(self) -> str: 
@@ -117,36 +133,50 @@ class Gobelin(Ennemi):
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
         super().__init__(tempsApparition=tempsApparition, vitesse=80.0, pointsDeVie=60, degats=1, chemin=chemin, **kw)
 
-        # Charger les frames si elles sont vide uniquement la première fois
-        if Gobelin._frames is None:
-            image = pygame.image.load("assets/enemy/goblin/D_Walk.png").convert_alpha()
+        # Charger les spritesheets une seule fois
+        if Gobelin._frames_by_dir is None:
             from classes.utils import decouper_sprite
-            Gobelin._frames = decouper_sprite(image, nb_images=6, horizontal=True)
+            Gobelin._frames_by_dir = {
+                "down": [pygame.transform.scale(f, (f.get_width()*SCALE_FACTOR, f.get_height()*SCALE_FACTOR)) for f in decouper_sprite(pygame.image.load("assets/enemy/goblin/D_Walk.png").convert_alpha(), 6)],
+                "up":   [pygame.transform.scale(f, (f.get_width()*SCALE_FACTOR, f.get_height()*SCALE_FACTOR)) for f in decouper_sprite(pygame.image.load("assets/enemy/goblin/U_Walk.png").convert_alpha(), 6)],
+                "side": [pygame.transform.scale(f, (f.get_width()*SCALE_FACTOR, f.get_height()*SCALE_FACTOR)) for f in decouper_sprite(pygame.image.load("assets/enemy/goblin/S_Walk.png").convert_alpha(), 6)],
+            }
 
-        self.frames = Gobelin._frames
-        self.frame_index = 0 
+        self.direction = "down"   # par défaut
+        self.frame_index = 0
         self.frame_timer = 0
+        self.flip = False
+
+    def update_animation(self, dt: float):
+        """Met à jour l’index de frame en fonction du temps (dt)."""
+        self.frame_timer += dt
+        if self.frame_timer >= 0.15:  # change toutes les 150ms
+            self.frame_timer = 0
+            self.frame_index = (self.frame_index + 1) % len(Gobelin._frames_by_dir[self.direction])
 
     def draw(self, ecran: pygame.Surface) -> None:
-        if self.estMort(): 
+        if self.estMort():
             return
 
-        # Choisir l’image en fonction de l’animation
-        frame = self.frames[self.frame_index]
-        pos = (int(self.position.x - frame.get_width() // 2),
-               int(self.position.y - frame.get_height() // 2))
+        # Récupérer les frames correspondant à la direction
+        frames = Gobelin._frames_by_dir[self.direction]
+        frame = frames[self.frame_index]
 
+        # Flip horizontal si besoin (uniquement pour "side")
+        if self.direction == "side" and self.flip:
+            frame = pygame.transform.flip(frame, True, False)
+
+        # Calcul position centrée
+        pos = (
+            int(self.position.x - frame.get_width() // 2),
+            int(self.position.y - frame.get_height() // 2),
+        )
+
+        # Dessin
         if self.visible:
             ecran.blit(frame, pos)
         else:
             pygame.draw.circle(ecran, (200, 50, 50), (int(self.position.x), int(self.position.y)), 10)
-
-    def update_animation(self, dt: float):
-        """Met à jour l’index de frame en fonction du temps (dt = delta time en secondes)."""
-        self.frame_timer += dt
-        if self.frame_timer >= 0.15:  # change toutes les 150ms
-            self.frame_timer = 0
-            self.frame_index = (self.frame_index + 1) % len(self.frames)
 
 
 class Rat(Ennemi):
