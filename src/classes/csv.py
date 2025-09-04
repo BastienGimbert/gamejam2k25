@@ -20,7 +20,7 @@ def creer_liste_ennemis_depuis_csv(numVague=int, chemin_csv="src/data/jeu.csv") 
         for row in reader:
             id_ennemi = int(row["idEnnemi"])
             vague = int(row["numVague"])
-            temps = int(row["temps"])
+            temps = float(row["temps"])
 
             if vague == numVague:
                 # On récupère la classe correspondante

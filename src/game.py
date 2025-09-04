@@ -495,7 +495,7 @@ class Game:
         if not self.ennemis:
             return
         now = pygame.time.get_ticks()
-        elapsed_s = round((now - self.debutVague) / 1000)
+        elapsed_s = round((now - self.debutVague) / 1000, 1)
         for e in self.ennemis:
             try:
                 if getattr(e, "tempsApparition", None) is not None and elapsed_s == e.tempsApparition:

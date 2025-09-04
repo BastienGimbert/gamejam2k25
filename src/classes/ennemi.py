@@ -102,7 +102,7 @@ class Ennemi(ABC):
             self.set_visibilite(False)
 
     def estApparu(self, debutVague):
-        return self.tempsApparition <= round((pygame.time.get_ticks() - debutVague) / 1000) # conversion en sec
+        return self.tempsApparition <= round((pygame.time.get_ticks() - debutVague) / 1000, 1) # conversion en sec
 
 
 class Gobelin(Ennemi):
@@ -123,17 +123,41 @@ class Gobelin(Ennemi):
 class Rat(Ennemi):
     @property
     def type_nom(self) -> str: return "Rat"
-    def __init__(self, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(vitesse=120.0, pointsDeVie=30, degats=1, chemin=chemin, **kw)
+    def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
+        super().__init__(tempsApparition=tempsApparition, vitesse=120.0, pointsDeVie=30, degats=1, chemin=chemin, **kw)
+    def draw(self, ecran: pygame.Surface) -> None:
+        if self.estMort(): 
+            return
+        pos = (int(self.position.x), int(self.position.y))
+        if self.visible:
+            pygame.draw.circle(ecran, (50, 50, 200), pos, 10)
+        else:
+            pygame.draw.circle(ecran, (200, 50, 50), pos, 10)
 
 class Loup(Ennemi):
     @property
     def type_nom(self) -> str: return "Loup"
-    def __init__(self, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(vitesse=100.0, pointsDeVie=90, degats=2, chemin=chemin, **kw)
+    def __init__(self,tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
+        super().__init__(tempsApparition=tempsApparition, vitesse=100.0, pointsDeVie=90, degats=2, chemin=chemin, **kw)
+    def draw(self, ecran: pygame.Surface) -> None:
+        if self.estMort(): 
+            return
+        pos = (int(self.position.x), int(self.position.y))
+        if self.visible:
+            pygame.draw.circle(ecran, (50, 200, 50), pos, 10)
+        else:
+            pygame.draw.circle(ecran, (200, 50, 50), pos, 10)
 
 class Mage(Ennemi):
     @property
     def type_nom(self) -> str: return "Mage"
-    def __init__(self, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(vitesse=70.0, pointsDeVie=120, degats=3, chemin=chemin, **kw)
+    def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
+        super().__init__(tempsApparition=tempsApparition, vitesse=70.0, pointsDeVie=120, degats=3, chemin=chemin, **kw)
+    def draw(self, ecran: pygame.Surface) -> None:
+        if self.estMort(): 
+            return
+        pos = (int(self.position.x), int(self.position.y))
+        if self.visible:
+            pygame.draw.circle(ecran, (255, 255, 0), pos, 10)  # jaune
+        else:
+            pygame.draw.circle(ecran, (200, 50, 50), pos, 10)
