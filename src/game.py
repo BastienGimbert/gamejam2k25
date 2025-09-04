@@ -92,6 +92,19 @@ class Game:
         self.debutVague = 0
         self.ennemis: list[Ennemi] = []  # Rempli lors du lancement de vague
 
+    def _ennemi_atteint_chateau(self, ennemi: Ennemi) -> None:
+        # Inflige les dégâts de l'ennemi au joueur lorsque l'ennemi atteint la fin
+        try:
+            deg = getattr(ennemi, "degats", 1)
+        except Exception:
+            deg = 1
+        self.joueur.point_de_vie = max(0, int(self.joueur.point_de_vie) - int(deg))
+        # Le marquer comme "mort" pour que les tours cessent de le cibler
+        try:
+            ennemi.pointsDeVie = 0
+        except Exception:
+            pass
+
     # ---------- Chargements ----------
     def _charger_carte(self):
         chemin_carte = os.path.join(base_dir, "assets", "tilesets", "carte.png")
@@ -319,6 +332,25 @@ class Game:
                 if hasattr(e, "seDeplacer"):
                     e.seDeplacer(dt)
 
+        # Perte de PV si un ennemi touche la 3e ou 4e case de la 1ère ligne (cases (2,0) et (3,0))
+        for e in self.ennemis:
+            try:
+                pos_px = (int(e.position.x), int(e.position.y))
+                case = self._case_depuis_pos(pos_px)
+                if case in {(2, 0), (3, 0)}:
+                    # Infliger les dégâts de l'ennemi au joueur puis le retirer
+                    deg = getattr(e, "degats", 1)
+                    self.joueur.point_de_vie = max(0, int(self.joueur.point_de_vie) - int(deg))
+                    if hasattr(e, "perdreVie"):
+                        e.perdreVie(getattr(e, "pointsDeVie", 1))
+                    else:
+                        try:
+                            e.pointsDeVie = 0
+                        except Exception:
+                            pass
+            except Exception:
+                continue
+
         # Mise à jour des tours (acquisitions + tirs)
         for t in self.tours:
             def au_tir(tour: Tour, cible: Gobelin):
@@ -352,6 +384,9 @@ class Game:
 
         # Nettoyage projectiles
         self.projectiles = [p for p in self.projectiles if not getattr(p, "detruit", False)]
+
+        # Nettoyage des ennemis (retirer ceux qui sont morts ou arrivés au bout)
+        self.ennemis = [e for e in self.ennemis if not (getattr(e, "estMort", lambda: False)() or getattr(e, "a_atteint_le_bout", lambda: False)())]
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         dt = self.clock.tick(60) / 1000.0
@@ -434,12 +469,23 @@ class Game:
 
         # Génère la liste d'ennemis depuis le CSV (la fabrique gère leurs types)
         self.ennemis = creer_liste_ennemis_depuis_csv(self.numVague)
+        # Désactive le callback d'arrivée au château (les dégâts sont gérés sur les cases (3,0) et (4,0))
+        for e in self.ennemis:
+            try:
+                setattr(e, "_on_reach_castle", None)
+            except Exception:
+                pass
 
         # Si aucune donnée CSV, on peut au moins spawner un gobelin de base
         if not self.ennemis:
             gob = Gobelin(id=1, tmj_path=self.tmj_path)
             if hasattr(gob, "apparaitre"):
                 gob.apparaitre()
+            # Désactive le callback d'arrivée pour le fallback
+            try:
+                setattr(gob, "_on_reach_castle", None)
+            except Exception:
+                pass
             self.ennemis = [gob]
 
     def majvague(self):
