@@ -320,3 +320,4 @@ class Mage(Ennemi):
             ecran.blit(frame, pos)
         else:
             pygame.draw.circle(ecran, (200, 50, 50), (int(self.position.x), int(self.position.y)), 10)
+
