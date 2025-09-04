@@ -3,14 +3,15 @@ from abc import ABC, abstractmethod
 from classes.position import Position
 from classes.utils import charger_chemin_tiled, distance_positions
 import pygame
+from time import sleep  
 
 class Ennemi(ABC):
     def __init__(
         self,
-        id: int,
         vitesse: float,
         pointsDeVie: int,
         degats: int,
+        tempsApparition = 0,
         chemin: Optional[List[Position]] = None,
         on_reach_castle: Optional[Callable[["Ennemi"], None]] = None,
         tmj_path: str = "assets/tilesets/carte.tmj",
@@ -20,7 +21,6 @@ class Ennemi(ABC):
             chemin = charger_chemin_tiled(tmj_path, layer_name=layer_name)
         if len(chemin) < 2:
             raise ValueError("Chemin invalide (>=2 points requis).")
-        self.id = id
         self.vitesse = float(vitesse)
         self.pointsDeVie = int(pointsDeVie)
         self.degats = int(degats)
@@ -31,6 +31,8 @@ class Ennemi(ABC):
         self._arrive_au_bout = False
         self.visible = False
         self._on_reach_castle = on_reach_castle
+        self.tempsApparition = tempsApparition
+
 
     @abstractmethod
     def draw(self, ecran: pygame.Surface) -> None:
@@ -42,8 +44,7 @@ class Ennemi(ABC):
         self._segment_index = 0
         self._dist_on_segment = 0.0
         self._arrive_au_bout = False
-        self.visible = True
-        #print(f"{self.type_nom} {self.id} est apparu. En {self.position.x}, {self.position.y}")
+        self.visible = False
 
     def seDeplacer(self, dt: float):
         if self.estMort() or self._arrive_au_bout:
@@ -63,7 +64,6 @@ class Ennemi(ABC):
                 self.position.x = p0.x + (p1.x - p0.x) * t
                 self.position.y = p0.y + (p1.y - p0.y) * t
                 d = 0.0
-                #print(f"{self.type_nom} {self.id} deplacement {self.position.x}, {self.position.y}")
             else:
                 self.position.x, self.position.y = p1.x, p1.y
                 d -= reste
@@ -101,12 +101,16 @@ class Ennemi(ABC):
         else:
             self.set_visibilite(False)
 
+    def estApparu(self, debutVague):
+        print("estApparu ", self.tempsApparition, " >= ", round((pygame.time.get_ticks() - debutVague) / 1000))
+        return self.tempsApparition <= round((pygame.time.get_ticks() - debutVague) / 1000) # conversion en sec
+
 
 class Gobelin(Ennemi):
     @property
     def type_nom(self) -> str: return "Gobelin"
-    def __init__(self, id: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(id=id, vitesse=80.0, pointsDeVie=60, degats=1, chemin=chemin, **kw)
+    def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
+        super().__init__(tempsApparition=tempsApparition, vitesse=80.0, pointsDeVie=60, degats=1, chemin=chemin, **kw)
 
     def draw(self, ecran: pygame.Surface) -> None:
         if self.estMort(): 
@@ -120,17 +124,17 @@ class Gobelin(Ennemi):
 class Rat(Ennemi):
     @property
     def type_nom(self) -> str: return "Rat"
-    def __init__(self, id: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(id=id, vitesse=120.0, pointsDeVie=30, degats=1, chemin=chemin, **kw)
+    def __init__(self, chemin: Optional[List[Position]] = None, **kw):
+        super().__init__(vitesse=120.0, pointsDeVie=30, degats=1, chemin=chemin, **kw)
 
 class Loup(Ennemi):
     @property
     def type_nom(self) -> str: return "Loup"
-    def __init__(self, id: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(id=id, vitesse=100.0, pointsDeVie=90, degats=2, chemin=chemin, **kw)
+    def __init__(self, chemin: Optional[List[Position]] = None, **kw):
+        super().__init__(vitesse=100.0, pointsDeVie=90, degats=2, chemin=chemin, **kw)
 
 class Mage(Ennemi):
     @property
     def type_nom(self) -> str: return "Mage"
-    def __init__(self, id: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(id=id, vitesse=70.0, pointsDeVie=120, degats=3, chemin=chemin, **kw)
+    def __init__(self, chemin: Optional[List[Position]] = None, **kw):
+        super().__init__(vitesse=70.0, pointsDeVie=120, degats=3, chemin=chemin, **kw)
