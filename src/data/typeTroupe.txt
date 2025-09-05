@@ -4,3 +4,4 @@ id;type;
 3;Gobelin;
 4;Mage;
 5;Ogre;
+6;Chevalier;

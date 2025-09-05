@@ -27,7 +27,7 @@ from classes.constants import (
     WINDOW_HEIGHT,
 )
 from classes.csv import creer_liste_ennemis_depuis_csv
-from classes.ennemi import Ennemi, Gobelin, Mage
+from classes.ennemi import Chevalier, Ennemi, Gobelin, Mage
 from classes.joueur import Joueur
 from classes.pointeur import Pointeur
 from classes.position import Position
@@ -886,13 +886,9 @@ class Game:
                     p.image_base = self.image_fleche
                     self.projectiles.append(p)
                     # Joue le son de flèche
-                    try:
-                        arrow_sound = pygame.mixer.Sound(
-                            os.path.join(ASSETS_DIR, "audio", "bruitage", "arrow.mp3")
-                        )
-                        arrow_sound.play().set_volume(0.15)
-                    except Exception:
-                        pass
+                    self.jouer_sfx("arrow.mp3", volume=0.1)
+
+                
 
                 elif isinstance(tour, Catapulte) and self.image_pierre is not None:
                     p = ProjectilePierre(
@@ -904,15 +900,8 @@ class Game:
                     p.image_base = self.image_pierre
                     self.projectiles.append(p)
                     # Joue le son de catapulte
-                    try:
-                        fire_sound = pygame.mixer.Sound(
-                            os.path.join(
-                                ASSETS_DIR, "audio", "bruitage", "fire-magic.mp3"
-                            )
-                        )
-                        fire_sound.play().set_volume(0.15)
-                    except Exception:
-                        pass
+                    self.jouer_sfx("catapult.mp3", volume=0.3)
+
                     # Déclenche la réaction du mage le plus proche pour intercepter la pierre
                     mage = self.get_closest_mage(p.position)
                     if mage is None:
@@ -955,15 +944,7 @@ class Game:
                     p.image_base = self.image_orbe_mage
                     self.projectiles.append(p)
                     # Joue le son du mage
-                    try:
-                        wind_sound = pygame.mixer.Sound(
-                            os.path.join(
-                                ASSETS_DIR, "audio", "bruitage", "wind-magic.mp3"
-                            )
-                        )
-                        wind_sound.play().set_volume(0.15)
-                    except Exception:
-                        pass
+                    self.jouer_sfx("fire-magic.mp3", volume=0.2)
 
             if hasattr(t, "maj"):
                 t.maj(dt, self.ennemis, au_tir=au_tir)
@@ -983,6 +964,8 @@ class Game:
                     if hasattr(pr, "aTouche") and pr.aTouche(e):
                         if hasattr(pr, "appliquerDegats"):
                             pr.appliquerDegats(e)
+                            if isinstance(pr, ProjectileFleche) and isinstance(e, Chevalier):
+                                self.jouer_sfx("arrow-hit-metal.mp3", volume=0.5)
                             try:
                                 if (
                                     e.estMort()
@@ -1120,6 +1103,7 @@ class Game:
             son.set_volume(volume)
             son.play()
         except Exception:
+            print("Erreur lors de la lecture du son ")
             # On ignore silencieusement les erreurs audio (pas de périphérique, etc.)
             pass
 

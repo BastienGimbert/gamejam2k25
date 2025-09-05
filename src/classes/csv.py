@@ -2,7 +2,7 @@ import csv
 import os
 
 from classes.constants import PROJECT_ROOT
-from classes.ennemi import Gobelin, Loup, Mage, Ogre, Rat
+from classes.ennemi import Chevalier, Gobelin, Loup, Mage, Ogre, Rat
 
 ENEMY_CLASSES = {
     1: Loup,
@@ -10,6 +10,7 @@ ENEMY_CLASSES = {
     3: Gobelin,
     4: Mage,
     5: Ogre,
+    6: Chevalier,
 }
 
 

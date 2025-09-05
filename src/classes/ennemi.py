@@ -508,3 +508,65 @@ class Ogre(Ennemi):
             temp = frame.copy()  # Copier pour ne pas modifier l'original
             temp.set_alpha(70)  # Réduit de 20% par rapport à 90
             ecran.blit(temp, pos)
+
+
+
+class Chevalier(Ennemi):
+    _frames_by_dir: dict[str, list[pygame.Surface]] | None = None
+
+    @property
+    def type_nom(self) -> str:
+        return "Chevalier"
+
+    def __init__(
+        self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw
+    ):
+        super().__init__(
+            tempsApparition=tempsApparition,
+            vitesse=35.0,
+            pointsDeVie=140,
+            degats=15,
+            argent=5,
+            chemin=chemin,
+            **kw
+        )
+
+        if Chevalier._frames_by_dir is None:
+            Chevalier._frames_by_dir = {
+                "down": charger_et_scaler("knight", "D_Walk.png", 6, scale=SCALE_FACTOR*0.8),
+                "up": charger_et_scaler("knight", "U_Walk.png", 6, scale=SCALE_FACTOR*0.8),
+                "side": charger_et_scaler("knight", "S_Walk.png", 6, scale=SCALE_FACTOR*0.8),
+            }
+
+        self.direction = "down"
+        self.frame_index = 0
+        self.frame_timer = 0
+        self.flip = False
+
+    def update_animation(self, dt: float):
+        self.frame_timer += dt
+        if self.frame_timer >= 0.15:
+            self.frame_timer = 0
+            self.frame_index = (self.frame_index + 1) % len(
+                Chevalier._frames_by_dir[self.direction]
+            )
+
+    def draw(self, ecran: pygame.Surface) -> None:
+        if self.estMort():
+            return
+        frames = Chevalier._frames_by_dir[self.direction]
+        frame = frames[self.frame_index]
+        if self.direction == "side" and self.flip:
+            frame = pygame.transform.flip(frame, True, False)
+        pos = (
+            int(self.position.x - frame.get_width() // 2),
+            int(self.position.y - frame.get_height() // 2),
+        )
+        if self.visible:
+            temp = frame.copy()  # Copier pour ne pas modifier l'original
+            temp.set_alpha(204)  # 80% d'opacité (255 * 0.8 = 204)
+            ecran.blit(temp, pos)
+        else:
+            temp = frame.copy()  # Copier pour ne pas modifier l'original
+            temp.set_alpha(70)  # Réduit de 20% par rapport à 90
+            ecran.blit(temp, pos)

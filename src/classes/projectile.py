@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, ClassVar, Optional
 
 import pygame
 
-from classes.ennemi import Ennemi
+from classes.ennemi import Chevalier, Ennemi
 from classes.position import Position
 
 if TYPE_CHECKING:
@@ -112,6 +112,14 @@ class ProjectileFleche(Projectile):
         sprite = pygame.transform.rotozoom(self.image_base, 90 - angle, 1.0)
         rect = sprite.get_rect(center=(int(self.x), int(self.y)))
         ecran.blit(sprite, rect)
+
+    def appliquerDegats(self, e: Ennemi) -> None:
+        if isinstance(e, Chevalier):
+            # Les chevaliers en prennent pas de degats par des fleches
+            self.detruit = True
+            return
+        e.perdreVie(self.degats)
+        self.detruit = True
 
 
 class ProjectilePierre(Projectile):
