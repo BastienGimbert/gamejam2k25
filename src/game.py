@@ -271,10 +271,12 @@ class Game:
                 self.coin_frame_idx = (self.coin_frame_idx + 1) % len(self.coin_frames)
                 self.last_coin_ticks = now
         txt_solde = self.police.render(f"{self.joueur.argent}", True, self.couleur_texte)
+        # Décale le texte si l'argent est grand
         ecran.blit(txt_solde, (self.rect_boutique.x + 50, 56))
+    
 
         # Points de vie
-        coeur_pos = (self.rect_boutique.x + 120, 60)
+        coeur_pos = (self.rect_boutique.x + 140, 60)
         if self.heart_frames:
             coeur = self.heart_frames[self.heart_frame_idx % len(self.heart_frames)]
             coeur_s = pygame.transform.smoothscale(coeur, (24, 24))
