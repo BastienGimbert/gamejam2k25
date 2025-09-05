@@ -615,7 +615,11 @@ class Game:
                         # Sélectionne le type uniquement si le joueur a assez d'argent
                         t = item["type"]
                         prix_t = self.prix_par_type.get(t, 0)
-                        if self.joueur.argent >= prix_t:
+
+                        # Si déjà sélectionné, on désélectionne
+                        if self.type_selectionne == t:
+                            self.type_selectionne = None
+                        elif self.joueur.argent >= prix_t:
                             self.type_selectionne = t
                         else:
                             self.type_selectionne = None
