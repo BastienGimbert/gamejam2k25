@@ -492,6 +492,22 @@ class Game:
                     p.cible = cible
                     p.image_base = self.image_pierre
                     self.projectiles.append(p)
+                    # Déclenche la réaction du mage le plus proche pour intercepter la pierre
+                    mage = self.get_closest_mage(p.position)
+                    if mage is None:
+                        # Fallback: mage le plus proche non mort, même si cooldown pas prêt
+                        try:
+                            candidats = [e for e in self.ennemis if isinstance(e, Mage) and not e.estMort() and e.estApparu(self.debutVague)]
+                            if candidats:
+                                from classes.utils import distance_positions
+                                mage = min(candidats, key=lambda m: distance_positions(m.position, p.position))
+                        except Exception:
+                            mage = None
+                    if mage is not None and getattr(self, "image_projectileMageEnnemi", None) is not None:
+                        mage.react_to_projectile()
+                        pm = ProjectileMageEnnemi(origine=mage.position.copy(), cible_proj=p, vitesse=700.0)
+                        pm.image_base = self.image_projectileMageEnnemi
+                        self.projectiles.append(pm)
 
                 elif isinstance(tour, TourMage) and self.image_orbe_mage is not None:
                     # LOGIQUE SIMPLE identique à l'archer (pas d'interception ici)
