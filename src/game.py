@@ -22,7 +22,7 @@ from classes.constants import ASSETS_DIR, PROJECT_ROOT, MONEY_DIR, HEART_DIR, TO
 
 class Game:
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
-        self.joueur = Joueur(argent=3500000, point_de_vie=100, sort="feu", etat="normal")
+        self.joueur = Joueur(argent=35, point_de_vie=100, sort="feu", etat="normal")
         self.police = police
         # État muet propagé depuis main
         self.est_muet = est_muet
