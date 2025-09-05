@@ -5,7 +5,7 @@ from classes.position import Position
 import os
 import pygame
 
-base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+from classes.constants import PROJECT_ROOT, ASSETS_DIR
 
 def distance_positions(a: Position, b: Position) -> float:
     return hypot(a.x - b.x, a.y - b.y)
@@ -15,7 +15,7 @@ def charger_chemin_tiled(tmj_path: str, layer_name: str = "path") -> List[Positi
     Charge les points d'un polygon depuis un calque d'objets dans un fichier .tmj.
     """
     if not os.path.isabs(tmj_path):
-        tmj_path = os.path.join(base_dir, tmj_path)
+        tmj_path = os.path.join(PROJECT_ROOT, tmj_path)
     with open(tmj_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
@@ -71,7 +71,7 @@ def charger_et_scaler(sous_dossier: str, nom_fichier: str, nb_frames: int, scale
     nb_frames: nombre de frames à découper
     scale: facteur d'échelle (1.0 = taille originale)
     """
-    chemin = os.path.join(base_dir, "assets", "enemy", sous_dossier, nom_fichier)
+    chemin = os.path.join(ASSETS_DIR, "enemy", sous_dossier, nom_fichier)
     image = pygame.image.load(chemin).convert_alpha()
     frames = decouper_sprite(image, nb_frames)
     if scale != 1.0:

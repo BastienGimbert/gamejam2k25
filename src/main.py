@@ -5,6 +5,7 @@ import random
 
 
 from classes.menu import creer_boutons_menu, creer_boutons_credits, dessiner_menu, dessiner_credits
+from classes.constants import AUDIO_DIR
 from game import Game
 
 # ------------------- INITIALISATION -------------------
@@ -46,14 +47,13 @@ def demarrer_musique_de_fond() -> None:
     global derniere_piste
     if not MIXER_DISPONIBLE:
         return
-    base_dir = os.path.dirname(os.path.dirname(__file__))
     pistes_candidates = [
-        os.path.join(base_dir, "assets", "audio", "Aqua-Barbie-Girl.mp3"),
-        os.path.join(base_dir, "assets", "audio", "Camila-Cabello-Havana.mp3"),
-        os.path.join(base_dir, "assets", "audio", "Crab-Rave-medieval-style.mp3"),
-        os.path.join(base_dir, "assets", "audio", "Nirvana-Smells-Like-Teen-Spirit.mp3"),
-        os.path.join(base_dir, "assets", "audio", "Shakira-Hips-Don-t-Lie.mp3"),
-        os.path.join(base_dir, "assets", "audio", "We-Found-Love-Bardcore.mp3"),
+        os.path.join(AUDIO_DIR, "Aqua-Barbie-Girl.mp3"),
+        os.path.join(AUDIO_DIR, "Camila-Cabello-Havana.mp3"),
+        os.path.join(AUDIO_DIR, "Crab-Rave-medieval-style.mp3"),
+        os.path.join(AUDIO_DIR, "Nirvana-Smells-Like-Teen-Spirit.mp3"),
+        os.path.join(AUDIO_DIR, "Shakira-Hips-Don-t-Lie.mp3"),
+        os.path.join(AUDIO_DIR, "We-Found-Love-Bardcore.mp3"),
     ]
 
     # Filtrer celles qui existent vraiment

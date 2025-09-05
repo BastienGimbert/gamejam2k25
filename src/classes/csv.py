@@ -1,20 +1,20 @@
 import csv
-from classes.ennemi import Gobelin, Rat, Loup, Mage
+from classes.ennemi import Gobelin, Ogre, Rat, Loup, Mage
 import os
-
-base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+from classes.constants import PROJECT_ROOT
 
 ENEMY_CLASSES = {
     1: Loup,
     2: Rat,
     3: Gobelin,
     4: Mage,
+    5: Ogre, 
 }
 
 def creer_liste_ennemis_depuis_csv(numVague=int, chemin_csv="src/data/jeu.csv") -> list:
     ennemis = []
     # Split chemin_csv into parts and join with base_dir
-    chemin_csv = os.path.join(base_dir, *chemin_csv.split('/'))
+    chemin_csv = os.path.join(PROJECT_ROOT, *chemin_csv.split('/'))
     with open(chemin_csv, newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=';')
         for row in reader:

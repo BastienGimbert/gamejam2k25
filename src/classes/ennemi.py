@@ -7,13 +7,14 @@ import os
 
 #Evite les boucles dans les imports mutuels
 from typing import TYPE_CHECKING
+
+from src.classes.constants import TILESETS_DIR, MAP_TILESET_TMJ
+
 if TYPE_CHECKING:
     from game import Game
 
 
 SCALE_FACTOR = 2
-
-base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 
 class Ennemi(ABC):
@@ -26,7 +27,7 @@ class Ennemi(ABC):
         tempsApparition = 0,
         chemin: Optional[List[Position]] = None,
         on_reach_castle: Optional[Callable[["Ennemi"], None]] = None,
-        tmj_path: str = "assets/tilesets/carte.tmj",
+        tmj_path: str = MAP_TILESET_TMJ,
         layer_name: str = "path",
     ):
         if chemin is None:
@@ -158,7 +159,7 @@ class Gobelin(Ennemi):
         return "Gobelin"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=50.0, pointsDeVie=70, degats=8, argent=6, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=50.0, pointsDeVie=130, degats=8, argent=3, chemin=chemin, **kw)
 
         # Charger les spritesheets une seule fois
         if Gobelin._frames_by_dir is None:
@@ -209,7 +210,7 @@ class Rat(Ennemi):
     def type_nom(self) -> str: return "Rat"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=120.0, pointsDeVie=20, degats=3, argent=4, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=120.0, pointsDeVie=20, degats=3, argent=1, chemin=chemin, **kw)
 
         if Rat._frames_by_dir is None:
             Rat._frames_by_dir = {
@@ -252,7 +253,7 @@ class Loup(Ennemi):
     def type_nom(self) -> str: return "Loup"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=100.0, pointsDeVie=90, degats=10, argent=10, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=100.0, pointsDeVie=90, degats=10, argent=2, chemin=chemin, **kw)
 
         if Loup._frames_by_dir is None:
             Loup._frames_by_dir = {
@@ -298,7 +299,7 @@ class Mage(Ennemi):
     def type_nom(self) -> str: return "Mage"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=50.0, pointsDeVie=180, degats=12, argent=15, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=50.0, pointsDeVie=180, degats=12, argent=5, chemin=chemin, **kw)
 
         if Mage._frames_by_dir is None:
             Mage._frames_by_dir = {
@@ -353,3 +354,48 @@ class Mage(Ennemi):
         self._time_since_last_attack = 0.0
         self.frame_index = 0
         self.frame_timer = 0
+
+
+
+class Ogre(Ennemi):
+    _frames_by_dir: dict[str, list[pygame.Surface]] | None = None
+
+    @property
+    def type_nom(self) -> str: return "Ogre"
+
+    def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
+        super().__init__(tempsApparition=tempsApparition, vitesse=25.0, pointsDeVie=500, degats=30, argent=10, chemin=chemin, **kw)
+
+        if Ogre._frames_by_dir is None:
+            Ogre._frames_by_dir = {
+                "down": charger_et_scaler("ogre", "D_Walk.png", 6, scale=SCALE_FACTOR),
+                "up": charger_et_scaler("ogre", "U_Walk.png", 6, scale=SCALE_FACTOR),
+                "side": charger_et_scaler("ogre", "S_Walk.png", 6, scale=SCALE_FACTOR),
+            }
+
+        self.direction = "down"
+        self.frame_index = 0
+        self.frame_timer = 0
+        self.flip = False
+
+    def update_animation(self, dt: float):
+        self.frame_timer += dt
+        if self.frame_timer >= 0.15:
+            self.frame_timer = 0
+            self.frame_index = (self.frame_index + 1) % len(Ogre._frames_by_dir[self.direction])
+
+    def draw(self, ecran: pygame.Surface) -> None:
+        if self.estMort():
+            return
+        frames = Ogre._frames_by_dir[self.direction]
+        frame = frames[self.frame_index]
+        if self.direction == "side" and self.flip:
+            frame = pygame.transform.flip(frame, True, False)
+        pos = (int(self.position.x - frame.get_width()//2),
+               int(self.position.y - frame.get_height()//2))
+        if self.visible:
+            ecran.blit(frame, pos)
+        else:
+            temp = frame.copy()          # Copier pour ne pas modifier l'original
+            temp.set_alpha(90)
+            ecran.blit(temp, pos)

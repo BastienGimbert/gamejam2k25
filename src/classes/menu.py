@@ -1,21 +1,14 @@
 import os
-
 import pygame
 from .bouton import Bouton
+from classes.constants import ASSETS_DIR, COLORS
 
 # ------------------- COULEURS PAR DÉFAUT -------------------
-BLANC = (255, 255, 255)
-GRIS = (200, 200, 200)
-NOIR = (0, 0, 0)
-
-base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-
-
 COULEURS_BOUTON = {
-    "fond_normal": BLANC,
-    "fond_survol": GRIS,
-    "contour": NOIR,
-    "texte": NOIR,
+    "fond_normal": COLORS["button_bg"],
+    "fond_survol": COLORS["button_hover"],
+    "contour": COLORS["border"],
+    "texte": COLORS["ui_text"],
 }
 
 CREDITS_LIGNES = [
@@ -56,7 +49,7 @@ FOND = None
 def charger_fond(ecran: pygame.Surface):
     global FOND
     if FOND is None:  # on le fait une seule fois
-        image = pygame.image.load(os.path.join(base_dir, "assets", "fond.png")).convert()
+        image = pygame.image.load(os.path.join(ASSETS_DIR, "fond.png")).convert()
         FOND = pygame.transform.scale(image, ecran.get_size())
 
 # ------------------- CRÉDITS -------------------
@@ -115,13 +108,13 @@ def dessiner_credits(ecran: pygame.Surface, police: pygame.font.Font, largeur: i
     global _scroll_y
 
     w, h = ecran.get_size()
-    ecran.fill((0, 0, 0))
+    ecran.fill(COLORS["background"])
 
     if _scroll_y is None:
         _scroll_y = h + MARGE_DEPART
 
     for i, ligne in enumerate(CREDITS_LIGNES):
-        surf = police.render(ligne, True, BLANC)
+        surf = police.render(ligne, True, COLORS["ui_text"])
         y = _scroll_y + i * ESPACEMENT_LIGNES
         if -ESPACEMENT_LIGNES < y < h + ESPACEMENT_LIGNES: 
             ecran.blit(surf, (w // 2 - surf.get_width() // 2, y))
@@ -137,7 +130,7 @@ _GAMEOVER_IMG = None
 def _charger_gameover(ecran: pygame.Surface):
     global _GAMEOVER_IMG
     if _GAMEOVER_IMG is None:
-        chemin = os.path.join(base_dir, "assets", "gameover.png")
+        chemin = os.path.join(ASSETS_DIR, "gameover.png")
         if os.path.exists(chemin):
             try:
                 img = pygame.image.load(chemin).convert_alpha()

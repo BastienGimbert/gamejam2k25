@@ -3,3 +3,4 @@ id;type;
 2;Rat;
 3;Gobelin;
 4;Mage;
+5;Ogre;
