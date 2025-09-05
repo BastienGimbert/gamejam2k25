@@ -141,7 +141,7 @@ class Archer(Tour):
     TYPE_NOM = "archer"
 
     # Prix indicatif de la tour Archer (affiché dans la boutique)
-    PRIX = 10
+    PRIX = 12
 
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
@@ -163,7 +163,7 @@ class Catapult(Tour):
     TYPE_NOM = "catapult"
 
     # Prix indicatif de la tour Catapult (affiché dans la boutique)
-    PRIX = 30
+    PRIX = 35
 
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
@@ -185,7 +185,7 @@ class Mage(Tour):
     TYPE_NOM = "mage"
 
     # Prix indicatif de la tour Catapult (affiché dans la boutique)
-    PRIX = 50
+    PRIX = 60
 
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
