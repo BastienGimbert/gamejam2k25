@@ -28,7 +28,8 @@ CREDITS_LIGNES = [
     "GIBELLO Gregoire",
     "GIMBERT Bastien",
     "",
-    "Assets : free-game-assets.itch.io (achetés sous licence)",
+    "Assets : free-game-assets.itch.io",
+    "(achetés sous licence)",
     "",
     "Musiques (arrangements bardcore) :",
     "Barbie Girl (Aqua)",
@@ -40,8 +41,14 @@ CREDITS_LIGNES = [
     "",
     "Arrangements médiévaux : Stantough",
     "",
+    "Bruitage par pixabay.com",
+    "",
+    "Nous tenons à remercier Coding With Russ",
+    "pour son tutoriel de 3 heures",
+    "sur la création d'un tower defense avec pygame",
+    "",
     "Merci d'avoir joué !",
-    "2025"
+    "2025 IUT2 Grenoble - Informatique"
 ]
 
 # ------------------- IMAGE DE FOND --------------------
@@ -121,3 +128,51 @@ def dessiner_credits(ecran: pygame.Surface, police: pygame.font.Font, largeur: i
 
     # avancer le défilement
     _scroll_y -= SCROLL_VITESSE
+
+
+# ------------------- GAME OVER -------------------
+
+_GAMEOVER_IMG = None
+
+def _charger_gameover(ecran: pygame.Surface):
+    global _GAMEOVER_IMG
+    if _GAMEOVER_IMG is None:
+        chemin = os.path.join(base_dir, "assets", "gameover.png")
+        if os.path.exists(chemin):
+            try:
+                img = pygame.image.load(chemin).convert_alpha()
+                _GAMEOVER_IMG = pygame.transform.smoothscale(img, ecran.get_size())
+            except Exception:
+                _GAMEOVER_IMG = None
+
+def creer_boutons_gameover(police: pygame.font.Font, actions: dict) -> list:
+    largeur_ecran = 1168
+    largeur_bouton = 260
+    hauteur_bouton = 56
+    espacement = 24
+    y_depart = 520
+
+    boutons = [
+        Bouton("Recommencer", (largeur_ecran - largeur_bouton) // 2, y_depart, largeur_bouton, hauteur_bouton, actions.get("recommencer"), police, COULEURS_BOUTON),
+        Bouton("Crédits", (largeur_ecran - largeur_bouton) // 2, y_depart + (hauteur_bouton + espacement), largeur_bouton, hauteur_bouton, actions.get("credits"), police, COULEURS_BOUTON),
+        Bouton("Quitter", (largeur_ecran - largeur_bouton) // 2, y_depart + 2 * (hauteur_bouton + espacement), largeur_bouton, hauteur_bouton, actions.get("quitter"), police, COULEURS_BOUTON),
+    ]
+    return boutons
+
+def dessiner_gameover(ecran: pygame.Surface, boutons: list) -> None:
+    _charger_gameover(ecran)
+    if _GAMEOVER_IMG is not None:
+        ecran.blit(_GAMEOVER_IMG, (0, 0))
+    else:
+        ecran.fill((20, 0, 0))
+        # Titre fallback
+        try:
+            police_titre = pygame.font.Font(None, 96)
+        except Exception:
+            police_titre = None
+        if police_titre is not None:
+            titre = police_titre.render("GAME OVER", True, (220, 40, 40))
+            ecran.blit(titre, (ecran.get_width() // 2 - titre.get_width() // 2, 180))
+
+    for b in boutons:
+        b.dessiner(ecran)

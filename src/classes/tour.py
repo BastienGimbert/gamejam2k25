@@ -50,7 +50,7 @@ class Tour(ABC):
         )
         self._anim.start("Idle", "S", False)
 
-        offsets = {"archer": -18, "catapult": 2, "mage": 6}
+        offsets = {"archer": -18, "catapult": 2, "mage": -18}
         self._person_offset_y = offsets.get(self.type_nom, 8)
 
     def draw(self, ecran: pygame.Surface) -> None:
@@ -114,7 +114,6 @@ class Tour(ABC):
         return self._anim.best_orientation(self.position.x, self.position.y, cible.position.x, cible.position.y)
 
     def _choisir_cible(self, ennemis: List["Ennemi"]) -> Optional["Ennemi"]:
-        from classes.ennemi import Ennemi  # type: ignore
         candidats: List[tuple[float, Ennemi]] = []
         for e in ennemis:
             if e.estMort() or not e.visible:
@@ -141,7 +140,7 @@ class Archer(Tour):
     TYPE_NOM = "archer"
 
     # Prix indicatif de la tour Archer (affiché dans la boutique)
-    PRIX = 10
+    PRIX = 12
 
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
@@ -163,7 +162,7 @@ class Catapult(Tour):
     TYPE_NOM = "catapult"
 
     # Prix indicatif de la tour Catapult (affiché dans la boutique)
-    PRIX = 30
+    PRIX = 35
 
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
@@ -171,7 +170,7 @@ class Catapult(Tour):
             type_id=self.TYPE_ID,
             type_nom=self.TYPE_NOM,
             cooldown_s=2.0,
-            portee=400.0,
+            portee=200.0,
             position=position,
             prix=self.PRIX,
         )
@@ -185,7 +184,7 @@ class Mage(Tour):
     TYPE_NOM = "mage"
 
     # Prix indicatif de la tour Catapult (affiché dans la boutique)
-    PRIX = 50
+    PRIX = 60
 
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
