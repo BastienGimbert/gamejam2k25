@@ -214,7 +214,7 @@ class FeuDeCamps(Tour):
             type_id=self.TYPE_ID,
             type_nom=self.TYPE_NOM,
             cooldown_s=1.5,
-            portee=90.0,
+            portee=92.0,
             position=position,
             prix=self.PRIX,
         )
