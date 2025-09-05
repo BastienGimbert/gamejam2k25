@@ -122,7 +122,7 @@ class SortFee(Sort):
     @property
     def nom_complet(self) -> str:
         """Retourne le nom complet du sort."""
-        return "Fee"
+        return "Fée"
     
     def peut_etre_achete(self, argent_joueur: int) -> bool:
         """Vérifie si le joueur a assez d'argent ET que l'effet n'est pas déjà actif."""
