@@ -89,7 +89,7 @@ def creer_boutons_menu(police: pygame.font.Font, reprendre: bool, actions: dict)
 def creer_boutons_credits(police: pygame.font.Font, action_retour) -> list:
     """Construit le bouton de retour depuis l'écran des crédits."""
     return [
-        Bouton("Retour", 968, 720, 200, 50, action_retour, police, COULEURS_BOUTON)
+        Bouton("Retour", 968, 920, 200, 50, action_retour, police, COULEURS_BOUTON)
     ]
 
 # ------------------- AFFICHAGES -------------------
