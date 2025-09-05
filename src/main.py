@@ -5,7 +5,7 @@ import random
 
 
 from classes.menu import creer_boutons_menu, creer_boutons_credits, dessiner_menu, dessiner_credits
-from classes.constants import AUDIO_DIR
+from classes.constants import AUDIO_DIR, WINDOW_WIDTH, WINDOW_HEIGHT, FPS
 from game import Game
 
 # ------------------- INITIALISATION -------------------
@@ -18,8 +18,7 @@ except Exception:
     # Si pas de périphérique audio dispo, on continue sans mixer
     MIXER_DISPONIBLE = False
 
-LARGEUR, HAUTEUR = 1168, 968
-ECRAN = pygame.display.set_mode((LARGEUR, HAUTEUR))
+ECRAN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Protect The Castle")
 
 POLICE = pygame.font.Font(None, 50)
@@ -214,7 +213,7 @@ def main() -> None:
             scene_jeu.decompte_dt()
             dessiner_menu(ECRAN, BOUTONS_PAUSE)
         elif ETAT == "CREDITS":
-            dessiner_credits(ECRAN, POLICE, LARGEUR)
+            dessiner_credits(ECRAN, POLICE, WINDOW_WIDTH)
             # Dessine le bouton Retour
             for b in BOUTONS_CREDITS:
                 b.dessiner(ECRAN)
@@ -234,7 +233,7 @@ def main() -> None:
 
         # 3) Mise à jour de l'écran + FPS
         pygame.display.flip()
-        HORLOGE.tick(60)
+        HORLOGE.tick(FPS)
 
 
 if __name__ == "__main__":

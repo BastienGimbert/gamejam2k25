@@ -22,9 +22,11 @@ GRID_ROWS: int = 12
 GAME_WIDTH: int = TILE_SIZE * GRID_COLS      # 768
 GAME_HEIGHT: int = TILE_SIZE * GRID_ROWS    # 768
 SHOP_WIDTH: int = 400
+SPELLS_HEIGHT: int = 200
 WINDOW_WIDTH: int = GAME_WIDTH + SHOP_WIDTH # 1168
-WINDOW_HEIGHT: int = GAME_HEIGHT
+WINDOW_HEIGHT: int = GAME_HEIGHT + SPELLS_HEIGHT
 FPS: int = 60
+GAME_NAME: str = "Protect The Castle"
 
 # Couleurs UI (R, G, B)
 COLORS: Dict[str, Tuple[int, int, int]] = {
