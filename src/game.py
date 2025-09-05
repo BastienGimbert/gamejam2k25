@@ -531,7 +531,6 @@ class Game:
                         try:
                             candidats = [e for e in self.ennemis if isinstance(e, Mage) and not e.estMort() and e.estApparu(self.debutVague)]
                             if candidats:
-                                from classes.utils import distance_positions
                                 mage = min(candidats, key=lambda m: distance_positions(m.position, p.position))
                         except Exception:
                             mage = None

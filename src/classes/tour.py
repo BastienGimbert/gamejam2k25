@@ -114,7 +114,6 @@ class Tour(ABC):
         return self._anim.best_orientation(self.position.x, self.position.y, cible.position.x, cible.position.y)
 
     def _choisir_cible(self, ennemis: List["Ennemi"]) -> Optional["Ennemi"]:
-        from classes.ennemi import Ennemi  # type: ignore
         candidats: List[tuple[float, Ennemi]] = []
         for e in ennemis:
             if e.estMort() or not e.visible:
