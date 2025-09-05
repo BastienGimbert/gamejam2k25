@@ -115,7 +115,7 @@ class ProjectileFleche(Projectile):
 class ProjectilePierre(Projectile):
     """Pierre: lente, dégâts fixes = 70."""
 
-    CHEMIN_IMAGE: ClassVar[str] = "assets/tower/catapult/projectiles/1.png"
+    CHEMIN_IMAGE: ClassVar[str] = "assets/tower/catapulte/projectiles/1.png"
 
     def __init__(self, origine: Position, cible_pos: Position, game_ref:  Optional["Game"]) -> None:
         super().__init__(origine=origine, cible_pos=cible_pos, degats=70, vitesse=360.0, rayon_collision=16.0)

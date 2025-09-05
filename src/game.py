@@ -8,7 +8,7 @@ from classes.pointeur import Pointeur
 from classes.ennemi import Gobelin, Mage, Ennemi 
 from classes.joueur import Joueur
 from classes.position import Position
-from classes.tour import Archer, Catapult, FeuDeCamps, Tour
+from classes.tour import Archer, Catapulte, Campement, Tour
 from classes.tour import Mage as TourMage
 from classes.projectile import ProjectileFleche, ProjectileMageEnnemi, ProjectilePierre, ProjectileTourMage
 from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positions
@@ -24,6 +24,7 @@ class Game:
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
         self.joueur = Joueur(argent=35, point_de_vie=100, sort="feu", etat="normal")
         self.police = police
+        self.police_tour = pygame.font.Font(None, 44)
         # État muet propagé depuis main
         self.est_muet = est_muet
         # Cache de sons ponctuels
@@ -63,16 +64,16 @@ class Game:
         # Prix par type de tour (affichage et logique d'achat/vente)
         self.prix_par_type: dict[str, int] = {
             "archer": getattr(Archer, "PRIX"),
-            "catapult": getattr(Catapult, "PRIX"),
+            "catapulte": getattr(Catapulte, "PRIX"),
             "mage": getattr(TourMage, "PRIX"),
-            "Feu de camp": getattr(FeuDeCamps, "PRIX"),
+            "campement": getattr(Campement, "PRIX"),
         }
 
         self.portee_par_type: dict[str, float] = {
             "archer": getattr(Archer, "PORTEE"),
-            "catapult": getattr(Catapult, "PORTEE"),
+            "catapulte": getattr(Catapulte, "PORTEE"),
             "mage": getattr(TourMage, "PORTEE"),
-            "Feu de camp": getattr(FeuDeCamps, "PORTEE"),
+            "Feu de camp": getattr(Campement, "PORTEE"),
         }
 
 
@@ -240,8 +241,8 @@ class Game:
 
             chemins.sort()
 
-            # feu de camp : 6 images 
-            if tower_type == "Feu de camp":
+            # campement : 6 images
+            if tower_type == "campement":
                 dernier_chemin = os.path.join(tower_folder, chemins[-1])
                 image = pygame.image.load(dernier_chemin).convert_alpha()
                 slices = decouper_sprite(image, 6, horizontal=True, copy=False)  
@@ -373,7 +374,7 @@ class Game:
             pygame.draw.rect(ecran, self.couleur_boutique_border, rect, 2, border_radius=6)
 
             # label centré verticalement
-            label = self.police.render(t.capitalize(), True, self.couleur_texte)
+            label = self.police_tour.render(t.capitalize(), True, self.couleur_texte)
 
 
             label_y = rect.y + (rect.h - label.get_height()) // 2
@@ -752,7 +753,7 @@ class Game:
                     except Exception:
                         pass
 
-                elif isinstance(tour, Catapult) and self.image_pierre is not None:
+                elif isinstance(tour, Catapulte) and self.image_pierre is not None:
                     p = ProjectilePierre(origine=tour.position, cible_pos=cible.position.copy(), game_ref=self)
                     p.cible = cible
                     p.image_base = self.image_pierre
@@ -1048,12 +1049,12 @@ class Game:
                     nouvelle_tour = None
                     if self.type_selectionne == "archer":
                         nouvelle_tour = Archer(id=tour_id, position=pos_tour)
-                    elif self.type_selectionne == "catapult":
-                        nouvelle_tour = Catapult(id=tour_id, position=pos_tour)
+                    elif self.type_selectionne == "catapulte":
+                        nouvelle_tour = Catapulte(id=tour_id, position=pos_tour)
                     elif self.type_selectionne == "mage":
                         nouvelle_tour = TourMage(id=tour_id, position=pos_tour)
-                    elif self.type_selectionne == "Feu de camp":
-                        nouvelle_tour = FeuDeCamps(id=tour_id, position=pos_tour)
+                    elif self.type_selectionne == "campement":
+                        nouvelle_tour = Campement(id=tour_id, position=pos_tour)
                     else:
                         # Types non encore implémentés
                         nouvelle_tour = None
@@ -1062,8 +1063,8 @@ class Game:
                         self.tours.append(nouvelle_tour)
                         self.positions_occupees[case]["instance"] = nouvelle_tour
 
-                        # Joue le son du feu de camp si c'est un feu de camp
-                        if self.type_selectionne == "Feu de camp":
+                        # Joue le son du campement si c'est un campement
+                        if self.type_selectionne == "campement":
                             try:
                                 campfire_sound = pygame.mixer.Sound(os.path.join(ASSETS_DIR, "audio", "bruitage", "camp-fire.mp3"))
                                 campfire_sound.play().set_volume(0.15)

@@ -50,7 +50,7 @@ MAP_TILESET_TMJ: str = os.path.join(TILESETS_DIR, "carte.tmj")
 MAP_PNG: str = os.path.join(TILESETS_DIR, "carte.png")
 
 # Valeurs par défaut / listes partagées
-DEFAULT_TOWER_TYPES = ["archer", "catapult", "mage", "Feu de camp"]
+DEFAULT_TOWER_TYPES = ["archer", "catapulte", "mage", "campement"]
 
 # Export
 __all__ = [
