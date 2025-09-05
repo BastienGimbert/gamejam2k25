@@ -224,7 +224,7 @@ class Campement(Tour):
             prix=self.PRIX,
         )
 
-        if FeuDeCamps._frames is None:
+        if Campement._frames is None:
             # Charger les 6 frames de feu
             Campement._frames = charger_et_scaler(
                 "../tower/Campement", "1.png", 6, scale=0.8
@@ -237,12 +237,12 @@ class Campement(Tour):
         self.frame_timer += dt
         if self.frame_timer >= 0.12: 
             self.frame_timer = 0
-            self.frame_index = (self.frame_index + 1) % len(FeuDeCamps._frames)
+            self.frame_index = (self.frame_index + 1) % len(Campement._frames)
 
     def dessiner(self, ecran: pygame.Surface, taille_case: int) -> None:
-        if FeuDeCamps._frames is None:
+        if Campement._frames is None:
             return
-        frame = FeuDeCamps._frames[self.frame_index]
+        frame = Campement._frames[self.frame_index]
         surf = pygame.transform.smoothscale(frame, (taille_case, taille_case))
         ecran.blit(surf, (self.position.x - taille_case // 2, self.position.y - taille_case // 2))
 

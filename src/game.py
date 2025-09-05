@@ -22,7 +22,7 @@ from classes.constants import ASSETS_DIR, PROJECT_ROOT, MONEY_DIR, HEART_DIR, TO
 
 class Game:
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
-        self.joueur = Joueur(argent=35, point_de_vie=100, sort="feu", etat="normal")
+        self.joueur = Joueur(argent=3500, point_de_vie=100, sort="feu", etat="normal")
         self.police = police
         self.police_tour = pygame.font.Font(None, 44)
         # État muet propagé depuis main
@@ -174,8 +174,8 @@ class Game:
         #self.action_bouton= self.lancerVague()            
         #self.bouton = Bouton("Bouton", 100, 100, 200, 50, self.action_bouton, self.police, self.couleurs)
 
-    def getToursFeuDeCamp(self) -> list[FeuDeCamps]:
-        return [t for t in self.tours if isinstance(t, FeuDeCamps)]
+    def getToursFeuDeCamp(self) -> list[Campement]:
+        return [t for t in self.tours if isinstance(t, Campement)]
 
     def dansFeuDeCamp(self, position: Position) -> bool:
         for t in self.getToursFeuDeCamp():
@@ -611,12 +611,12 @@ class Game:
 
 
     def _dessiner_tours_placees(self, ecran):
-        """Dessine les tours, avec un traitement spécial pour FeuDeCamps."""
+        """Dessine les tours, avec un traitement spécial pour Campement."""
         for (x_case, y_case), data in self.positions_occupees.items():
             tour = data.get("instance")
 
             if tour and hasattr(tour, "dessiner"):
-                # FeuDeCamps (et éventuellement d'autres tours spéciales)
+                # Campement (et éventuellement d'autres tours spéciales)
                 tour.dessiner(ecran, self.taille_case)
             else:
                 # Cas standard (anciennes tours fixes)
@@ -741,7 +741,7 @@ class Game:
         # Mise à jour des tours (acquisition cible + tir)
         for t in self.tours:
 
-            if isinstance(t, FeuDeCamps):
+            if isinstance(t, Campement):
                 continue 
             def au_tir(tour: Tour, cible: Gobelin):
                 if isinstance(tour, Archer) and self.image_fleche is not None:
@@ -860,7 +860,7 @@ class Game:
     
     def majFeuxDeCamps(self, dt: float, nuit_surface: pygame.Surface) -> None:
         """Met à jour et dessine les effets de lumière des feux de camps."""
-        feux_de_camps = [t for t in self.tours if t.__class__.__name__ == "FeuDeCamps"]
+        feux_de_camps = [t for t in self.tours if t.__class__.__name__ == "Campement"]
         for feu in feux_de_camps:
             feu.maj(dt)
             radius = feu.portee
