@@ -167,6 +167,9 @@ class Game:
         self.debutVague = 0
         self.ennemis: list[Ennemi] = []  # Rempli lors du lancement de vague
         
+        # État jour/nuit - jour entre les manches, nuit pendant les manches
+        self.est_nuit = False
+        
         #self.action_bouton= self.lancerVague()            
         #self.bouton = Bouton("Bouton", 100, 100, 200, 50, self.action_bouton, self.police, self.couleurs)
 
@@ -836,6 +839,10 @@ class Game:
             )
         ]
         
+        # Désactiver l'effet de nuit si la vague est terminée
+        if self.vague_terminee() and self.est_nuit:
+            self.est_nuit = False
+        
     def get_closest_mage(self, pos: Position) -> None | Mage:
         """Retourne le mage le plus proche de la position pos."""
         mages = [e for e in self.ennemis if isinstance(e, Mage) and not e.estMort() and e.estApparu(self.debutVague) and e.ready_to_attack()]
@@ -865,27 +872,28 @@ class Game:
         self._dessiner_personnages_tours(ecran)
         self._dessiner_surbrillance(ecran)
         
-        # Effet nuit
-        nuit_surface = pygame.Surface((self.largeur_ecran, self.hauteur_ecran), pygame.SRCALPHA)
-        nuit_surface.fill((0, 6, 25, int(255 * 0.6)))  # 60% opacity
+        # Effet nuit - seulement pendant les manches
+        if self.est_nuit:
+            nuit_surface = pygame.Surface((self.largeur_ecran, self.hauteur_ecran), pygame.SRCALPHA)
+            nuit_surface.fill((0, 6, 25, int(255 * 0.8)))  # 80% opacity
 
-        # Vérifier si la fée est active
-        if 'fee' in self.sorts and self.sorts['fee'].est_actif():
-            # Si la fée est active, éclairer toute la carte
-            pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (self.largeur_ecran // 2, self.hauteur_ecran // 2), max(self.largeur_ecran, self.hauteur_ecran))
-        else:
-            # Effet de lumière du curseur seulement si la souris est sur la carte
-            x, y = pygame.mouse.get_pos()
-            if x < self.largeur_ecran: 
-                # Portée de base du curseur
-                portee_curseur = 100
-                # Vérifier si le joueur a le sort de vision et augmenter la portée
-                if 'vision' in self.sorts:
-                    portee_curseur = self.sorts['vision'].portee
-                pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (x, y), portee_curseur) # dessin de la lumiere
-        self.majFeuxDeCamps(dt, nuit_surface)
+            # Vérifier si la fée est active
+            if 'fee' in self.sorts and self.sorts['fee'].est_actif():
+                # Si la fée est active, éclairer toute la carte
+                pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (self.largeur_ecran // 2, self.hauteur_ecran // 2), max(self.largeur_ecran, self.hauteur_ecran))
+            else:
+                # Effet de lumière du curseur seulement si la souris est sur la carte
+                x, y = pygame.mouse.get_pos()
+                if x < self.largeur_ecran: 
+                    # Portée de base du curseur
+                    portee_curseur = 100
+                    # Vérifier si le joueur a le sort de vision et augmenter la portée
+                    if 'vision' in self.sorts:
+                        portee_curseur = self.sorts['vision'].portee
+                    pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (x, y), portee_curseur) # dessin de la lumiere
+            self.majFeuxDeCamps(dt, nuit_surface)
 
-        ecran.blit(nuit_surface, (0, 0))
+            ecran.blit(nuit_surface, (0, 0))
 
 
         self._dessiner_boutique(ecran) 
@@ -1111,6 +1119,7 @@ class Game:
         """Démarre une nouvelle vague d'ennemis, chargée depuis un CSV."""
         self.numVague += 1
         self.debutVague = pygame.time.get_ticks()
+        self.est_nuit = True  # Active l'effet de nuit pendant la manche
         print("Vague n°", self.numVague, "lancée")
 
         # Génère la liste d'ennemis depuis le CSV (la fabrique gère leurs types)

@@ -195,10 +195,12 @@ class Gobelin(Ennemi):
         pos = (int(self.position.x - frame.get_width()//2),
                int(self.position.y - frame.get_height()//2))
         if self.visible:
-            ecran.blit(frame, pos)
+            temp = frame.copy()          # Copier pour ne pas modifier l'original
+            temp.set_alpha(204)          # 80% d'opacité (255 * 0.8 = 204)
+            ecran.blit(temp, pos)
         else:
             temp = frame.copy()          # Copier pour ne pas modifier l'original
-            temp.set_alpha(90)
+            temp.set_alpha(70)           # Réduit de 20% par rapport à 90
             ecran.blit(temp, pos)
 
 SCALE_FACTOR = 2  # redimensionne toutes les frames
@@ -240,10 +242,12 @@ class Rat(Ennemi):
         pos = (int(self.position.x - frame.get_width()//2),
                int(self.position.y - frame.get_height()//2))
         if self.visible:
-            ecran.blit(frame, pos)
+            temp = frame.copy()          # Copier pour ne pas modifier l'original
+            temp.set_alpha(204)          # 80% d'opacité (255 * 0.8 = 204)
+            ecran.blit(temp, pos)
         else:
             temp = frame.copy()          # Copier pour ne pas modifier l'original
-            temp.set_alpha(90)
+            temp.set_alpha(70)           # Réduit de 20% par rapport à 90
             ecran.blit(temp, pos)
 
 class Loup(Ennemi):
@@ -283,10 +287,12 @@ class Loup(Ennemi):
         pos = (int(self.position.x - frame.get_width()//2),
                int(self.position.y - frame.get_height()//2))
         if self.visible:
-            ecran.blit(frame, pos)
+            temp = frame.copy()          # Copier pour ne pas modifier l'original
+            temp.set_alpha(204)          # 80% d'opacité (255 * 0.8 = 204)
+            ecran.blit(temp, pos)
         else:
             temp = frame.copy()          # Copier pour ne pas modifier l'original
-            temp.set_alpha(90)
+            temp.set_alpha(70)           # Réduit de 20% par rapport à 90
             ecran.blit(temp, pos)
 
 class Mage(Ennemi):
@@ -335,10 +341,12 @@ class Mage(Ennemi):
         pos = (int(self.position.x - frame.get_width()//2),
                int(self.position.y - frame.get_height()//2))
         if self.visible:
-            ecran.blit(frame, pos)
+            temp = frame.copy()          # Copier pour ne pas modifier l'original
+            temp.set_alpha(204)          # 80% d'opacité (255 * 0.8 = 204)
+            ecran.blit(temp, pos)
         else:
             temp = frame.copy()          # Copier pour ne pas modifier l'original
-            temp.set_alpha(90)
+            temp.set_alpha(70)           # Réduit de 20% par rapport à 90
             ecran.blit(temp, pos)
 
     def ready_to_attack(self) -> bool:
@@ -394,8 +402,10 @@ class Ogre(Ennemi):
         pos = (int(self.position.x - frame.get_width()//2),
                int(self.position.y - frame.get_height()//2))
         if self.visible:
-            ecran.blit(frame, pos)
+            temp = frame.copy()          # Copier pour ne pas modifier l'original
+            temp.set_alpha(204)          # 80% d'opacité (255 * 0.8 = 204)
+            ecran.blit(temp, pos)
         else:
             temp = frame.copy()          # Copier pour ne pas modifier l'original
-            temp.set_alpha(90)
+            temp.set_alpha(70)           # Réduit de 20% par rapport à 90
             ecran.blit(temp, pos)
