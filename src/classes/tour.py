@@ -141,7 +141,7 @@ class Archer(Tour):
     PORTEE = 150.0
 
     # Prix indicatif de la tour Archer (affiché dans la boutique)
-    PRIX = 12
+    PRIX = 16
 
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
@@ -207,7 +207,7 @@ class Mage(Tour):
 class FeuDeCamps(Tour):
     TYPE_ID = 4
     TYPE_NOM = "Feu de camp"
-    PRIX = 80
+    PRIX = 120
     PORTEE = 92.0  
 
     _frames: list[pygame.Surface] | None = None

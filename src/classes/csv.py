@@ -1,5 +1,5 @@
 import csv
-from classes.ennemi import Gobelin, Rat, Loup, Mage
+from classes.ennemi import Gobelin, Ogre, Rat, Loup, Mage
 import os
 
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -9,6 +9,7 @@ ENEMY_CLASSES = {
     2: Rat,
     3: Gobelin,
     4: Mage,
+    5: Ogre, 
 }
 
 def creer_liste_ennemis_depuis_csv(numVague=int, chemin_csv="src/data/jeu.csv") -> list:
