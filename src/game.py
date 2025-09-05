@@ -9,7 +9,7 @@ from classes.joueur import Joueur
 from classes.position import Position
 from classes.tour import Archer, Catapult, Tour
 from classes.tour import Mage as TourMage
-from classes.projectile import ProjectileFleche, ProjectileMageEnnemi, ProjectilePierre
+from classes.projectile import ProjectileFleche, ProjectileMageEnnemi, ProjectilePierre, ProjectileTourMage
 from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positions
 from classes.csv import creer_liste_ennemis_depuis_csv
 from classes.bouton import Bouton
@@ -69,7 +69,7 @@ class Game:
 
         # Tours / projectiles (logique)
         self.tours: list[Tour] = []
-        self.projectiles: list[ProjectileFleche | ProjectilePierre] = []
+        self.projectiles: list[ProjectileFleche | ProjectilePierre | ProjectileTourMage] = []
 
 
         # Couleurs UI
@@ -79,6 +79,8 @@ class Game:
         # Images de base des projectiles (chargées via une fonction générique)
         self.image_fleche = self._charger_image_projectile(ProjectileFleche.CHEMIN_IMAGE)
         self.image_pierre = self._charger_image_projectile(ProjectilePierre.CHEMIN_IMAGE)
+        # Projectile de la tour mage
+        self.image_orbe_mage = self._charger_image_projectile(ProjectileTourMage.CHEMIN_IMAGE)
         self.image_projectileMageEnnemi = self._charger_image_projectile(ProjectileMageEnnemi.CHEMIN_IMAGE)
 
 
@@ -468,6 +470,11 @@ class Game:
                     p.cible = cible
                     p.image_base = self.image_pierre
                     self.projectiles.append(p)
+                elif isinstance(tour, TourMage) and self.image_orbe_mage is not None:
+                    p = ProjectileTourMage(origine=tour.position, cible_pos=cible.position.copy())
+                    p.cible = cible
+                    p.image_base = self.image_orbe_mage
+                    self.projectiles.append(p)
 
                     if p and hasattr(self, "get_closest_mage"):
                         mage = self.get_closest_mage(p.position)
@@ -496,7 +503,7 @@ class Game:
                             # Si l'ennemi vient de mourir suite à ce projectile, créditer la récompense
                             try:
                                 if e.estMort() and not getattr(e, "_recompense_donnee", False) and not getattr(e, "_ne_pas_recompenser", False):
-                                    self.joueur.argent += int(getattr(e, "valeur", 0))
+                                    self.joueur.argent += int(getattr(e, "argent", 0))
                                     setattr(e, "_recompense_donnee", True)
                             except Exception:
                                 pass
@@ -607,6 +614,8 @@ class Game:
                         nouvelle_tour = Archer(id=tour_id, position=pos_tour)
                     elif self.type_selectionne == "catapult":
                         nouvelle_tour = Catapult(id=tour_id, position=pos_tour)
+                    elif self.type_selectionne == "mage":
+                        nouvelle_tour = TourMage(id=tour_id, position=pos_tour)
                     else:
                         # Types non encore implémentés
                         nouvelle_tour = None
