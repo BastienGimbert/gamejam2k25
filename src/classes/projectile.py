@@ -134,11 +134,31 @@ class ProjectilePierre(Projectile):
         ecran.blit(sprite, rect)
 
 
+# --- Nouveau projectile de tour mage ---
+class ProjectileTourMage(Projectile):
+    """Projectile de la tour Mage: orbe magique rapide à dégâts moyens."""
+
+    CHEMIN_IMAGE: ClassVar[str] = "assets/tower/mage/projectiles/1.png"
+
+    def __init__(self, origine: Position, cible_pos: Position) -> None:
+        # Moins rapide qu'une flèche, dégâts supérieurs
+        super().__init__(origine=origine, cible_pos=cible_pos, degats=40, vitesse=600.0, rayon_collision=14.0)
+        self.image_base: Optional[pygame.Surface] = None
+
+    def dessiner(self, ecran: pygame.Surface) -> None:
+        if self.detruit or self.image_base is None:
+            return
+        angle = self._angle_degres()
+        sprite = pygame.transform.rotate(self.image_base, 90 - angle)
+        sprite = pygame.transform.smoothscale(sprite, (26, 26))
+        rect = sprite.get_rect(center=(int(self.x), int(self.y)))
+        ecran.blit(sprite, rect)
+
 
 class ProjectileMageEnnemi(Projectile):
     """Projectile du mage qui suit un projectile de pierre."""
 
-    CHEMIN_IMAGE: ClassVar[str] = "assets\enemy\mage\Projectile2.png"
+    CHEMIN_IMAGE: ClassVar[str] = "assets/enemy/mage/Projectile2.png"
 
     def __init__(self, origine: Position, cible_proj: "ProjectilePierre", vitesse: float = 500.0):
         # On initialise avec la position initiale du projectile

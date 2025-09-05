@@ -16,6 +16,7 @@ class Ennemi(ABC):
         vitesse: float,
         pointsDeVie: int,
         degats: int,
+        argent: int,
         tempsApparition = 0,
         chemin: Optional[List[Position]] = None,
         on_reach_castle: Optional[Callable[["Ennemi"], None]] = None,
@@ -30,6 +31,8 @@ class Ennemi(ABC):
         self.pointsDeVie = int(pointsDeVie)
         self.pointsDeVieMax = int(pointsDeVie)  # PV Max et donc initiaux de l'ennemi
         self.degats = int(degats)
+        # Montant d'or donné au joueur quand cet ennemi est tué
+        self.argent = int(argent)
         self._chemin: List[Position] = chemin
         self.position = self._chemin[0].copy()
         self._segment_index = 0
@@ -134,7 +137,7 @@ class Gobelin(Ennemi):
         return "Gobelin"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=50.0, pointsDeVie=70, degats=10, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=50.0, pointsDeVie=70, degats=10, argent=5, chemin=chemin, **kw)
 
         # Charger les spritesheets une seule fois
         if Gobelin._frames_by_dir is None:
@@ -185,7 +188,7 @@ class Rat(Ennemi):
     def type_nom(self) -> str: return "Rat"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=120.0, pointsDeVie=20, degats=4, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=120.0, pointsDeVie=20, degats=4, argent=3, chemin=chemin, **kw)
 
         if Rat._frames_by_dir is None:
             Rat._frames_by_dir = {
@@ -228,7 +231,7 @@ class Loup(Ennemi):
     def type_nom(self) -> str: return "Loup"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=100.0, pointsDeVie=90, degats=10, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=100.0, pointsDeVie=90, degats=10, argent=8, chemin=chemin, **kw)
 
         if Loup._frames_by_dir is None:
             Loup._frames_by_dir = {
@@ -274,7 +277,7 @@ class Mage(Ennemi):
     def type_nom(self) -> str: return "Mage"
 
     def __init__(self, tempsApparition: int, chemin: Optional[List[Position]] = None, **kw):
-        super().__init__(tempsApparition=tempsApparition, vitesse=50.0, pointsDeVie=180, degats=15, chemin=chemin, **kw)
+        super().__init__(tempsApparition=tempsApparition, vitesse=50.0, pointsDeVie=180, degats=15, argent=12, chemin=chemin, **kw)
 
         if Mage._frames_by_dir is None:
             Mage._frames_by_dir = {
