@@ -17,7 +17,7 @@ except Exception:
     # Si pas de périphérique audio dispo, on continue sans mixer
     MIXER_DISPONIBLE = False
 
-LARGEUR, HAUTEUR = 1168, 768
+LARGEUR, HAUTEUR = 1168, 968
 ECRAN = pygame.display.set_mode((LARGEUR, HAUTEUR))
 pygame.display.set_caption("Protect The Castle")
 
@@ -109,6 +109,11 @@ def basculer_muet():
     if MIXER_DISPONIBLE:
         pygame.mixer.music.set_volume(0.0 if est_muet else VOLUME_MUSIQUE)
     print("Muet activé" if est_muet else "Son activé")
+    # Propager l'état muet au jeu pour les SFX
+    try:
+        scene_jeu.est_muet = est_muet
+    except Exception:
+        pass
 
 
 def retour_depuis_credits():
@@ -124,7 +129,7 @@ def quitter_jeu():
 # ------------------- CONSTRUCTION DES ÉCRANS -------------------
 
 # Game (scène)
-scene_jeu = Game(POLICE)
+scene_jeu = Game(POLICE, est_muet=est_muet)
 
 # Menus (listes de boutons), on génère à partir des callbacks ci-dessus
 ACTIONS_MENU_PRINCIPAL = {
@@ -154,7 +159,7 @@ ACTIONS_GAMEOVER = {
 
 def redemarrer_partie():
     global scene_jeu, ETAT
-    scene_jeu = Game(POLICE)
+    scene_jeu = Game(POLICE, est_muet=est_muet)
     ETAT = "JEU"
 
 try:

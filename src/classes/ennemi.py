@@ -125,7 +125,22 @@ class Ennemi(ABC):
     def majVisible(self, game: Optional["Game"]):
         x, y = pygame.mouse.get_pos()
         pointeurPos = Position(x, y)
-        if(distance_positions(self.position, pointeurPos) < 100) or game.dansFeuDeCamp(self.position):
+        
+        # Vérifier d'abord si l'effet de la fée est actif
+        if game and hasattr(game, 'sorts') and 'fee' in game.sorts:
+            if game.sorts['fee'].est_actif():
+                # Si la fée est active, tous les ennemis sont visibles
+                self.set_visibilite(True)
+                return
+        
+        # Portée de base du curseur
+        portee_curseur = 100
+        
+        # Vérifier si le joueur a le sort de vision et augmenter la portée
+        if game and hasattr(game, 'sorts') and 'vision' in game.sorts:
+            portee_curseur = game.sorts['vision'].portee
+        
+        if(distance_positions(self.position, pointeurPos) < portee_curseur) or game.dansFeuDeCamp(self.position):
             self.set_visibilite(True)
         else:
             self.set_visibilite(False)

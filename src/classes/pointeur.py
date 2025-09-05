@@ -6,7 +6,7 @@ class Pointeur:
         self.position = Position(0, 0) 
         self.rayon = 100
         self.couleur = (0, 200, 255)  # couleur magique cyan
-        self.surface = self.creer_halo(self.rayon, self.couleur)
+        self.surface = None  # Sera créé dynamiquement
 
     def creer_halo(self, rayon, couleur):
         """Crée un cercle avec halo """
@@ -17,8 +17,22 @@ class Pointeur:
             pygame.draw.circle(surface, (*couleur, alpha), (rayon, rayon), i)
         return surface
 
-    def draw(self, screen):
+    def draw(self, screen, game=None):
         # Récupère la position de la souris
         x, y = pygame.mouse.get_pos()
         self.position.x = x
         self.position.y = y
+        
+        # Détermine le rayon selon le sort de vision
+        rayon = 100  # rayon de base
+        if game and hasattr(game, 'sorts') and 'vision' in game.sorts:
+            rayon = game.sorts['vision'].portee
+        
+        # Crée le halo avec le bon rayon
+        if self.surface is None or self.rayon != rayon:
+            self.rayon = rayon
+            self.surface = self.creer_halo(self.rayon, self.couleur)
+        
+        # Dessine le halo
+        if self.surface:
+            screen.blit(self.surface, (x - self.rayon, y - self.rayon))
