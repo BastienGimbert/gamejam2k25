@@ -8,7 +8,7 @@ from classes.pointeur import Pointeur
 from classes.ennemi import Gobelin, Mage, Ennemi 
 from classes.joueur import Joueur
 from classes.position import Position
-from classes.tour import Archer, Catapult, Tour
+from classes.tour import Archer, Catapult, FeuDeCamps, Tour
 from classes.tour import Mage as TourMage
 from classes.projectile import ProjectileFleche, ProjectileMageEnnemi, ProjectilePierre, ProjectileTourMage
 from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positions
@@ -45,6 +45,7 @@ class Game:
             "archer": getattr(Archer, "PRIX"),
             "catapult": getattr(Catapult, "PRIX"),
             "mage": getattr(TourMage, "PRIX"),
+            "Feu de camp": getattr(FeuDeCamps, "PRIX"),
         }
 
         # Animation monnaie
@@ -60,10 +61,10 @@ class Game:
         self.last_heart_ticks = pygame.time.get_ticks()
 
         # Types de tours
+        self.tower_types = ["archer", "catapult", "mage", "Feu de camp"]
         # --- Ajout : sélection de tour pour affichage de la range ---
         self.tour_selectionnee: tuple[int, int] | None = None
-
-        self.tower_types = ["archer", "catapult", "mage"]
+        
         self.tower_assets = self._charger_tours()
         self.shop_items = self._creer_boutons_boutique()
         self.type_selectionne: str | None = None
@@ -137,6 +138,15 @@ class Game:
         #self.action_bouton= self.lancerVague()            
         #self.bouton = Bouton("Bouton", 100, 100, 200, 50, self.action_bouton, self.police, self.couleurs)
 
+    def getToursFeuDeCamp(self) -> list[FeuDeCamps]:
+        return [t for t in self.tours if isinstance(t, FeuDeCamps)]
+
+    def dansFeuDeCamp(self, position: Position) -> bool:
+        for t in self.getToursFeuDeCamp():
+            if distance_positions(t.position, position) <= t.portee:
+                return True
+        return False
+
     def _ennemi_atteint_chateau(self, ennemi: Ennemi) -> None:
         # Inflige les dégâts de l'ennemi au joueur lorsque l'ennemi atteint la fin
         try:
@@ -193,17 +203,34 @@ class Game:
             dossier_absolu = os.path.join(base_dir, dossier)
             if not os.path.isdir(dossier_absolu):
                 continue
+
             chemins = [f for f in os.listdir(dossier_absolu) if f.endswith(".png")]
             if not chemins:
                 continue
+
             chemins.sort()
-            dernier_chemin = os.path.join(dossier_absolu, chemins[-1])
-            image = pygame.image.load(dernier_chemin).convert_alpha()
-            slices = decouper_sprite(image, 4, horizontal=True, copy=False)
-            frames = [slices]
-            icon = pygame.transform.smoothscale(slices[2], (48, 48))
-            assets[tower_type] = {"frames": frames, "icon": icon}
+
+            # feu de camp : 6 images 
+            if tower_type == "Feu de camp":
+                dernier_chemin = os.path.join(dossier_absolu, chemins[-1])
+                image = pygame.image.load(dernier_chemin).convert_alpha()
+                slices = decouper_sprite(image, 6, horizontal=True, copy=False)  
+                frames = [slices]
+                assets[tower_type] = {
+                    "frames": frames,
+                    "icon": pygame.transform.smoothscale(slices[0], (48, 48)) 
+                }
+            else:
+                # Cas tour classique : découpe en 4
+                dernier_chemin = os.path.join(dossier_absolu, chemins[-1])
+                image = pygame.image.load(dernier_chemin).convert_alpha()
+                slices = decouper_sprite(image, 4, horizontal=True, copy=False)
+                frames = [slices]
+                icon = pygame.transform.smoothscale(slices[2], (48, 48))
+                assets[tower_type] = {"frames": frames, "icon": icon}
+
         return assets
+
 
     def _creer_boutons_boutique(self):
         boutons = []
@@ -405,18 +432,26 @@ class Game:
             ecran.blit(overlay, rect)
 
     def _dessiner_tours_placees(self, ecran):
-        """Dessine l'apparence des tours sur la grille (assets ou fallback)."""
+        """Dessine les tours, avec un traitement spécial pour FeuDeCamps."""
         for (x_case, y_case), data in self.positions_occupees.items():
-            ttype = data["type"]
-            surf = None
-            if ttype in self.tower_assets and self.tower_assets[ttype]["frames"]:
-                slices = self.tower_assets[ttype]["frames"][0]
-                surf = slices[2]
-                surf = pygame.transform.smoothscale(surf, (self.taille_case, self.taille_case))
-            if surf is None:
-                surf = pygame.Surface((self.taille_case, self.taille_case))
-                surf.fill((150, 150, 180))
-            ecran.blit(surf, (x_case * self.taille_case, y_case * self.taille_case))
+            tour = data.get("instance")
+
+            if tour and hasattr(tour, "dessiner"):
+                # FeuDeCamps (et éventuellement d'autres tours spéciales)
+                tour.dessiner(ecran, self.taille_case)
+            else:
+                # Cas standard (anciennes tours fixes)
+                ttype = data["type"]
+                surf = None
+                if ttype in self.tower_assets and self.tower_assets[ttype]["frames"]:
+                    slices = self.tower_assets[ttype]["frames"][0]
+                    surf = slices[2]
+                    surf = pygame.transform.smoothscale(surf, (self.taille_case, self.taille_case))
+                if surf is None:
+                    surf = pygame.Surface((self.taille_case, self.taille_case))
+                    surf.fill((150, 150, 180))
+                ecran.blit(surf, (x_case * self.taille_case, y_case * self.taille_case))
+
 
             # --- Ajout : affichage range si sélectionnée ---
             if self.tour_selectionnee == (x_case, y_case):
@@ -459,7 +494,7 @@ class Game:
                 doit_dessiner = True
             if doit_dessiner:
                 if hasattr(e, "majVisible"):
-                    e.majVisible()
+                    e.majVisible(self)
                 if hasattr(e, "draw"):
                     e.draw(ecran)
                 # --- Barre de PV ---
@@ -522,7 +557,10 @@ class Game:
 
         # Mise à jour des tours (acquisition cible + tir)
         for t in self.tours:
-            def au_tir(tour: Tour, cible: Ennemi):
+            if isinstance(t, FeuDeCamps):
+                continue 
+            def au_tir(tour: Tour, cible: Gobelin):
+
                 if isinstance(tour, Archer) and self.image_fleche is not None:
                     p = ProjectileFleche(origine=tour.position, cible_pos=cible.position.copy())
                     p.cible = cible              # suivi de la cible (comme une flèche)
@@ -614,7 +652,14 @@ class Game:
                 distance = distance_positions(m.position, pos)
         
         return nearestMage
-
+    
+    def majFeuxDeCamps(self, dt: float, nuit_surface: pygame.Surface) -> None:
+        """Met à jour et dessine les effets de lumière des feux de camps."""
+        feux_de_camps = [t for t in self.tours if t.__class__.__name__ == "FeuDeCamps"]
+        for feu in feux_de_camps:
+            feu.maj(dt)
+            radius = feu.portee
+            pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (feu.position.x, feu.position.y), radius)
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         dt = self.clock.tick(60) / 1000.0
@@ -630,7 +675,10 @@ class Game:
         x, y = pygame.mouse.get_pos()
         if x < self.largeur_ecran: 
             pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (x, y), 100) # dessin de la lumiere
+        self.majFeuxDeCamps(dt, nuit_surface)
+
         ecran.blit(nuit_surface, (0, 0))
+
 
         self._dessiner_boutique(ecran) 
         self.dessiner_ennemis(ecran)
@@ -721,11 +769,15 @@ class Game:
                         nouvelle_tour = Catapult(id=tour_id, position=pos_tour)
                     elif self.type_selectionne == "mage":
                         nouvelle_tour = TourMage(id=tour_id, position=pos_tour)
+                    elif self.type_selectionne == "Feu de camp":
+                        nouvelle_tour = FeuDeCamps(id=tour_id, position=pos_tour)
                     else:
                         # Types non encore implémentés
                         nouvelle_tour = None
                     if nouvelle_tour is not None:
                         self.tours.append(nouvelle_tour)
+                        self.positions_occupees[case]["instance"] = nouvelle_tour
+
                         # Mémorise le prix d'achat pour revente éventuelle
                         self.positions_occupees[case]["prix"] = getattr(
                             nouvelle_tour,
