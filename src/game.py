@@ -522,18 +522,31 @@ class Game:
 
         # Mise à jour des tours (acquisition cible + tir)
         for t in self.tours:
+
             def au_tir(tour: Tour, cible: Ennemi):
                 if isinstance(tour, Archer) and self.image_fleche is not None:
                     p = ProjectileFleche(origine=tour.position, cible_pos=cible.position.copy())
                     p.cible = cible              # suivi de la cible (comme une flèche)
                     p.image_base = self.image_fleche
                     self.projectiles.append(p)
+                    # Joue le son de flèche
+                    try:
+                        arrow_sound = pygame.mixer.Sound(os.path.join(base_dir, "assets", "audio", "bruitage", "arrow.mp3"))
+                        arrow_sound.play()
+                    except Exception:
+                        pass
 
                 elif isinstance(tour, Catapult) and self.image_pierre is not None:
                     p = ProjectilePierre(origine=tour.position, cible_pos=cible.position.copy(), game_ref=self)
                     p.cible = cible
                     p.image_base = self.image_pierre
                     self.projectiles.append(p)
+                    # Joue le son de catapulte
+                    try:
+                        fire_sound = pygame.mixer.Sound(os.path.join(base_dir, "assets", "audio", "bruitage", "fire-magic.mp3"))
+                        fire_sound.play()
+                    except Exception:
+                        pass
                     # Déclenche la réaction du mage le plus proche pour intercepter la pierre
                     mage = self.get_closest_mage(p.position)
                     if mage is None:
@@ -556,6 +569,12 @@ class Game:
                     p.cible = cible
                     p.image_base = self.image_orbe_mage
                     self.projectiles.append(p)
+                    # Joue le son du mage
+                    try:
+                        wind_sound = pygame.mixer.Sound(os.path.join(base_dir, "assets", "audio", "bruitage", "wind-magic.mp3"))
+                        wind_sound.play()
+                    except Exception:
+                        pass
 
             if hasattr(t, "maj"):
                 t.maj(dt, self.ennemis, au_tir=au_tir)
