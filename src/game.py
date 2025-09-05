@@ -8,7 +8,7 @@ from classes.pointeur import Pointeur
 from classes.ennemi import Gobelin, Mage, Ennemi 
 from classes.joueur import Joueur
 from classes.position import Position
-from classes.tour import Archer, Catapult, FeuDeCamps, Tour
+from classes.tour import Archer, Catapulte, Campement, Tour
 from classes.tour import Mage as TourMage
 from classes.projectile import ProjectileFleche, ProjectileMageEnnemi, ProjectilePierre, ProjectileTourMage
 from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positions
@@ -24,6 +24,7 @@ class Game:
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
         self.joueur = Joueur(argent=35, point_de_vie=100, sort="feu", etat="normal")
         self.police = police
+        self.police_tour = pygame.font.Font(None, 44)
         # État muet propagé depuis main
         self.est_muet = est_muet
         # Cache de sons ponctuels
@@ -63,16 +64,16 @@ class Game:
         # Prix par type de tour (affichage et logique d'achat/vente)
         self.prix_par_type: dict[str, int] = {
             "archer": getattr(Archer, "PRIX"),
-            "catapult": getattr(Catapult, "PRIX"),
+            "catapulte": getattr(Catapulte, "PRIX"),
             "mage": getattr(TourMage, "PRIX"),
-            "Feu de camp": getattr(FeuDeCamps, "PRIX"),
+            "campement": getattr(Campement, "PRIX"),
         }
 
         self.portee_par_type: dict[str, float] = {
             "archer": getattr(Archer, "PORTEE"),
-            "catapult": getattr(Catapult, "PORTEE"),
+            "catapulte": getattr(Catapulte, "PORTEE"),
             "mage": getattr(TourMage, "PORTEE"),
-            "Feu de camp": getattr(FeuDeCamps, "PORTEE"),
+            "Feu de camp": getattr(Campement, "PORTEE"),
         }
 
 
@@ -167,6 +168,9 @@ class Game:
         self.debutVague = 0
         self.ennemis: list[Ennemi] = []  # Rempli lors du lancement de vague
         
+        # État jour/nuit - jour entre les manches, nuit pendant les manches
+        self.est_nuit = False
+        
         #self.action_bouton= self.lancerVague()            
         #self.bouton = Bouton("Bouton", 100, 100, 200, 50, self.action_bouton, self.police, self.couleurs)
 
@@ -240,8 +244,8 @@ class Game:
 
             chemins.sort()
 
-            # feu de camp : 6 images 
-            if tower_type == "Feu de camp":
+            # campement : 6 images
+            if tower_type == "campement":
                 dernier_chemin = os.path.join(tower_folder, chemins[-1])
                 image = pygame.image.load(dernier_chemin).convert_alpha()
                 slices = decouper_sprite(image, 6, horizontal=True, copy=False)  
@@ -373,7 +377,7 @@ class Game:
             pygame.draw.rect(ecran, self.couleur_boutique_border, rect, 2, border_radius=6)
 
             # label centré verticalement
-            label = self.police.render(t.capitalize(), True, self.couleur_texte)
+            label = self.police_tour.render(t.capitalize(), True, self.couleur_texte)
 
 
             label_y = rect.y + (rect.h - label.get_height()) // 2
@@ -752,7 +756,7 @@ class Game:
                     except Exception:
                         pass
 
-                elif isinstance(tour, Catapult) and self.image_pierre is not None:
+                elif isinstance(tour, Catapulte) and self.image_pierre is not None:
                     p = ProjectilePierre(origine=tour.position, cible_pos=cible.position.copy(), game_ref=self)
                     p.cible = cible
                     p.image_base = self.image_pierre
@@ -836,6 +840,10 @@ class Game:
             )
         ]
         
+        # Désactiver l'effet de nuit si la vague est terminée
+        if self.vague_terminee() and self.est_nuit:
+            self.est_nuit = False
+        
     def get_closest_mage(self, pos: Position) -> None | Mage:
         """Retourne le mage le plus proche de la position pos."""
         mages = [e for e in self.ennemis if isinstance(e, Mage) and not e.estMort() and e.estApparu(self.debutVague) and e.ready_to_attack()]
@@ -865,27 +873,28 @@ class Game:
         self._dessiner_personnages_tours(ecran)
         self._dessiner_surbrillance(ecran)
         
-        # Effet nuit
-        nuit_surface = pygame.Surface((self.largeur_ecran, self.hauteur_ecran), pygame.SRCALPHA)
-        nuit_surface.fill((0, 6, 25, int(255 * 0.6)))  # 60% opacity
+        # Effet nuit - seulement pendant les manches
+        if self.est_nuit:
+            nuit_surface = pygame.Surface((self.largeur_ecran, self.hauteur_ecran), pygame.SRCALPHA)
+            nuit_surface.fill((0, 6, 25, int(255 * 0.8)))  # 80% opacity
 
-        # Vérifier si la fée est active
-        if 'fee' in self.sorts and self.sorts['fee'].est_actif():
-            # Si la fée est active, éclairer toute la carte
-            pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (self.largeur_ecran // 2, self.hauteur_ecran // 2), max(self.largeur_ecran, self.hauteur_ecran))
-        else:
-            # Effet de lumière du curseur seulement si la souris est sur la carte
-            x, y = pygame.mouse.get_pos()
-            if x < self.largeur_ecran: 
-                # Portée de base du curseur
-                portee_curseur = 100
-                # Vérifier si le joueur a le sort de vision et augmenter la portée
-                if 'vision' in self.sorts:
-                    portee_curseur = self.sorts['vision'].portee
-                pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (x, y), portee_curseur) # dessin de la lumiere
-        self.majFeuxDeCamps(dt, nuit_surface)
+            # Vérifier si la fée est active
+            if 'fee' in self.sorts and self.sorts['fee'].est_actif():
+                # Si la fée est active, éclairer toute la carte
+                pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (self.largeur_ecran // 2, self.hauteur_ecran // 2), max(self.largeur_ecran, self.hauteur_ecran))
+            else:
+                # Effet de lumière du curseur seulement si la souris est sur la carte
+                x, y = pygame.mouse.get_pos()
+                if x < self.largeur_ecran: 
+                    # Portée de base du curseur
+                    portee_curseur = 100
+                    # Vérifier si le joueur a le sort de vision et augmenter la portée
+                    if 'vision' in self.sorts:
+                        portee_curseur = self.sorts['vision'].portee
+                    pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (x, y), portee_curseur) # dessin de la lumiere
+            self.majFeuxDeCamps(dt, nuit_surface)
 
-        ecran.blit(nuit_surface, (0, 0))
+            ecran.blit(nuit_surface, (0, 0))
 
 
         self._dessiner_boutique(ecran) 
@@ -980,8 +989,12 @@ class Game:
                         is_fee_active = sort_key == "fee" and hasattr(sort, 'est_actif') and sort.est_actif()
                         
                         if sort_key == "eclair":
-                            # Pour l'éclair, sélectionner le sort au lieu de l'acheter directement
-                            if not is_max_level and sort.peut_etre_achete(self.joueur.argent):
+                            # Pour l'éclair, sélectionner/désélectionner le sort
+                            if self.eclair_selectionne:
+                                # Si déjà sélectionné, le désélectionner
+                                self.eclair_selectionne = False
+                            elif not is_max_level and sort.peut_etre_achete(self.joueur.argent):
+                                # Sinon, le sélectionner si on peut l'acheter
                                 self.eclair_selectionne = True
                                 self.type_selectionne = None  # Désélectionner les tours
                         elif not is_max_level and not is_fee_active:
@@ -1009,6 +1022,7 @@ class Game:
                             self.type_selectionne = None
                         elif self.joueur.argent >= prix_t:
                             self.type_selectionne = t
+                            self.eclair_selectionne = False  # Désélectionner l'éclair
                         else:
                             self.type_selectionne = None
                         break
@@ -1048,12 +1062,12 @@ class Game:
                     nouvelle_tour = None
                     if self.type_selectionne == "archer":
                         nouvelle_tour = Archer(id=tour_id, position=pos_tour)
-                    elif self.type_selectionne == "catapult":
-                        nouvelle_tour = Catapult(id=tour_id, position=pos_tour)
+                    elif self.type_selectionne == "catapulte":
+                        nouvelle_tour = Catapulte(id=tour_id, position=pos_tour)
                     elif self.type_selectionne == "mage":
                         nouvelle_tour = TourMage(id=tour_id, position=pos_tour)
-                    elif self.type_selectionne == "Feu de camp":
-                        nouvelle_tour = FeuDeCamps(id=tour_id, position=pos_tour)
+                    elif self.type_selectionne == "campement":
+                        nouvelle_tour = Campement(id=tour_id, position=pos_tour)
                     else:
                         # Types non encore implémentés
                         nouvelle_tour = None
@@ -1062,8 +1076,8 @@ class Game:
                         self.tours.append(nouvelle_tour)
                         self.positions_occupees[case]["instance"] = nouvelle_tour
 
-                        # Joue le son du feu de camp si c'est un feu de camp
-                        if self.type_selectionne == "Feu de camp":
+                        # Joue le son du campement si c'est un campement
+                        if self.type_selectionne == "campement":
                             try:
                                 campfire_sound = pygame.mixer.Sound(os.path.join(ASSETS_DIR, "audio", "bruitage", "camp-fire.mp3"))
                                 campfire_sound.play().set_volume(0.15)
@@ -1111,6 +1125,7 @@ class Game:
         """Démarre une nouvelle vague d'ennemis, chargée depuis un CSV."""
         self.numVague += 1
         self.debutVague = pygame.time.get_ticks()
+        self.est_nuit = True  # Active l'effet de nuit pendant la manche
         print("Vague n°", self.numVague, "lancée")
 
         # Génère la liste d'ennemis depuis le CSV (la fabrique gère leurs types)

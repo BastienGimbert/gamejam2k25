@@ -41,7 +41,7 @@ class Tour(ABC):
         self._au_tir: Optional[Callable[["Tour", "Ennemi"], None]] = None
 
         person_path = os.path.join(_project_root(), "assets", "tower", self.type_nom, "person")
-        desired_total = 6 if self.type_nom == "catapult" else 11
+        desired_total = 6 if self.type_nom == "catapulte" else 11
         side_faces_right = False if self.type_nom == "archer" else True
         self._anim = DirectionalAnimator(
             person_path,
@@ -50,7 +50,7 @@ class Tour(ABC):
         )
         self._anim.start("Idle", "S", False)
 
-        offsets = {"archer": -18, "catapult": 2, "mage": -18}
+        offsets = {"archer": -18, "catapulte": 2, "mage": -18}
         self._person_offset_y = offsets.get(self.type_nom, 8)
 
     def draw(self, ecran: pygame.Surface) -> None:
@@ -159,12 +159,12 @@ class Archer(Tour):
         return
 
 
-class Catapult(Tour):
+class Catapulte(Tour):
     TYPE_ID = 2
-    TYPE_NOM = "catapult"
+    TYPE_NOM = "catapulte"
     PORTEE = 200.0
 
-    # Prix indicatif de la tour Catapult (affiché dans la boutique)
+    # Prix indicatif de la tour Catapulte (affiché dans la boutique)
     PRIX = 35
 
     def __init__(self, id: int, position: Position) -> None:
@@ -187,7 +187,7 @@ class Mage(Tour):
     TYPE_NOM = "mage"
     PORTEE = 150.0
 
-    # Prix indicatif de la tour Catapult (affiché dans la boutique)
+    # Prix indicatif de la tour Catapulte (affiché dans la boutique)
     PRIX = 60
 
     def __init__(self, id: int, position: Position) -> None:
@@ -205,9 +205,9 @@ class Mage(Tour):
         return
     
 
-class FeuDeCamps(Tour):
+class Campement(Tour):
     TYPE_ID = 4
-    TYPE_NOM = "Feu de camp"
+    TYPE_NOM = "Campement"
     PRIX = 120
     PORTEE = 92.0  
 
@@ -226,8 +226,8 @@ class FeuDeCamps(Tour):
 
         if FeuDeCamps._frames is None:
             # Charger les 6 frames de feu
-            FeuDeCamps._frames = charger_et_scaler(
-                "../tower/Feu de camp", "1.png", 6, scale=0.8
+            Campement._frames = charger_et_scaler(
+                "../tower/Campement", "1.png", 6, scale=0.8
             )
 
         self.frame_index = 0
