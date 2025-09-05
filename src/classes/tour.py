@@ -102,7 +102,8 @@ class Tour(ABC):
                     if distance_positions(self.position, self._cible.position) <= self.portee:
                         if self._au_tir is not None:
                             self._au_tir(self, self._cible)
-                self._time_since_last_shot = 0.0
+                            self._time_since_last_shot = 0.0
+                
                 self._etat = "idle"
                 self._cible = None
                 self._au_tir = None
