@@ -138,6 +138,7 @@ class Tour(ABC):
 class Archer(Tour):
     TYPE_ID = 1
     TYPE_NOM = "archer"
+    PORTEE = 150.0
 
     # Prix indicatif de la tour Archer (affiché dans la boutique)
     PRIX = 12
@@ -148,7 +149,7 @@ class Archer(Tour):
             type_id=self.TYPE_ID,
             type_nom=self.TYPE_NOM,
             cooldown_s=0.5,
-            portee=150.0,
+            portee=self.PORTEE,
             position=position,
             prix=self.PRIX,
         )
@@ -160,6 +161,7 @@ class Archer(Tour):
 class Catapult(Tour):
     TYPE_ID = 2
     TYPE_NOM = "catapult"
+    PORTEE = 200.0
 
     # Prix indicatif de la tour Catapult (affiché dans la boutique)
     PRIX = 35
@@ -170,7 +172,7 @@ class Catapult(Tour):
             type_id=self.TYPE_ID,
             type_nom=self.TYPE_NOM,
             cooldown_s=2.0,
-            portee=200.0,
+            portee=self.PORTEE,
             position=position,
             prix=self.PRIX,
         )
@@ -182,6 +184,7 @@ class Catapult(Tour):
 class Mage(Tour):
     TYPE_ID = 3
     TYPE_NOM = "mage"
+    PORTEE = 150.0
 
     # Prix indicatif de la tour Catapult (affiché dans la boutique)
     PRIX = 60
@@ -192,7 +195,7 @@ class Mage(Tour):
             type_id=self.TYPE_ID,
             type_nom=self.TYPE_NOM,
             cooldown_s=1.5,
-            portee=150.0,
+            portee=self.PORTEE,
             position=position,
             prix=self.PRIX,
         )
@@ -205,6 +208,7 @@ class FeuDeCamps(Tour):
     TYPE_ID = 4
     TYPE_NOM = "Feu de camp"
     PRIX = 80
+    PORTEE = 92.0  
 
     _frames: list[pygame.Surface] | None = None
 
@@ -214,7 +218,7 @@ class FeuDeCamps(Tour):
             type_id=self.TYPE_ID,
             type_nom=self.TYPE_NOM,
             cooldown_s=1.5,
-            portee=92.0,
+            portee=self.PORTEE,
             position=position,
             prix=self.PRIX,
         )
