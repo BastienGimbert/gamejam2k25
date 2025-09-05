@@ -160,10 +160,11 @@ class ProjectileMageEnnemi(Projectile):
 
     CHEMIN_IMAGE: ClassVar[str] = "assets/enemy/mage/Projectile2.png"
 
-    def __init__(self, origine: Position, cible_proj: "ProjectilePierre", vitesse: float = 500.0):
+    def __init__(self, origine: Position, cible_proj: "ProjectilePierre", vitesse: float = 700.0):
         # On initialise avec la position initiale du projectile
+        # Portée illimitée pour garantir l'interception, collision un peu plus large
         super().__init__(origine=origine, cible_pos=Position(cible_proj.x, cible_proj.y),
-                         degats=50, vitesse=vitesse, rayon_collision=12.0)
+                         degats=0, vitesse=vitesse, rayon_collision=24.0, portee_max=None)
         self.image_base: Optional[pygame.Surface] = None
         self.cible_proj = cible_proj  # On garde la référence pour le guidage
 
