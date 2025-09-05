@@ -5,6 +5,12 @@ from classes.utils import charger_chemin_tiled, distance_positions, decouper_spr
 import pygame
 import os
 
+#Evite les boucles dans les imports mutuels
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from game import Game
+
+
 SCALE_FACTOR = 2
 
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -115,11 +121,11 @@ class Ennemi(ABC):
         self._arrive_au_bout = True
         if self._on_reach_castle and not self.estMort():
             self._on_reach_castle(self)
-    
-    def majVisible(self):
-        x, y  = pygame.mouse.get_pos()
+
+    def majVisible(self, game: Optional["Game"]):
+        x, y = pygame.mouse.get_pos()
         pointeurPos = Position(x, y)
-        if(distance_positions(self.position, pointeurPos) < 100):
+        if(distance_positions(self.position, pointeurPos) < 100) or game.dansFeuDeCamp(self.position):
             self.set_visibilite(True)
         else:
             self.set_visibilite(False)
