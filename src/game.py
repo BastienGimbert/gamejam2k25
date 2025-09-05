@@ -793,8 +793,17 @@ class Game:
                         # Types non encore implémentés
                         nouvelle_tour = None
                     if nouvelle_tour is not None:
+
                         self.tours.append(nouvelle_tour)
                         self.positions_occupees[case]["instance"] = nouvelle_tour
+
+                        # Joue le son du feu de camp si c'est un feu de camp
+                        if self.type_selectionne == "Feu de camp":
+                            try:
+                                campfire_sound = pygame.mixer.Sound(os.path.join(base_dir, "assets", "audio", "bruitage", "camp-fire.mp3"))
+                                campfire_sound.play()
+                            except Exception:
+                                pass
 
                         # Mémorise le prix d'achat pour revente éventuelle
                         self.positions_occupees[case]["prix"] = getattr(
