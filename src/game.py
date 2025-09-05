@@ -1111,7 +1111,7 @@ class Game:
         try:
             if self.est_muet:
                 return
-            chemin = os.path.join(base_dir, "assets", "audio", "bruitage", fichier)
+            chemin = os.path.join( "assets", "audio", "bruitage", fichier)
             if not os.path.exists(chemin):
                 return
             if fichier not in self._sons_cache:
