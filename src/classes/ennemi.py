@@ -28,6 +28,7 @@ class Ennemi(ABC):
             raise ValueError("Chemin invalide (>=2 points requis).")
         self.vitesse = float(vitesse)
         self.pointsDeVie = int(pointsDeVie)
+        self.pointsDeVieMax = int(pointsDeVie)  # PV Max et donc initiaux de l'ennemi
         self.degats = int(degats)
         self._chemin: List[Position] = chemin
         self.position = self._chemin[0].copy()
@@ -328,7 +329,3 @@ class Mage(Ennemi):
         self._time_since_last_attack = 0.0
         self.frame_index = 0
         self.frame_timer = 0
-
-        
-
-        

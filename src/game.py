@@ -414,6 +414,26 @@ class Game:
                     e.majVisible()
                 if hasattr(e, "draw"):
                     e.draw(ecran)
+                # --- Barre de PV ---
+                if hasattr(e, "pointsDeVie") and hasattr(e, "pointsDeVieMax") and e.pointsDeVie < e.pointsDeVieMax:
+                    # Position de la barre : juste au-dessus de l'ennemi
+                    px = int(e.position.x)
+                    py = int(e.position.y)
+
+                    largeur_max = 40
+                    hauteur = 4
+
+                    ratio = max(0, min(1, e.pointsDeVie / e.pointsDeVieMax))
+                    largeur_barre = int(largeur_max * ratio)
+
+                    x_barre = px - largeur_max // 2
+                    y_barre = py - 40  # Espace entre le haut du sprite et l'ennemi
+
+                    # Fond gris
+                    pygame.draw.rect(ecran, (60, 60, 60), (x_barre, y_barre, largeur_max, hauteur), border_radius=3)
+
+                    # Barre rouge
+                    pygame.draw.rect(ecran, (220, 50, 50), (x_barre, y_barre, largeur_barre, hauteur), border_radius=3)
 
     # ---------- Update / boucle ----------
     def maj(self, dt: float):
@@ -740,4 +760,3 @@ class Game:
             if not (est_mort or au_bout):
                 return False
         return True
-
