@@ -99,17 +99,13 @@ class ProjectileFleche(Projectile):
 
     def __init__(self, origine: Position, cible_pos: Position) -> None:
         super().__init__(origine=origine, cible_pos=cible_pos, degats=20, vitesse=720.0, rayon_collision=12.0)
-        self.image_base: Optional[pygame.Surface] = None
+        self.image_base: Optional[pygame.Surface] = None 
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         if self.detruit or self.image_base is None:
             return
         angle = self._angle_degres()
-        rotation = 90.0 - angle
-        # 1) Rotation sur image originale pour éviter l'accumulation d'artefacts
-        sprite = pygame.transform.rotate(self.image_base, rotation)
-        # 2) Mise à l'échelle douce après rotation (meilleure netteté)
-        sprite = pygame.transform.smoothscale(sprite, (24, 24))
+        sprite = pygame.transform.rotozoom(self.image_base, 90 - angle, 1.0)
         rect = sprite.get_rect(center=(int(self.x), int(self.y)))
         ecran.blit(sprite, rect)
 
@@ -127,9 +123,7 @@ class ProjectilePierre(Projectile):
         if self.detruit or self.image_base is None:
             return
         angle = self._angle_degres()
-        rotation = 90.0 - angle
-        sprite = pygame.transform.rotate(self.image_base, rotation)
-        sprite = pygame.transform.smoothscale(sprite, (22, 22))
+        sprite = pygame.transform.rotozoom(self.image_base, 90 - angle, 1.0)
         rect = sprite.get_rect(center=(int(self.x), int(self.y)))
         ecran.blit(sprite, rect)
 
@@ -149,8 +143,7 @@ class ProjectileTourMage(Projectile):
         if self.detruit or self.image_base is None:
             return
         angle = self._angle_degres()
-        sprite = pygame.transform.rotate(self.image_base, 90 - angle)
-        sprite = pygame.transform.smoothscale(sprite, (26, 26))
+        sprite = pygame.transform.rotozoom(self.image_base, 90 - angle, 1.0)
         rect = sprite.get_rect(center=(int(self.x), int(self.y)))
         ecran.blit(sprite, rect)
 
@@ -201,8 +194,7 @@ class ProjectileMageEnnemi(Projectile):
         if self.detruit or self.image_base is None:
             return
         angle = self._angle_degres()
-        sprite = pygame.transform.rotate(self.image_base, 90 - angle)
-        sprite = pygame.transform.smoothscale(sprite, (28, 28))
+        sprite = pygame.transform.rotozoom(self.image_base, 90 - angle, 1.0)
         rect = sprite.get_rect(center=(int(self.x), int(self.y)))
         ecran.blit(sprite, rect)
 
