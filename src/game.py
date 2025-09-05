@@ -48,6 +48,14 @@ class Game:
             "Feu de camp": getattr(FeuDeCamps, "PRIX"),
         }
 
+        self.portee_par_type: dict[str, float] = {
+            "archer": getattr(Archer, "PORTEE"),
+            "catapult": getattr(Catapult, "PORTEE"),
+            "mage": getattr(TourMage, "PORTEE"),
+            "Feu de camp": getattr(FeuDeCamps, "PORTEE"),
+        }
+
+
         # Animation monnaie
         self.coin_frames = self._charger_piece()
         self.coin_frame_idx = 0
@@ -419,8 +427,16 @@ class Game:
         # Ne montrer la surbrillance que si une tour est sélectionnée pour placement
         if not self.case_survolee or not self.type_selectionne:
             return
+
         x_case, y_case = self.case_survolee
-        rect = pygame.Rect(x_case * self.taille_case, y_case * self.taille_case, self.taille_case, self.taille_case)
+        rect = pygame.Rect(
+            x_case * self.taille_case,
+            y_case * self.taille_case,
+            self.taille_case,
+            self.taille_case
+        )
+
+        #Surbrillance
         overlay = pygame.Surface((self.taille_case, self.taille_case), pygame.SRCALPHA)
         interdit = (
             (x_case, y_case) in getattr(self, "cases_bannies", set())
@@ -430,6 +446,26 @@ class Game:
         overlay.fill((*couleur, 80))
         if rect.right <= self.largeur_ecran:
             ecran.blit(overlay, rect)
+
+        # Cercle autour de la case
+
+        portee = self.portee_par_type.get(self.type_selectionne, 0)
+        cx = x_case * self.taille_case + self.taille_case // 2
+        cy = y_case * self.taille_case + self.taille_case // 2
+
+        # Dessine un cercle
+        dash_count = 15     # nombre de segments
+        dash_length = 0.15  # en radians
+
+        for i in range(dash_count):
+            angle_start = 2 * math.pi * i / dash_count
+            angle_end = angle_start + dash_length
+            x1 = int(cx + portee * math.cos(angle_start))
+            y1 = int(cy + portee * math.sin(angle_start))
+            x2 = int(cx + portee * math.cos(angle_end))
+            y2 = int(cy + portee * math.sin(angle_end))
+            pygame.draw.line(ecran, (255, 255, 255), (x1, y1), (x2, y2), 3)
+
 
     def _dessiner_tours_placees(self, ecran):
         """Dessine les tours, avec un traitement spécial pour FeuDeCamps."""
