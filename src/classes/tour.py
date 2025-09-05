@@ -204,7 +204,7 @@ class Mage(Tour):
 class FeuDeCamps(Tour):
     TYPE_ID = 4
     TYPE_NOM = "Feu de camp"
-    PRIX = 50
+    PRIX = 80
 
     _frames: list[pygame.Surface] | None = None
 
