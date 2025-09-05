@@ -294,15 +294,20 @@ class Game:
         # Boutons tours
         for item in self.shop_items:
             rect = item["rect"]
+            t = item["type"]
             hover = rect.collidepoint(pygame.mouse.get_pos())
+            # --- Ajout : fond hover si sélectionné ---
+            if self.type_selectionne == t or hover:
+                couleur_fond_boutton = self.couleur_bouton_hover
+            else:
+                couleur_fond_boutton = self.couleur_bouton_bg
             pygame.draw.rect(
                 ecran,
-                self.couleur_bouton_hover if hover else self.couleur_bouton_bg,
+                couleur_fond_boutton,
                 rect,
                 border_radius=6,
             )
             pygame.draw.rect(ecran, self.couleur_boutique_border, rect, 2, border_radius=6)
-            t = item["type"]
 
             # label centré verticalement
             label = self.police.render(t.capitalize(), True, self.couleur_texte)
@@ -355,9 +360,6 @@ class Game:
             if coin_surf:
                 ecran.blit(coin_surf, (coin_x, coin_y))
 
-        if self.type_selectionne:
-            info = self.police.render(f"Place: {self.type_selectionne}", True, (200, 220, 255))
-            ecran.blit(info, (self.rect_boutique.x + 20, self.hauteur_ecran - 40))
         bouton_actif = self.vague_terminee()
         if bouton_actif:
             self.bouton_vague.dessiner(ecran)
