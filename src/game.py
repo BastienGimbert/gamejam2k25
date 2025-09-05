@@ -294,15 +294,20 @@ class Game:
         # Boutons tours
         for item in self.shop_items:
             rect = item["rect"]
+            t = item["type"]
             hover = rect.collidepoint(pygame.mouse.get_pos())
+            # --- Ajout : fond hover si sélectionné ---
+            if self.type_selectionne == t or hover:
+                couleur_fond_boutton = self.couleur_bouton_hover
+            else:
+                couleur_fond_boutton = self.couleur_bouton_bg
             pygame.draw.rect(
                 ecran,
-                self.couleur_bouton_hover if hover else self.couleur_bouton_bg,
+                couleur_fond_boutton,
                 rect,
                 border_radius=6,
             )
             pygame.draw.rect(ecran, self.couleur_boutique_border, rect, 2, border_radius=6)
-            t = item["type"]
 
             # label centré verticalement
             label = self.police.render(t.capitalize(), True, self.couleur_texte)
@@ -355,9 +360,6 @@ class Game:
             if coin_surf:
                 ecran.blit(coin_surf, (coin_x, coin_y))
 
-        if self.type_selectionne:
-            info = self.police.render(f"Place: {self.type_selectionne}", True, (200, 220, 255))
-            ecran.blit(info, (self.rect_boutique.x + 20, self.hauteur_ecran - 40))
         bouton_actif = self.vague_terminee()
         if bouton_actif:
             self.bouton_vague.dessiner(ecran)
@@ -416,6 +418,26 @@ class Game:
                     e.majVisible()
                 if hasattr(e, "draw"):
                     e.draw(ecran)
+                # --- Barre de PV ---
+                if hasattr(e, "pointsDeVie") and hasattr(e, "pointsDeVieMax") and e.pointsDeVie < e.pointsDeVieMax:
+                    # Position de la barre : juste au-dessus de l'ennemi
+                    px = int(e.position.x)
+                    py = int(e.position.y)
+
+                    largeur_max = 40
+                    hauteur = 4
+
+                    ratio = max(0, min(1, e.pointsDeVie / e.pointsDeVieMax))
+                    largeur_barre = int(largeur_max * ratio)
+
+                    x_barre = px - largeur_max // 2
+                    y_barre = py - 40  # Espace entre le haut du sprite et l'ennemi
+
+                    # Fond gris
+                    pygame.draw.rect(ecran, (60, 60, 60), (x_barre, y_barre, largeur_max, hauteur), border_radius=3)
+
+                    # Barre rouge
+                    pygame.draw.rect(ecran, (220, 50, 50), (x_barre, y_barre, largeur_barre, hauteur), border_radius=3)
 
     # ---------- Update / boucle ----------
     def maj(self, dt: float):
@@ -590,7 +612,11 @@ class Game:
                         # Sélectionne le type uniquement si le joueur a assez d'argent
                         t = item["type"]
                         prix_t = self.prix_par_type.get(t, 0)
-                        if self.joueur.argent >= prix_t:
+
+                        # Si déjà sélectionné, on désélectionne
+                        if self.type_selectionne == t:
+                            self.type_selectionne = None
+                        elif self.joueur.argent >= prix_t:
                             self.type_selectionne = t
                         else:
                             self.type_selectionne = None
@@ -746,4 +772,3 @@ class Game:
             if not (est_mort or au_bout):
                 return False
         return True
-

@@ -29,6 +29,7 @@ class Ennemi(ABC):
             raise ValueError("Chemin invalide (>=2 points requis).")
         self.vitesse = float(vitesse)
         self.pointsDeVie = int(pointsDeVie)
+        self.pointsDeVieMax = int(pointsDeVie)  # PV Max et donc initiaux de l'ennemi
         self.degats = int(degats)
         # Montant d'or donné au joueur quand cet ennemi est tué
         self.argent = int(argent)
@@ -331,7 +332,3 @@ class Mage(Ennemi):
         self._time_since_last_attack = 0.0
         self.frame_index = 0
         self.frame_timer = 0
-
-        
-
-        
