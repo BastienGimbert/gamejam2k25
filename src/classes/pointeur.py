@@ -22,6 +22,3 @@ class Pointeur:
         x, y = pygame.mouse.get_pos()
         self.position.x = x
         self.position.y = y
-
-        # Dessine le halo à la position de la souris
-        screen.blit(self.surface, (x - self.rayon, y - self.rayon))

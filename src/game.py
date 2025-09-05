@@ -22,9 +22,9 @@ class Game:
         self.joueur = Joueur(argent=1030, point_de_vie=100, sort="feu", etat="normal")
         self.police = police
         self.couleurs = {
-            "fond": (30, 30, 30),
-            "bordure": (80, 80, 80),
-            "texte": (240, 240, 240),
+            "fond": (0, 6, 25),
+            "bordure": (40, 40, 60),
+            "texte": (200, 220, 255),
         }
         
 
@@ -82,8 +82,8 @@ class Game:
         self.image_projectileMageEnnemi = self._charger_image_projectile(ProjectileMageEnnemi.CHEMIN_IMAGE)
 
 
-        self.couleur_quadrillage = (100, 100, 100)
-        self.couleur_surbrillance = (255, 255, 0)
+        self.couleur_quadrillage = (40, 60, 100)
+        self.couleur_surbrillance = (80, 180, 255)
         self.couleur_surbrillance_interdite = (255, 80, 80)
         self.couleur_boutique_bg = (30, 30, 30)
         self.couleur_boutique_border = (80, 80, 80)
@@ -537,10 +537,19 @@ class Game:
         self._dessiner_tours_placees(ecran)
         self._dessiner_personnages_tours(ecran)
         self._dessiner_surbrillance(ecran)
-        self._dessiner_boutique(ecran)
+        
+        # Effet nuit
+        nuit_surface = pygame.Surface((self.largeur_ecran, self.hauteur_ecran), pygame.SRCALPHA)
+        nuit_surface.fill((0, 6, 25, int(255 * 0.6)))  # 60% opacity
+
+        x, y = pygame.mouse.get_pos()
+        if x < self.largeur_ecran: 
+            pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (x, y), 100) # dessin de la lumiere
+        ecran.blit(nuit_surface, (0, 0))
+
+        self._dessiner_boutique(ecran) 
         self.dessiner_ennemis(ecran)
 
-        # Dessine les projectiles au-dessus de la carte (et sous le pointeur)
         for pr in self.projectiles:
             if hasattr(pr, "dessiner"):
                 pr.dessiner(ecran)
