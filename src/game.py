@@ -1041,15 +1041,14 @@ class Game:
 
         return nearestMage
 
-    def majFeuxDeCamps(self, dt: float, nuit_surface: pygame.Surface) -> None:
+    def majFeuxDeCamps(self, dt: float, nuit_surface: pygame.Surface | None = None) -> None:
         """Met à jour et dessine les effets de lumière des feux de camps."""
         feux_de_camps = [t for t in self.tours if t.__class__.__name__ == "Campement"]
         for feu in feux_de_camps:
             feu.maj(dt)
-            radius = feu.portee
-            pygame.draw.circle(
-                nuit_surface, (0, 0, 0, 0), (feu.position.x, feu.position.y), radius
-            )
+            if nuit_surface is not None:
+                radius = feu.portee
+                pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (feu.position.x, feu.position.y), radius)
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         dt = self.clock.tick(60) / 1000.0
@@ -1089,7 +1088,9 @@ class Game:
             self.majFeuxDeCamps(dt, nuit_surface)
 
             ecran.blit(nuit_surface, (0, 0))
-
+        else:
+            self.majFeuxDeCamps(dt, None)
+        
         self._dessiner_boutique(ecran)
         self._dessiner_boutique_sorts(ecran)
         self.dessiner_ennemis(ecran)
