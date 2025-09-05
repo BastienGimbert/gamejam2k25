@@ -50,7 +50,7 @@ class Tour(ABC):
         )
         self._anim.start("Idle", "S", False)
 
-        offsets = {"archer": -18, "catapult": 2, "mage": 6}
+        offsets = {"archer": -18, "catapult": 2, "mage": -18}
         self._person_offset_y = offsets.get(self.type_nom, 8)
 
     def draw(self, ecran: pygame.Surface) -> None:

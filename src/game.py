@@ -429,20 +429,17 @@ class Game:
                     e.seDeplacer(dt)
                     e.update_animation(dt)
             except Exception:
-                # Si l'ennemi ne supporte pas le timing des vagues, on le met à jour quand même
                 if hasattr(e, "seDeplacer"):
                     e.seDeplacer(dt)
 
-        # Perte de PV si un ennemi touche la 3e ou 4e case de la 1ère ligne (cases (2,0) et (3,0))
+        # Perte de PV si un ennemi touche certaines cases "château"
         for e in self.ennemis:
             try:
                 pos_px = (int(e.position.x), int(e.position.y))
                 case = self._case_depuis_pos(pos_px)
                 if case in {(2, 0), (3, 0)}:
-                    # Infliger les dégâts de l'ennemi au joueur puis le retirer
                     deg = getattr(e, "degats", 1)
                     self.joueur.point_de_vie = max(0, int(self.joueur.point_de_vie) - int(deg))
-                    # Marque pour ne pas donner d'or si l'ennemi est retiré pour arrivée au château
                     try:
                         setattr(e, "_ne_pas_recompenser", True)
                     except Exception:
@@ -457,50 +454,46 @@ class Game:
             except Exception:
                 continue
 
-        # Mise à jour des tours (acquisitions + tirs)
+        # Mise à jour des tours (acquisition cible + tir)
         for t in self.tours:
-            def au_tir(tour: Tour, cible: Gobelin):
+            def au_tir(tour: Tour, cible: Ennemi):
                 if isinstance(tour, Archer) and self.image_fleche is not None:
                     p = ProjectileFleche(origine=tour.position, cible_pos=cible.position.copy())
-                    p.cible = cible  # head-seeking
+                    p.cible = cible              # suivi de la cible (comme une flèche)
                     p.image_base = self.image_fleche
                     self.projectiles.append(p)
+
                 elif isinstance(tour, Catapult) and self.image_pierre is not None:
                     p = ProjectilePierre(origine=tour.position, cible_pos=cible.position.copy(), game_ref=self)
                     p.cible = cible
                     p.image_base = self.image_pierre
                     self.projectiles.append(p)
+
                 elif isinstance(tour, TourMage) and self.image_orbe_mage is not None:
+                    # LOGIQUE SIMPLE identique à l'archer (pas d'interception ici)
                     p = ProjectileTourMage(origine=tour.position, cible_pos=cible.position.copy())
                     p.cible = cible
                     p.image_base = self.image_orbe_mage
                     self.projectiles.append(p)
 
-                    if p and hasattr(self, "get_closest_mage"):
-                        mage = self.get_closest_mage(p.position)
-                        if mage:
-                            mage.react_to_projectile()
-                            pm = ProjectileMageEnnemi(origine=mage.position.copy(), cible_proj=p, vitesse=600.0)
-                            pm.image_base = self.image_projectileMageEnnemi 
-                            self.projectiles.append(pm)
-
             if hasattr(t, "maj"):
                 t.maj(dt, self.ennemis, au_tir=au_tir)
 
-        # Mise à jour projectiles + collisions
+        # Mise à jour des projectiles + collisions
         for pr in self.projectiles:
             if hasattr(pr, "mettreAJour"):
                 pr.mettreAJour(dt)
             if getattr(pr, "detruit", False):
                 continue
+
             if not isinstance(pr, ProjectileMageEnnemi):
+                # Collision projectiles tours -> ennemis
                 for e in self.ennemis:
                     if hasattr(e, "estMort") and e.estMort():
                         continue
                     if hasattr(pr, "aTouche") and pr.aTouche(e):
                         if hasattr(pr, "appliquerDegats"):
                             pr.appliquerDegats(e)
-                            # Si l'ennemi vient de mourir suite à ce projectile, créditer la récompense
                             try:
                                 if e.estMort() and not getattr(e, "_recompense_donnee", False) and not getattr(e, "_ne_pas_recompenser", False):
                                     self.joueur.argent += int(getattr(e, "argent", 0))
@@ -508,21 +501,25 @@ class Game:
                             except Exception:
                                 pass
                         break
-            # --- Collision spécifique pour ProjectileMageEnnemi ---
             else:
+                # Collision spécifique projectile mage ennemi -> projectile de catapulte (si encore utilisé)
                 cible = getattr(pr, "cible_proj", None)
                 if cible and hasattr(pr, "aTouche") and pr.aTouche(cible):
-                    # détruit la pierre
                     cible.detruit = True
-                    # détruit le projectile du mage 
                     pr.detruit = True
 
         # Nettoyage projectiles
         self.projectiles = [p for p in self.projectiles if not getattr(p, "detruit", False)]
 
-        # Nettoyage des ennemis (retirer ceux qui sont morts ou arrivés au bout)
-        self.ennemis = [e for e in self.ennemis if not (getattr(e, "estMort", lambda: False)() or getattr(e, "a_atteint_le_bout", lambda: False)())]
-
+        # Nettoyage ennemis
+        self.ennemis = [
+            e for e in self.ennemis
+            if not (
+                getattr(e, "estMort", lambda: False)() or
+                getattr(e, "a_atteint_le_bout", lambda: False)()
+            )
+        ]
+        
     def get_closest_mage(self, pos: Position) -> None | Mage:
         """Retourne le mage le plus proche de la position pos."""
         mages = [e for e in self.ennemis if isinstance(e, Mage) and not e.estMort() and e.estApparu(self.debutVague) and e.ready_to_attack()]
