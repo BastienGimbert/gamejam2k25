@@ -41,6 +41,8 @@ CREDITS_LIGNES = [
     "",
     "Arrangements médiévaux : Stantough",
     "",
+    "Bruitage par pixabay.com",
+    "",
     "Nous tenons à remercier Coding With Russ",
     "pour son tutoriel de 3 heures",
     "sur la création d'un tower defense avec pygame",
