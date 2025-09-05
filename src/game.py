@@ -415,7 +415,7 @@ class Game:
                 tour = None
                 cx = x_case * self.taille_case + self.taille_case // 2
                 cy = y_case * self.taille_case + self.taille_case // 2
-                for t in self.tours and i:
+                for t in self.tours:
                     if int(t.position.x) == cx and int(t.position.y) == cy:
                         tour = t
                         break
