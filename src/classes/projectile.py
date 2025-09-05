@@ -135,7 +135,7 @@ class ProjectilePierre(Projectile):
             origine=origine,
             cible_pos=cible_pos,
             degats=200,
-            vitesse=360.0,
+            vitesse=250.0,
             rayon_collision=16.0,
         )
         self.image_base: Optional[pygame.Surface] = None
@@ -161,7 +161,7 @@ class ProjectileTourMage(Projectile):
             origine=origine,
             cible_pos=cible_pos,
             degats=40,
-            vitesse=600.0,
+            vitesse=400.0,
             rayon_collision=14.0,
         )
         self.image_base: Optional[pygame.Surface] = None

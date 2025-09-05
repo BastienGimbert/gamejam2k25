@@ -378,7 +378,7 @@ class Mage(Ennemi):
             tempsApparition=tempsApparition,
             vitesse=40.0,
             pointsDeVie=170,
-            degats=12,
+            degats=20,
             argent=3,
             chemin=chemin,
             **kw
