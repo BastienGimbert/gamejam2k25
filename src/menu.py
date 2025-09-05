@@ -1,5 +1,6 @@
 import pygame
 from bouton import Bouton
+from classes.constants import GAME_NAME
 
 # ------------------- COULEURS PAR DÉFAUT -------------------
 BLANC = (255, 255, 255)
@@ -53,7 +54,7 @@ def dessiner_menu(ecran: pygame.Surface, boutons: list) -> None:
 def dessiner_credits(ecran: pygame.Surface, police: pygame.font.Font, largeur: int) -> None:
     """Dessine l'écran des crédits."""
     ecran.fill((180, 180, 180))
-    lignes = ["Protect The Castle", "Par ...", "2025"]
+    lignes = [GAME_NAME, "Par ...", "2025"]
     for i, ligne in enumerate(lignes):
         surf = police.render(ligne, True, NOIR)
         ecran.blit(surf, (largeur // 2 - surf.get_width() // 2, 150 + i * 60))

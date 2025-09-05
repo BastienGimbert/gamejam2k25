@@ -17,7 +17,7 @@ from classes.bouton import Bouton
 from classes.sort import SortVision, SortFee, SortEclair
 
 from classes.constants import ASSETS_DIR, PROJECT_ROOT, MONEY_DIR, HEART_DIR, TOWER_DIR, \
-    COIN_ANIM_INTERVAL_MS, HEART_ANIM_INTERVAL_MS, MAP_PNG, DEFAULT_TOWER_TYPES, MAP_TILESET_TMJ
+    COIN_ANIM_INTERVAL_MS, HEART_ANIM_INTERVAL_MS, MAP_PNG, DEFAULT_TOWER_TYPES, MAP_TILESET_TMJ, SPELLS_HEIGHT, GAME_HEIGHT, SHOP_WIDTH, TILE_SIZE, GRID_COLS, GRID_ROWS, GAME_WIDTH, WINDOW_HEIGHT
 
 
 class Game:
@@ -36,20 +36,20 @@ class Game:
         
 
         # Grille / carte
-        self.taille_case = 64
-        self.colonnes = 12
-        self.lignes = 12
-        self.largeur_ecran = 768
-        self.hauteur_ecran = 768  # Taille normale de la carte
+        self.taille_case = TILE_SIZE
+        self.colonnes = GRID_COLS
+        self.lignes = GRID_ROWS
+        self.largeur_ecran = GAME_WIDTH
+        self.hauteur_ecran = GAME_HEIGHT  # Taille normale de la carte
         self.case_survolee: tuple[int, int] | None = None
 
         # Boutique (à droite de la carte)
-        self.largeur_boutique = 400
+        self.largeur_boutique = SHOP_WIDTH
         self.rect_boutique = pygame.Rect(self.largeur_ecran, 0, self.largeur_boutique, self.hauteur_ecran)
         
         # Boutique de sorts (en bas de l'écran)
-        self.hauteur_boutique_sorts = 200
-        self.rect_boutique_sorts = pygame.Rect(0, self.hauteur_ecran, 1168, self.hauteur_boutique_sorts)
+        self.hauteur_boutique_sorts = SPELLS_HEIGHT
+        self.rect_boutique_sorts = pygame.Rect(0, self.hauteur_ecran, WINDOW_HEIGHT, self.hauteur_boutique_sorts)
         
         # Sorts du joueur
         self.sorts = {
