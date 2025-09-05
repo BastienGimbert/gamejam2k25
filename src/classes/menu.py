@@ -28,7 +28,8 @@ CREDITS_LIGNES = [
     "GIBELLO Gregoire",
     "GIMBERT Bastien",
     "",
-    "Assets : free-game-assets.itch.io (achetés sous licence)",
+    "Assets : free-game-assets.itch.io",
+    "(achetés sous licence)",
     "",
     "Musiques (arrangements bardcore) :",
     "Barbie Girl (Aqua)",
@@ -40,8 +41,12 @@ CREDITS_LIGNES = [
     "",
     "Arrangements médiévaux : Stantough",
     "",
+    "Nous tenons à remercier Coding With Russ",
+    "pour son tutoriel de 3 heures",
+    "sur la création d'un tower defense avec pygame",
+    "",
     "Merci d'avoir joué !",
-    "2025"
+    "2025 IUT2 Grenoble - Informatique"
 ]
 
 # ------------------- IMAGE DE FOND --------------------
