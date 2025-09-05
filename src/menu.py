@@ -1,5 +1,6 @@
 import pygame
 from bouton import Bouton
+
 from classes.constants import GAME_NAME
 
 # ------------------- COULEURS PAR DÉFAUT -------------------
@@ -16,7 +17,10 @@ COULEURS_BOUTON = {
 
 # ------------------- FABRICATION DES BOUTONS -------------------
 
-def creer_boutons_menu(police: pygame.font.Font, reprendre: bool, actions: dict) -> list:
+
+def creer_boutons_menu(
+    police: pygame.font.Font, reprendre: bool, actions: dict
+) -> list:
     """
     Construit la liste des boutons du menu principal ou du menu pause.
     - reprendre=False => affiche un bouton "Jouer", sinon "Reprendre".
@@ -25,24 +29,70 @@ def creer_boutons_menu(police: pygame.font.Font, reprendre: bool, actions: dict)
     boutons = []
 
     if reprendre:
-        boutons.append(Bouton("Reprendre", 300, 200, 200, 50, actions.get("reprendre"), police, COULEURS_BOUTON))
+        boutons.append(
+            Bouton(
+                "Reprendre",
+                300,
+                200,
+                200,
+                50,
+                actions.get("reprendre"),
+                police,
+                COULEURS_BOUTON,
+            )
+        )
     else:
-        boutons.append(Bouton("Jouer", 300, 200, 200, 50, actions.get("jouer"), police, COULEURS_BOUTON))
+        boutons.append(
+            Bouton(
+                "Jouer",
+                300,
+                200,
+                200,
+                50,
+                actions.get("jouer"),
+                police,
+                COULEURS_BOUTON,
+            )
+        )
 
-    boutons.append(Bouton("Crédits", 300, 300, 200, 50, actions.get("credits"), police, COULEURS_BOUTON))
-    boutons.append(Bouton("Muet", 300, 400, 200, 50, actions.get("muet"), police, COULEURS_BOUTON))
-    boutons.append(Bouton("Quitter", 300, 500, 200, 50, actions.get("quitter"), police, COULEURS_BOUTON))
+    boutons.append(
+        Bouton(
+            "Crédits",
+            300,
+            300,
+            200,
+            50,
+            actions.get("credits"),
+            police,
+            COULEURS_BOUTON,
+        )
+    )
+    boutons.append(
+        Bouton("Muet", 300, 400, 200, 50, actions.get("muet"), police, COULEURS_BOUTON)
+    )
+    boutons.append(
+        Bouton(
+            "Quitter",
+            300,
+            500,
+            200,
+            50,
+            actions.get("quitter"),
+            police,
+            COULEURS_BOUTON,
+        )
+    )
 
     return boutons
 
 
 def creer_boutons_credits(police: pygame.font.Font, action_retour) -> list:
     """Construit le bouton de retour depuis l'écran des crédits."""
-    return [
-        Bouton("Retour", 300, 500, 200, 50, action_retour, police, COULEURS_BOUTON)
-    ]
+    return [Bouton("Retour", 300, 500, 200, 50, action_retour, police, COULEURS_BOUTON)]
+
 
 # ------------------- AFFICHAGES -------------------
+
 
 def dessiner_menu(ecran: pygame.Surface, boutons: list) -> None:
     """Dessine le fond et les boutons du menu (principal ou pause)."""
@@ -51,7 +101,9 @@ def dessiner_menu(ecran: pygame.Surface, boutons: list) -> None:
         b.dessiner(ecran)
 
 
-def dessiner_credits(ecran: pygame.Surface, police: pygame.font.Font, largeur: int) -> None:
+def dessiner_credits(
+    ecran: pygame.Surface, police: pygame.font.Font, largeur: int
+) -> None:
     """Dessine l'écran des crédits."""
     ecran.fill((180, 180, 180))
     lignes = [GAME_NAME, "Par ...", "2025"]

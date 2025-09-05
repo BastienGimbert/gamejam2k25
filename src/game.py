@@ -1,23 +1,47 @@
 from __future__ import annotations
 
-import os
-import pygame
 import math
+import os
 
-from classes.pointeur import Pointeur
-from classes.ennemi import Gobelin, Mage, Ennemi 
-from classes.joueur import Joueur
-from classes.position import Position
-from classes.tour import Archer, Catapulte, Campement, Tour
-from classes.tour import Mage as TourMage
-from classes.projectile import ProjectileFleche, ProjectileMageEnnemi, ProjectilePierre, ProjectileTourMage
-from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positions
-from classes.csv import creer_liste_ennemis_depuis_csv
+import pygame
+
 from classes.bouton import Bouton
-from classes.sort import SortVision, SortFee, SortEclair
-
-from classes.constants import ASSETS_DIR, PROJECT_ROOT, MONEY_DIR, HEART_DIR, TOWER_DIR, \
-    COIN_ANIM_INTERVAL_MS, HEART_ANIM_INTERVAL_MS, MAP_PNG, DEFAULT_TOWER_TYPES, MAP_TILESET_TMJ, SPELLS_HEIGHT, GAME_HEIGHT, SHOP_WIDTH, TILE_SIZE, GRID_COLS, GRID_ROWS, GAME_WIDTH, WINDOW_HEIGHT
+from classes.constants import (
+    ASSETS_DIR,
+    COIN_ANIM_INTERVAL_MS,
+    DEFAULT_TOWER_TYPES,
+    GAME_HEIGHT,
+    GAME_WIDTH,
+    GRID_COLS,
+    GRID_ROWS,
+    HEART_ANIM_INTERVAL_MS,
+    HEART_DIR,
+    MAP_PNG,
+    MAP_TILESET_TMJ,
+    MONEY_DIR,
+    PROJECT_ROOT,
+    SHOP_WIDTH,
+    SPELLS_HEIGHT,
+    TILE_SIZE,
+    TOWER_DIR,
+    WINDOW_HEIGHT,
+)
+from classes.csv import creer_liste_ennemis_depuis_csv
+from classes.ennemi import Ennemi, Gobelin, Mage
+from classes.joueur import Joueur
+from classes.pointeur import Pointeur
+from classes.position import Position
+from classes.projectile import (
+    ProjectileFleche,
+    ProjectileMageEnnemi,
+    ProjectilePierre,
+    ProjectileTourMage,
+)
+from classes.sort import SortEclair, SortFee, SortVision
+from classes.tour import Archer, Campement, Catapulte
+from classes.tour import Mage as TourMage
+from classes.tour import Tour
+from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positions
 
 
 class Game:
@@ -34,7 +58,6 @@ class Game:
             "bordure": (40, 40, 60),
             "texte": (200, 220, 255),
         }
-        
 
         # Grille / carte
         self.taille_case = TILE_SIZE
@@ -46,19 +69,23 @@ class Game:
 
         # Boutique (à droite de la carte)
         self.largeur_boutique = SHOP_WIDTH
-        self.rect_boutique = pygame.Rect(self.largeur_ecran, 0, self.largeur_boutique, self.hauteur_ecran)
-        
+        self.rect_boutique = pygame.Rect(
+            self.largeur_ecran, 0, self.largeur_boutique, self.hauteur_ecran
+        )
+
         # Boutique de sorts (en bas de l'écran)
         self.hauteur_boutique_sorts = SPELLS_HEIGHT
-        self.rect_boutique_sorts = pygame.Rect(0, self.hauteur_ecran, WINDOW_HEIGHT, self.hauteur_boutique_sorts)
-        
+        self.rect_boutique_sorts = pygame.Rect(
+            0, self.hauteur_ecran, WINDOW_HEIGHT, self.hauteur_boutique_sorts
+        )
+
         # Sorts du joueur
         self.sorts = {
             "vision": SortVision(niveau=1),
             "fee": SortFee(niveau=1),
-            "eclair": SortEclair(niveau=1)
+            "eclair": SortEclair(niveau=1),
         }
-        
+
         # État de sélection des sorts
         self.eclair_selectionne = False
         # Prix par type de tour (affichage et logique d'achat/vente)
@@ -76,7 +103,6 @@ class Game:
             "Feu de camp": getattr(Campement, "PORTEE"),
         }
 
-
         # Animation monnaie
         self.coin_frames = self._charger_piece()
         self.coin_frame_idx = 0
@@ -93,7 +119,7 @@ class Game:
         self.tower_types = DEFAULT_TOWER_TYPES
         # --- Ajout : sélection de tour pour affichage de la range ---
         self.tour_selectionnee: tuple[int, int] | None = None
-        
+
         self.tower_assets = self._charger_tours()
         self.shop_items = self._creer_boutons_boutique()
         self.type_selectionne: str | None = None
@@ -103,20 +129,28 @@ class Game:
 
         # Tours / projectiles (logique)
         self.tours: list[Tour] = []
-        self.projectiles: list[ProjectileFleche | ProjectilePierre | ProjectileTourMage] = []
-
+        self.projectiles: list[
+            ProjectileFleche | ProjectilePierre | ProjectileTourMage
+        ] = []
 
         # Couleurs UI
         # Projectiles actifs (flèches, etc.)
         # Peut contenir ProjectileFleche et ProjectilePierre
         self.projectiles: list = []
         # Images de base des projectiles (chargées via une fonction générique)
-        self.image_fleche = self._charger_image_projectile(ProjectileFleche.CHEMIN_IMAGE)
-        self.image_pierre = self._charger_image_projectile(ProjectilePierre.CHEMIN_IMAGE)
+        self.image_fleche = self._charger_image_projectile(
+            ProjectileFleche.CHEMIN_IMAGE
+        )
+        self.image_pierre = self._charger_image_projectile(
+            ProjectilePierre.CHEMIN_IMAGE
+        )
         # Projectile de la tour mage
-        self.image_orbe_mage = self._charger_image_projectile(ProjectileTourMage.CHEMIN_IMAGE)
-        self.image_projectileMageEnnemi = self._charger_image_projectile(ProjectileMageEnnemi.CHEMIN_IMAGE)
-
+        self.image_orbe_mage = self._charger_image_projectile(
+            ProjectileTourMage.CHEMIN_IMAGE
+        )
+        self.image_projectileMageEnnemi = self._charger_image_projectile(
+            ProjectileMageEnnemi.CHEMIN_IMAGE
+        )
 
         self.couleur_quadrillage = (40, 60, 100)
         self.couleur_surbrillance = (80, 180, 255)
@@ -126,7 +160,7 @@ class Game:
         self.couleur_bouton_bg = (60, 60, 60)
         self.couleur_bouton_hover = (90, 90, 90)
         self.couleur_texte = (240, 240, 240)
-        
+
         # Couleurs pour la boutique de sorts (même style que la boutique)
         self.couleur_boutique_sorts_bg = self.couleur_boutique_bg
         self.couleur_boutique_sorts_border = self.couleur_boutique_border
@@ -142,16 +176,18 @@ class Game:
             for x in range(0, 6):
                 if 0 <= x < self.colonnes and 0 <= y < self.lignes:
                     self.cases_bannies.add((x, y))
-        
+
         # Pointeur
         self.pointeur = Pointeur()
         medieval_couleurs = {
-            "fond_normal": (110, 70, 30),      # brun
-            "fond_survol": (150, 100, 40),    # brun clair
-            "contour": (220, 180, 60),        # doré
-            "texte": (240, 220, 180),         # beige
+            "fond_normal": (110, 70, 30),  # brun
+            "fond_survol": (150, 100, 40),  # brun clair
+            "contour": (220, 180, 60),  # doré
+            "texte": (240, 220, 180),  # beige
         }
-        police_medievale = pygame.font.Font(None, 38)  # police plus grande, à adapter si tu as une police médiévale
+        police_medievale = pygame.font.Font(
+            None, 38
+        )  # police plus grande, à adapter si tu as une police médiévale
         self.bouton_vague = Bouton(
             "Lancer la vague",
             self.rect_boutique.x + 20,
@@ -160,19 +196,19 @@ class Game:
             50,
             self.lancerVague,
             police_medievale,
-            medieval_couleurs
+            medieval_couleurs,
         )
 
         # Gestion des vagues
         self.numVague = 0
         self.debutVague = 0
         self.ennemis: list[Ennemi] = []  # Rempli lors du lancement de vague
-        
+
         # État jour/nuit - jour entre les manches, nuit pendant les manches
         self.est_nuit = False
-        
-        #self.action_bouton= self.lancerVague()            
-        #self.bouton = Bouton("Bouton", 100, 100, 200, 50, self.action_bouton, self.police, self.couleurs)
+
+        # self.action_bouton= self.lancerVague()
+        # self.bouton = Bouton("Bouton", 100, 100, 200, 50, self.action_bouton, self.police, self.couleurs)
 
     def getToursFeuDeCamp(self) -> list[Campement]:
         return [t for t in self.tours if isinstance(t, Campement)]
@@ -248,11 +284,11 @@ class Game:
             if tower_type == "campement":
                 dernier_chemin = os.path.join(tower_folder, chemins[-1])
                 image = pygame.image.load(dernier_chemin).convert_alpha()
-                slices = decouper_sprite(image, 6, horizontal=True, copy=False)  
+                slices = decouper_sprite(image, 6, horizontal=True, copy=False)
                 frames = [slices]
                 assets[tower_type] = {
                     "frames": frames,
-                    "icon": pygame.transform.smoothscale(slices[0], (48, 48)) 
+                    "icon": pygame.transform.smoothscale(slices[0], (48, 48)),
                 }
             else:
                 # Cas tour classique : découpe en 4
@@ -264,7 +300,6 @@ class Game:
                 assets[tower_type] = {"frames": frames, "icon": icon}
 
         return assets
-
 
     def _creer_boutons_boutique(self):
         boutons = []
@@ -300,7 +335,7 @@ class Game:
         return surf
 
     # ---------- Utilitaires ----------
-    
+
     def _position_dans_grille(self, pos):
         return pos[0] < self.largeur_ecran and 0 <= pos[1] < self.hauteur_ecran
 
@@ -314,7 +349,9 @@ class Game:
     def _dessiner_quadrillage(self, ecran):
         largeur_draw = self.largeur_ecran
         for x in range(0, largeur_draw + 1, self.taille_case):
-            pygame.draw.line(ecran, self.couleur_quadrillage, (x, 0), (x, self.hauteur_ecran))
+            pygame.draw.line(
+                ecran, self.couleur_quadrillage, (x, 0), (x, self.hauteur_ecran)
+            )
         for y in range(0, self.hauteur_ecran + 1, self.taille_case):
             pygame.draw.line(ecran, self.couleur_quadrillage, (0, y), (largeur_draw, y))
 
@@ -322,12 +359,17 @@ class Game:
         for t in self.tours:
             t.draw_person(ecran)
 
-
     def _dessiner_boutique(self, ecran):
         pygame.draw.rect(ecran, self.couleur_boutique_bg, self.rect_boutique)
         pygame.draw.rect(ecran, self.couleur_boutique_border, self.rect_boutique, 2)
         titre = self.police.render("Boutique", True, self.couleur_texte)
-        ecran.blit(titre, (self.rect_boutique.x + (self.largeur_boutique - titre.get_width()) // 2, 20))
+        ecran.blit(
+            titre,
+            (
+                self.rect_boutique.x + (self.largeur_boutique - titre.get_width()) // 2,
+                20,
+            ),
+        )
 
         # Monnaie
         if self.coin_frames:
@@ -337,10 +379,11 @@ class Game:
             if now - self.last_coin_ticks >= self.COIN_ANIM_INTERVAL:
                 self.coin_frame_idx = (self.coin_frame_idx + 1) % len(self.coin_frames)
                 self.last_coin_ticks = now
-        txt_solde = self.police.render(f"{self.joueur.argent}", True, self.couleur_texte)
+        txt_solde = self.police.render(
+            f"{self.joueur.argent}", True, self.couleur_texte
+        )
         # Décale le texte si l'argent est grand
         ecran.blit(txt_solde, (self.rect_boutique.x + 50, 56))
-    
 
         # Points de vie
         coeur_pos = (self.rect_boutique.x + 140, 60)
@@ -350,12 +393,18 @@ class Game:
             ecran.blit(coeur_s, coeur_pos)
             now = pygame.time.get_ticks()
             if now - self.last_heart_ticks >= self.HEART_ANIM_INTERVAL:
-                self.heart_frame_idx = (self.heart_frame_idx + 1) % len(self.heart_frames)
+                self.heart_frame_idx = (self.heart_frame_idx + 1) % len(
+                    self.heart_frames
+                )
                 self.last_heart_ticks = now
         else:
             # Petit fallback visuel si aucun asset
-            pygame.draw.circle(ecran, (220, 50, 50), (coeur_pos[0] + 12, coeur_pos[1] + 12), 12)
-        txt_pv = self.police.render(f"{self.joueur.point_de_vie}", True, self.couleur_texte)
+            pygame.draw.circle(
+                ecran, (220, 50, 50), (coeur_pos[0] + 12, coeur_pos[1] + 12), 12
+            )
+        txt_pv = self.police.render(
+            f"{self.joueur.point_de_vie}", True, self.couleur_texte
+        )
         ecran.blit(txt_pv, (coeur_pos[0] + 30, coeur_pos[1]))
 
         # Boutons tours
@@ -374,11 +423,12 @@ class Game:
                 rect,
                 border_radius=6,
             )
-            pygame.draw.rect(ecran, self.couleur_boutique_border, rect, 2, border_radius=6)
+            pygame.draw.rect(
+                ecran, self.couleur_boutique_border, rect, 2, border_radius=6
+            )
 
             # label centré verticalement
             label = self.police_tour.render(t.capitalize(), True, self.couleur_texte)
-
 
             label_y = rect.y + (rect.h - label.get_height()) // 2
 
@@ -404,14 +454,20 @@ class Game:
             # icône de pièce : utilise frames chargées si disponibles, sinon fallback circulaire
             coin_w, coin_h = 20, 20
             if self.coin_frames:
-                coin_frame = self.coin_frames[self.coin_frame_idx % len(self.coin_frames)]
+                coin_frame = self.coin_frames[
+                    self.coin_frame_idx % len(self.coin_frames)
+                ]
                 try:
-                    coin_surf = pygame.transform.smoothscale(coin_frame, (coin_w, coin_h))
+                    coin_surf = pygame.transform.smoothscale(
+                        coin_frame, (coin_w, coin_h)
+                    )
                 except Exception:
                     coin_surf = coin_frame
             else:
                 coin_surf = pygame.Surface((coin_w, coin_h), pygame.SRCALPHA)
-                pygame.draw.circle(coin_surf, (220, 200, 40), (coin_w // 2, coin_h // 2), coin_w // 2)
+                pygame.draw.circle(
+                    coin_surf, (220, 200, 40), (coin_w // 2, coin_h // 2), coin_w // 2
+                )
 
             # aligne coin au bord droit du bouton, prix à sa gauche
             gap = 6
@@ -431,8 +487,13 @@ class Game:
 
         # Affiche le numéro de vague au-dessus du bouton
         try:
-            label_vague = self.police.render(f"Vague n° {self.numVague}", True, self.couleur_texte)
-            label_x = self.bouton_vague.rect.x + (self.bouton_vague.rect.w - label_vague.get_width()) // 2
+            label_vague = self.police.render(
+                f"Vague n° {self.numVague}", True, self.couleur_texte
+            )
+            label_x = (
+                self.bouton_vague.rect.x
+                + (self.bouton_vague.rect.w - label_vague.get_width()) // 2
+            )
             label_y = self.bouton_vague.rect.y - 36
             ecran.blit(label_vague, (label_x, label_y))
         except Exception:
@@ -451,82 +512,118 @@ class Game:
 
     def _dessiner_boutique_sorts(self, ecran):
         """Dessine la boutique de sorts en bas de l'écran."""
-        pygame.draw.rect(ecran, self.couleur_boutique_sorts_bg, self.rect_boutique_sorts)
-        pygame.draw.rect(ecran, self.couleur_boutique_sorts_border, self.rect_boutique_sorts, 2)
-        
+        pygame.draw.rect(
+            ecran, self.couleur_boutique_sorts_bg, self.rect_boutique_sorts
+        )
+        pygame.draw.rect(
+            ecran, self.couleur_boutique_sorts_border, self.rect_boutique_sorts, 2
+        )
+
         # Titre de la boutique de sorts
         titre = self.police.render("Boutique de sorts", True, self.couleur_texte)
-        ecran.blit(titre, (self.rect_boutique_sorts.x + (self.rect_boutique_sorts.width - titre.get_width()) // 2, 
-                          self.rect_boutique_sorts.y + 20))
-        
+        ecran.blit(
+            titre,
+            (
+                self.rect_boutique_sorts.x
+                + (self.rect_boutique_sorts.width - titre.get_width()) // 2,
+                self.rect_boutique_sorts.y + 20,
+            ),
+        )
+
         # Affichage des sorts disponibles
         y_offset = 60
         x_offset = 20
-        
+
         for sort_key, sort in self.sorts.items():
             # Rectangle pour le sort (même style que la boutique)
             sort_rect = pygame.Rect(
                 self.rect_boutique_sorts.x + x_offset,
                 self.rect_boutique_sorts.y + y_offset,
                 300,
-                80
+                80,
             )
-            
+
             # Vérifier si le sort est au niveau maximum
-            is_max_level = hasattr(sort, 'est_au_niveau_maximum') and sort.est_au_niveau_maximum()
-            
+            is_max_level = (
+                hasattr(sort, "est_au_niveau_maximum") and sort.est_au_niveau_maximum()
+            )
+
             # Pour le sort de la fée, vérifier s'il est déjà actif
-            is_fee_active = sort_key == "fee" and hasattr(sort, 'est_actif') and sort.est_actif()
-            
+            is_fee_active = (
+                sort_key == "fee" and hasattr(sort, "est_actif") and sort.est_actif()
+            )
+
             # Pour l'éclair, vérifier s'il est sélectionné
-            is_eclair_selected = sort_key == "eclair" and hasattr(self, 'eclair_selectionne') and self.eclair_selectionne
-            
+            is_eclair_selected = (
+                sort_key == "eclair"
+                and hasattr(self, "eclair_selectionne")
+                and self.eclair_selectionne
+            )
+
             # Effet de survol (comme dans la boutique)
             hover = sort_rect.collidepoint(pygame.mouse.get_pos())
-            can_buy = sort.peut_etre_achete(self.joueur.argent) and not is_max_level and not is_fee_active and not is_eclair_selected
-            
+            can_buy = (
+                sort.peut_etre_achete(self.joueur.argent)
+                and not is_max_level
+                and not is_fee_active
+                and not is_eclair_selected
+            )
+
             if hover and can_buy:
                 couleur_fond = self.couleur_bouton_hover
             else:
                 couleur_fond = self.couleur_bouton_bg
-            
+
             # Dessin avec bordures arrondies (comme la boutique)
             pygame.draw.rect(ecran, couleur_fond, sort_rect, border_radius=6)
-            pygame.draw.rect(ecran, self.couleur_boutique_sorts_border, sort_rect, 2, border_radius=6)
-            
+            pygame.draw.rect(
+                ecran, self.couleur_boutique_sorts_border, sort_rect, 2, border_radius=6
+            )
+
             # Nom du sort avec niveau (style boutique)
             if is_max_level or is_fee_active or is_eclair_selected:
                 # Grisé quand au niveau maximum, quand la fée est active, ou quand l'éclair est sélectionné
                 nom_sort = self.police.render(sort.nom_complet, True, (120, 120, 120))
             else:
-                nom_sort = self.police.render(sort.nom_complet, True, self.couleur_texte)
+                nom_sort = self.police.render(
+                    sort.nom_complet, True, self.couleur_texte
+                )
             ecran.blit(nom_sort, (sort_rect.x + 10, sort_rect.y + 10))
-            
+
             # Prix et icône seulement si pas au niveau maximum, pas actif, et pas sélectionné
             if not is_max_level and not is_fee_active and not is_eclair_selected:
                 # Prix avec couleur selon solvabilité (comme la boutique)
                 prix_color = self.couleur_texte if can_buy else (220, 80, 80)
                 prix_text = self.police.render(f"{sort.prix}", True, prix_color)
-                
+
                 # Icône de pièce (comme la boutique)
                 coin_w, coin_h = 20, 20
                 if self.coin_frames:
-                    coin_frame = self.coin_frames[self.coin_frame_idx % len(self.coin_frames)]
+                    coin_frame = self.coin_frames[
+                        self.coin_frame_idx % len(self.coin_frames)
+                    ]
                     try:
-                        coin_surf = pygame.transform.smoothscale(coin_frame, (coin_w, coin_h))
+                        coin_surf = pygame.transform.smoothscale(
+                            coin_frame, (coin_w, coin_h)
+                        )
                     except Exception:
                         coin_surf = coin_frame
                 else:
                     coin_surf = pygame.Surface((coin_w, coin_h), pygame.SRCALPHA)
-                    pygame.draw.circle(coin_surf, (220, 200, 40), (coin_w // 2, coin_h // 2), coin_w // 2)
-                
+                    pygame.draw.circle(
+                        coin_surf,
+                        (220, 200, 40),
+                        (coin_w // 2, coin_h // 2),
+                        coin_w // 2,
+                    )
+
                 # Positionnement du prix et de l'icône (comme la boutique)
                 gap = 6
                 coin_x = sort_rect.right - 10 - coin_surf.get_width()
                 prix_x = coin_x - gap - prix_text.get_width()
                 prix_y = sort_rect.y + 40
                 coin_y = sort_rect.y + 40
-                
+
                 ecran.blit(prix_text, (prix_x, prix_y))
                 if coin_surf:
                     ecran.blit(coin_surf, (coin_x, coin_y))
@@ -548,25 +645,39 @@ class Game:
                 selected_x = sort_rect.right - 10 - selected_text.get_width()
                 selected_y = sort_rect.y + 40
                 ecran.blit(selected_text, (selected_x, selected_y))
-            
+
             # Pas d'affichage de portée pour garder l'interface propre
-            
+
             x_offset += 320  # Espacement entre les sorts
 
     def _dessiner_surbrillance(self, ecran):
         # Surbrillance pour l'éclair (seulement sur les cases du chemin, sauf les 6 en haut à gauche)
-        if hasattr(self, 'eclair_selectionne') and self.eclair_selectionne and self.case_survolee:
-            if (self.case_survolee in getattr(self, "cases_bannies", set()) and 
-                self.case_survolee not in [(x, y) for y in (0, 1) for x in range(0, 6)]):
+        if (
+            hasattr(self, "eclair_selectionne")
+            and self.eclair_selectionne
+            and self.case_survolee
+        ):
+            if self.case_survolee in getattr(
+                self, "cases_bannies", set()
+            ) and self.case_survolee not in [
+                (x, y) for y in (0, 1) for x in range(0, 6)
+            ]:
                 x_case, y_case = self.case_survolee
-                rect = pygame.Rect(x_case * self.taille_case, y_case * self.taille_case, self.taille_case, self.taille_case)
-                overlay = pygame.Surface((self.taille_case, self.taille_case), pygame.SRCALPHA)
+                rect = pygame.Rect(
+                    x_case * self.taille_case,
+                    y_case * self.taille_case,
+                    self.taille_case,
+                    self.taille_case,
+                )
+                overlay = pygame.Surface(
+                    (self.taille_case, self.taille_case), pygame.SRCALPHA
+                )
                 # Couleur jaune pour l'éclair
                 overlay.fill((255, 255, 0, 100))
                 if rect.right <= self.largeur_ecran:
                     ecran.blit(overlay, rect)
             return
-        
+
         # Surbrillance pour les tours
         if not self.case_survolee or not self.type_selectionne:
             return
@@ -576,16 +687,20 @@ class Game:
             x_case * self.taille_case,
             y_case * self.taille_case,
             self.taille_case,
-            self.taille_case
+            self.taille_case,
         )
 
-        #Surbrillance
+        # Surbrillance
         overlay = pygame.Surface((self.taille_case, self.taille_case), pygame.SRCALPHA)
-        interdit = (
-            (x_case, y_case) in getattr(self, "cases_bannies", set())
-            or (x_case, y_case) in self.positions_occupees
+        interdit = (x_case, y_case) in getattr(self, "cases_bannies", set()) or (
+            x_case,
+            y_case,
+        ) in self.positions_occupees
+        couleur = (
+            self.couleur_surbrillance_interdite
+            if interdit
+            else self.couleur_surbrillance
         )
-        couleur = self.couleur_surbrillance_interdite if interdit else self.couleur_surbrillance
         overlay.fill((*couleur, 80))
         if rect.right <= self.largeur_ecran:
             ecran.blit(overlay, rect)
@@ -597,7 +712,7 @@ class Game:
         cy = y_case * self.taille_case + self.taille_case // 2
 
         # Dessine un cercle
-        dash_count = 15     # nombre de segments
+        dash_count = 15  # nombre de segments
         dash_length = 0.15  # en radians
 
         for i in range(dash_count):
@@ -608,7 +723,6 @@ class Game:
             x2 = int(cx + portee * math.cos(angle_end))
             y2 = int(cy + portee * math.sin(angle_end))
             pygame.draw.line(ecran, (255, 255, 255), (x1, y1), (x2, y2), 3)
-
 
     def _dessiner_tours_placees(self, ecran):
         """Dessine les tours, avec un traitement spécial pour Campement."""
@@ -625,12 +739,13 @@ class Game:
                 if ttype in self.tower_assets and self.tower_assets[ttype]["frames"]:
                     slices = self.tower_assets[ttype]["frames"][0]
                     surf = slices[2]
-                    surf = pygame.transform.smoothscale(surf, (self.taille_case, self.taille_case))
+                    surf = pygame.transform.smoothscale(
+                        surf, (self.taille_case, self.taille_case)
+                    )
                 if surf is None:
                     surf = pygame.Surface((self.taille_case, self.taille_case))
                     surf.fill((150, 150, 180))
                 ecran.blit(surf, (x_case * self.taille_case, y_case * self.taille_case))
-
 
             # --- Ajout : affichage range si sélectionnée ---
             if self.tour_selectionnee == (x_case, y_case):
@@ -648,7 +763,7 @@ class Game:
                     portee = getattr(tour, "portee", 120)
 
                     # Dessine un cercle
-                    dash_count = 15     # nombre de segments
+                    dash_count = 15  # nombre de segments
                     dash_length = 0.15  # en radians
 
                     for i in range(dash_count):
@@ -667,7 +782,9 @@ class Game:
                 doit_dessiner = (
                     (not hasattr(e, "estApparu") or e.estApparu(self.debutVague))
                     and (not hasattr(e, "estMort") or not e.estMort())
-                    and (not hasattr(e, "a_atteint_le_bout") or not e.a_atteint_le_bout())
+                    and (
+                        not hasattr(e, "a_atteint_le_bout") or not e.a_atteint_le_bout()
+                    )
                 )
             except Exception:
                 doit_dessiner = True
@@ -677,7 +794,11 @@ class Game:
                 if hasattr(e, "draw"):
                     e.draw(ecran)
                 # --- Barre de PV ---
-                if hasattr(e, "pointsDeVie") and hasattr(e, "pointsDeVieMax") and e.pointsDeVie < e.pointsDeVieMax:
+                if (
+                    hasattr(e, "pointsDeVie")
+                    and hasattr(e, "pointsDeVieMax")
+                    and e.pointsDeVie < e.pointsDeVieMax
+                ):
                     # Position de la barre : juste au-dessus de l'ennemi
                     px = int(e.position.x)
                     py = int(e.position.y)
@@ -692,10 +813,20 @@ class Game:
                     y_barre = py - 40  # Espace entre le haut du sprite et l'ennemi
 
                     # Fond gris
-                    pygame.draw.rect(ecran, (60, 60, 60), (x_barre, y_barre, largeur_max, hauteur), border_radius=3)
+                    pygame.draw.rect(
+                        ecran,
+                        (60, 60, 60),
+                        (x_barre, y_barre, largeur_max, hauteur),
+                        border_radius=3,
+                    )
 
                     # Barre rouge
-                    pygame.draw.rect(ecran, (220, 50, 50), (x_barre, y_barre, largeur_barre, hauteur), border_radius=3)
+                    pygame.draw.rect(
+                        ecran,
+                        (220, 50, 50),
+                        (x_barre, y_barre, largeur_barre, hauteur),
+                        border_radius=3,
+                    )
 
     # ---------- Update / boucle ----------
     def maj(self, dt: float):
@@ -711,7 +842,7 @@ class Game:
             except Exception:
                 if hasattr(e, "seDeplacer"):
                     e.seDeplacer(dt)
-        
+
         # Appliquer les effets des sorts
         for sort in self.sorts.values():
             sort.appliquer_effet(self)
@@ -723,7 +854,9 @@ class Game:
                 case = self._case_depuis_pos(pos_px)
                 if case in {(2, 0), (3, 0)}:
                     deg = getattr(e, "degats", 1)
-                    self.joueur.point_de_vie = max(0, int(self.joueur.point_de_vie) - int(deg))
+                    self.joueur.point_de_vie = max(
+                        0, int(self.joueur.point_de_vie) - int(deg)
+                    )
                     try:
                         setattr(e, "_ne_pas_recompenser", True)
                     except Exception:
@@ -742,28 +875,41 @@ class Game:
         for t in self.tours:
 
             if isinstance(t, Campement):
-                continue 
+                continue
+
             def au_tir(tour: Tour, cible: Gobelin):
                 if isinstance(tour, Archer) and self.image_fleche is not None:
-                    p = ProjectileFleche(origine=tour.position, cible_pos=cible.position.copy())
-                    p.cible = cible              # suivi de la cible (comme une flèche)
+                    p = ProjectileFleche(
+                        origine=tour.position, cible_pos=cible.position.copy()
+                    )
+                    p.cible = cible  # suivi de la cible (comme une flèche)
                     p.image_base = self.image_fleche
                     self.projectiles.append(p)
                     # Joue le son de flèche
                     try:
-                        arrow_sound = pygame.mixer.Sound(os.path.join(ASSETS_DIR, "audio", "bruitage", "arrow.mp3"))
+                        arrow_sound = pygame.mixer.Sound(
+                            os.path.join(ASSETS_DIR, "audio", "bruitage", "arrow.mp3")
+                        )
                         arrow_sound.play().set_volume(0.15)
                     except Exception:
                         pass
 
                 elif isinstance(tour, Catapulte) and self.image_pierre is not None:
-                    p = ProjectilePierre(origine=tour.position, cible_pos=cible.position.copy(), game_ref=self)
+                    p = ProjectilePierre(
+                        origine=tour.position,
+                        cible_pos=cible.position.copy(),
+                        game_ref=self,
+                    )
                     p.cible = cible
                     p.image_base = self.image_pierre
                     self.projectiles.append(p)
                     # Joue le son de catapulte
                     try:
-                        fire_sound = pygame.mixer.Sound(os.path.join(ASSETS_DIR, "audio", "bruitage", "fire-magic.mp3"))
+                        fire_sound = pygame.mixer.Sound(
+                            os.path.join(
+                                ASSETS_DIR, "audio", "bruitage", "fire-magic.mp3"
+                            )
+                        )
                         fire_sound.play().set_volume(0.15)
                     except Exception:
                         pass
@@ -772,26 +918,49 @@ class Game:
                     if mage is None:
                         # Fallback: mage le plus proche non mort, même si cooldown pas prêt
                         try:
-                            candidats = [e for e in self.ennemis if isinstance(e, Mage) and not e.estMort() and e.estApparu(self.debutVague)]
+                            candidats = [
+                                e
+                                for e in self.ennemis
+                                if isinstance(e, Mage)
+                                and not e.estMort()
+                                and e.estApparu(self.debutVague)
+                            ]
                             if candidats:
-                                mage = min(candidats, key=lambda m: distance_positions(m.position, p.position))
+                                mage = min(
+                                    candidats,
+                                    key=lambda m: distance_positions(
+                                        m.position, p.position
+                                    ),
+                                )
                         except Exception:
                             mage = None
-                    if mage is not None and getattr(self, "image_projectileMageEnnemi", None) is not None:
+                    if (
+                        mage is not None
+                        and getattr(self, "image_projectileMageEnnemi", None)
+                        is not None
+                    ):
                         mage.react_to_projectile()
-                        pm = ProjectileMageEnnemi(origine=mage.position.copy(), cible_proj=p, vitesse=700.0)
+                        pm = ProjectileMageEnnemi(
+                            origine=mage.position.copy(), cible_proj=p, vitesse=700.0
+                        )
                         pm.image_base = self.image_projectileMageEnnemi
                         self.projectiles.append(pm)
 
                 elif isinstance(tour, TourMage) and self.image_orbe_mage is not None:
                     # LOGIQUE SIMPLE identique à l'archer (pas d'interception ici)
-                    p = ProjectileTourMage(origine=tour.position, cible_pos=cible.position.copy())
+                    p = ProjectileTourMage(
+                        origine=tour.position, cible_pos=cible.position.copy()
+                    )
                     p.cible = cible
                     p.image_base = self.image_orbe_mage
                     self.projectiles.append(p)
                     # Joue le son du mage
                     try:
-                        wind_sound = pygame.mixer.Sound(os.path.join(ASSETS_DIR, "audio", "bruitage", "wind-magic.mp3"))
+                        wind_sound = pygame.mixer.Sound(
+                            os.path.join(
+                                ASSETS_DIR, "audio", "bruitage", "wind-magic.mp3"
+                            )
+                        )
                         wind_sound.play().set_volume(0.15)
                     except Exception:
                         pass
@@ -815,7 +984,11 @@ class Game:
                         if hasattr(pr, "appliquerDegats"):
                             pr.appliquerDegats(e)
                             try:
-                                if e.estMort() and not getattr(e, "_recompense_donnee", False) and not getattr(e, "_ne_pas_recompenser", False):
+                                if (
+                                    e.estMort()
+                                    and not getattr(e, "_recompense_donnee", False)
+                                    and not getattr(e, "_ne_pas_recompenser", False)
+                                ):
                                     self.joueur.argent += int(getattr(e, "argent", 0))
                                     setattr(e, "_recompense_donnee", True)
                             except Exception:
@@ -829,42 +1002,54 @@ class Game:
                     pr.detruit = True
 
         # Nettoyage projectiles
-        self.projectiles = [p for p in self.projectiles if not getattr(p, "detruit", False)]
+        self.projectiles = [
+            p for p in self.projectiles if not getattr(p, "detruit", False)
+        ]
 
         # Nettoyage ennemis
         self.ennemis = [
-            e for e in self.ennemis
+            e
+            for e in self.ennemis
             if not (
-                getattr(e, "estMort", lambda: False)() or
-                getattr(e, "a_atteint_le_bout", lambda: False)()
+                getattr(e, "estMort", lambda: False)()
+                or getattr(e, "a_atteint_le_bout", lambda: False)()
             )
         ]
-        
+
         # Désactiver l'effet de nuit si la vague est terminée
         if self.vague_terminee() and self.est_nuit:
             self.est_nuit = False
-        
+
     def get_closest_mage(self, pos: Position) -> None | Mage:
         """Retourne le mage le plus proche de la position pos."""
-        mages = [e for e in self.ennemis if isinstance(e, Mage) and not e.estMort() and e.estApparu(self.debutVague) and e.ready_to_attack()]
+        mages = [
+            e
+            for e in self.ennemis
+            if isinstance(e, Mage)
+            and not e.estMort()
+            and e.estApparu(self.debutVague)
+            and e.ready_to_attack()
+        ]
         if not mages:
             return None
         nearestMage = mages[0]
         distance = distance_positions(nearestMage.position, pos)
-        for m in mages :
+        for m in mages:
             if distance_positions(m.position, pos) < distance:
                 nearestMage = m
                 distance = distance_positions(m.position, pos)
-        
+
         return nearestMage
-    
+
     def majFeuxDeCamps(self, dt: float, nuit_surface: pygame.Surface) -> None:
         """Met à jour et dessine les effets de lumière des feux de camps."""
         feux_de_camps = [t for t in self.tours if t.__class__.__name__ == "Campement"]
         for feu in feux_de_camps:
             feu.maj(dt)
             radius = feu.portee
-            pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (feu.position.x, feu.position.y), radius)
+            pygame.draw.circle(
+                nuit_surface, (0, 0, 0, 0), (feu.position.x, feu.position.y), radius
+            )
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         dt = self.clock.tick(60) / 1000.0
@@ -872,35 +1057,43 @@ class Game:
         self._dessiner_tours_placees(ecran)
         self._dessiner_personnages_tours(ecran)
         self._dessiner_surbrillance(ecran)
-        
+
         # Effet nuit - seulement pendant les manches
         if self.est_nuit:
-            nuit_surface = pygame.Surface((self.largeur_ecran, self.hauteur_ecran), pygame.SRCALPHA)
+            nuit_surface = pygame.Surface(
+                (self.largeur_ecran, self.hauteur_ecran), pygame.SRCALPHA
+            )
             nuit_surface.fill((0, 6, 25, int(255 * 0.8)))  # 80% opacity
 
             # Vérifier si la fée est active
-            if 'fee' in self.sorts and self.sorts['fee'].est_actif():
+            if "fee" in self.sorts and self.sorts["fee"].est_actif():
                 # Si la fée est active, éclairer toute la carte
-                pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (self.largeur_ecran // 2, self.hauteur_ecran // 2), max(self.largeur_ecran, self.hauteur_ecran))
+                pygame.draw.circle(
+                    nuit_surface,
+                    (0, 0, 0, 0),
+                    (self.largeur_ecran // 2, self.hauteur_ecran // 2),
+                    max(self.largeur_ecran, self.hauteur_ecran),
+                )
             else:
                 # Effet de lumière du curseur seulement si la souris est sur la carte
                 x, y = pygame.mouse.get_pos()
-                if x < self.largeur_ecran: 
+                if x < self.largeur_ecran:
                     # Portée de base du curseur
                     portee_curseur = 100
                     # Vérifier si le joueur a le sort de vision et augmenter la portée
-                    if 'vision' in self.sorts:
-                        portee_curseur = self.sorts['vision'].portee
-                    pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (x, y), portee_curseur) # dessin de la lumiere
+                    if "vision" in self.sorts:
+                        portee_curseur = self.sorts["vision"].portee
+                    pygame.draw.circle(
+                        nuit_surface, (0, 0, 0, 0), (x, y), portee_curseur
+                    )  # dessin de la lumiere
             self.majFeuxDeCamps(dt, nuit_surface)
 
             ecran.blit(nuit_surface, (0, 0))
 
-
-        self._dessiner_boutique(ecran) 
+        self._dessiner_boutique(ecran)
         self._dessiner_boutique_sorts(ecran)
         self.dessiner_ennemis(ecran)
-        
+
         # Affichage des effets visuels des sorts
         for sort in self.sorts.values():
             sort.dessiner_effet(ecran, self)
@@ -928,16 +1121,15 @@ class Game:
         except Exception:
             # On ignore silencieusement les erreurs audio (pas de périphérique, etc.)
             pass
-    
+
     def decompte_dt(self) -> None:
         dt = self.clock.tick(60) / 1000.0
-    
 
     # ---------- Evénements ----------
     def gerer_evenement(self, event: pygame.event.Event) -> str | None:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             # Annuler la sélection d'éclair si elle est active
-            if hasattr(self, 'eclair_selectionne') and self.eclair_selectionne:
+            if hasattr(self, "eclair_selectionne") and self.eclair_selectionne:
                 self.eclair_selectionne = False
                 return None
             return "PAUSE"
@@ -952,23 +1144,25 @@ class Game:
         # Clic gauche: sélection dans la boutique et placement d'une tour
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             pos = event.pos
-            
+
             # Vérifier si l'éclair est sélectionné et cliquer sur une case
-            if hasattr(self, 'eclair_selectionne') and self.eclair_selectionne:
+            if hasattr(self, "eclair_selectionne") and self.eclair_selectionne:
                 if self._position_dans_grille(pos):
                     case = self._case_depuis_pos(pos)
                     if case and case in getattr(self, "cases_bannies", set()):
                         # L'éclair ne peut être utilisé que sur les cases du chemin
                         # Mais pas sur les 6 cases en haut à gauche (x=0..5, y=0..1)
                         x_case, y_case = case
-                        if (x_case, y_case) in [(x, y) for y in (0, 1) for x in range(0, 6)]:
+                        if (x_case, y_case) in [
+                            (x, y) for y in (0, 1) for x in range(0, 6)
+                        ]:
                             return None
                         # Activer l'éclair sur cette case
-                        if self.sorts['eclair'].activer_sur_case(x_case, y_case):
+                        if self.sorts["eclair"].activer_sur_case(x_case, y_case):
                             # Son d'éclair (respecte muet)
                             self.jouer_sfx("loud-thunder.mp3")
                             # Débiter le prix
-                            self.joueur.argent -= self.sorts['eclair'].prix
+                            self.joueur.argent -= self.sorts["eclair"].prix
                             # Désélectionner l'éclair
                             self.eclair_selectionne = False
                         return None
@@ -980,20 +1174,29 @@ class Game:
                         self.rect_boutique_sorts.x + x_offset,
                         self.rect_boutique_sorts.y + 60,
                         300,
-                        80
+                        80,
                     )
                     if sort_rect.collidepoint(pos):
                         # Vérifier si le sort n'est pas au niveau maximum
-                        is_max_level = hasattr(sort, 'est_au_niveau_maximum') and sort.est_au_niveau_maximum()
+                        is_max_level = (
+                            hasattr(sort, "est_au_niveau_maximum")
+                            and sort.est_au_niveau_maximum()
+                        )
                         # Vérifier si la fée n'est pas déjà active
-                        is_fee_active = sort_key == "fee" and hasattr(sort, 'est_actif') and sort.est_actif()
-                        
+                        is_fee_active = (
+                            sort_key == "fee"
+                            and hasattr(sort, "est_actif")
+                            and sort.est_actif()
+                        )
+
                         if sort_key == "eclair":
                             # Pour l'éclair, sélectionner/désélectionner le sort
                             if self.eclair_selectionne:
                                 # Si déjà sélectionné, le désélectionner
                                 self.eclair_selectionne = False
-                            elif not is_max_level and sort.peut_etre_achete(self.joueur.argent):
+                            elif not is_max_level and sort.peut_etre_achete(
+                                self.joueur.argent
+                            ):
                                 # Sinon, le sélectionner si on peut l'acheter
                                 self.eclair_selectionne = True
                                 self.type_selectionne = None  # Désélectionner les tours
@@ -1034,7 +1237,9 @@ class Game:
                 case = self._case_depuis_pos(pos)
                 if case and case in self.positions_occupees:
                     if self.tour_selectionnee == case:
-                        self.tour_selectionnee = None  # désélectionne si déjà sélectionnée
+                        self.tour_selectionnee = (
+                            None  # désélectionne si déjà sélectionnée
+                        )
                     else:
                         self.tour_selectionnee = case  # sélectionne la tour
                     return None
@@ -1047,11 +1252,15 @@ class Game:
                 if (
                     case
                     and case not in self.positions_occupees
-                    and self.joueur.argent >= self.prix_par_type.get(self.type_selectionne, 0)
+                    and self.joueur.argent
+                    >= self.prix_par_type.get(self.type_selectionne, 0)
                     and case not in getattr(self, "cases_bannies", set())
                 ):
                     # 1) Marque la case occupée (affichage)
-                    self.positions_occupees[case] = {"type": self.type_selectionne, "frame": 0}
+                    self.positions_occupees[case] = {
+                        "type": self.type_selectionne,
+                        "frame": 0,
+                    }
 
                     # 2) Crée l'instance de tour (logique)
                     x_case, y_case = case
@@ -1079,7 +1288,11 @@ class Game:
                         # Joue le son du campement si c'est un campement
                         if self.type_selectionne == "campement":
                             try:
-                                campfire_sound = pygame.mixer.Sound(os.path.join(ASSETS_DIR, "audio", "bruitage", "camp-fire.mp3"))
+                                campfire_sound = pygame.mixer.Sound(
+                                    os.path.join(
+                                        ASSETS_DIR, "audio", "bruitage", "camp-fire.mp3"
+                                    )
+                                )
                                 campfire_sound.play().set_volume(0.15)
                             except Exception:
                                 pass
@@ -1092,7 +1305,9 @@ class Game:
                         )
 
                     # Débiter le prix correspondant
-                    self.joueur.argent -= self.prix_par_type.get(self.type_selectionne, 0)
+                    self.joueur.argent -= self.prix_par_type.get(
+                        self.type_selectionne, 0
+                    )
                     self.type_selectionne = None
                     self.tour_selectionnee = None  # désélectionne la range
 
@@ -1113,7 +1328,11 @@ class Game:
                     # Retire l'instance de tour à cet emplacement (centre de case)
                     cx = case[0] * self.taille_case + self.taille_case // 2
                     cy = case[1] * self.taille_case + self.taille_case // 2
-                    self.tours = [t for t in self.tours if not (int(t.position.x) == cx and int(t.position.y) == cy)]
+                    self.tours = [
+                        t
+                        for t in self.tours
+                        if not (int(t.position.x) == cx and int(t.position.y) == cy)
+                    ]
                     # Libère la case pour placement futur
                     del self.positions_occupees[case]
                     self.tour_selectionnee = None  # désélectionne la range
@@ -1157,7 +1376,10 @@ class Game:
         elapsed_s = round((now - self.debutVague) / 1000, 1)
         for e in self.ennemis:
             try:
-                if getattr(e, "tempsApparition", None) is not None and elapsed_s == e.tempsApparition:
+                if (
+                    getattr(e, "tempsApparition", None) is not None
+                    and elapsed_s == e.tempsApparition
+                ):
                     if hasattr(e, "apparaitre"):
                         e.apparaitre()
             except Exception:
@@ -1165,7 +1387,9 @@ class Game:
                 pass
 
     # ---------- Chemin / placement ----------
-    def _cases_depuis_chemin(self, chemin_positions: list[Position]) -> set[tuple[int, int]]:
+    def _cases_depuis_chemin(
+        self, chemin_positions: list[Position]
+    ) -> set[tuple[int, int]]:
         """Approxime les cases de grille traversées par le polygone du chemin."""
         bannies: set[tuple[int, int]] = set()
         if not chemin_positions:

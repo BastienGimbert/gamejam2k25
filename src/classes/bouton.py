@@ -1,5 +1,6 @@
 import pygame
 
+
 # ------------------- CLASSE BOUTON -------------------
 class Bouton:
     """
@@ -10,7 +11,18 @@ class Bouton:
     - police: police utilisée pour dessiner le texte
     - couleurs: dictionnaire pour les couleurs (fond_normal, fond_survol, contour, texte)
     """
-    def __init__(self, texte: str, x: int, y: int, largeur: int, hauteur: int, action, police: pygame.font.Font, couleurs: dict):
+
+    def __init__(
+        self,
+        texte: str,
+        x: int,
+        y: int,
+        largeur: int,
+        hauteur: int,
+        action,
+        police: pygame.font.Font,
+        couleurs: dict,
+    ):
         self.texte = texte
         self.rect = pygame.Rect(x, y, largeur, hauteur)
         self.action = action
@@ -26,7 +38,9 @@ class Bouton:
         """Dessine le bouton et gère la couleur de survol."""
         position_souris = pygame.mouse.get_pos()
         survole = self.rect.collidepoint(position_souris)
-        couleur_fond = self.couleurs["fond_survol"] if survole else self.couleurs["fond_normal"]
+        couleur_fond = (
+            self.couleurs["fond_survol"] if survole else self.couleurs["fond_normal"]
+        )
 
         # Dessine le fond et le contour
         pygame.draw.rect(ecran, couleur_fond, self.rect)
@@ -43,4 +57,4 @@ class Bouton:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.rect.collidepoint(event.pos):
                 if callable(self.action):
-                    self.action() 
+                    self.action()

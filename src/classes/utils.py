@@ -1,14 +1,17 @@
 import json
+import os
 from math import hypot
 from typing import List
-from classes.position import Position
-import os
+
 import pygame
 
-from classes.constants import PROJECT_ROOT, ASSETS_DIR
+from classes.constants import ASSETS_DIR, PROJECT_ROOT
+from classes.position import Position
+
 
 def distance_positions(a: Position, b: Position) -> float:
     return hypot(a.x - b.x, a.y - b.y)
+
 
 def charger_chemin_tiled(tmj_path: str, layer_name: str = "path") -> List[Position]:
     """
@@ -19,18 +22,29 @@ def charger_chemin_tiled(tmj_path: str, layer_name: str = "path") -> List[Positi
     with open(tmj_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    layer = next((l for l in data["layers"] if l["type"] == "objectgroup" and l["name"] == layer_name), None)  # Trouve le calque d'objets correspondant au nom donné
-    if not layer:  
-        raise ValueError(f"Calque '{layer_name}' introuvable dans {tmj_path}")  
-    obj = next((o for o in layer["objects"] if "polygon" in o), None)  # Trouve le premier objet contenant un polygon
-    if not obj: 
-        raise ValueError(f"Aucun polygon trouvé dans le calque '{layer_name}'.") 
+    layer = next(
+        (
+            l
+            for l in data["layers"]
+            if l["type"] == "objectgroup" and l["name"] == layer_name
+        ),
+        None,
+    )  # Trouve le calque d'objets correspondant au nom donné
+    if not layer:
+        raise ValueError(f"Calque '{layer_name}' introuvable dans {tmj_path}")
+    obj = next(
+        (o for o in layer["objects"] if "polygon" in o), None
+    )  # Trouve le premier objet contenant un polygon
+    if not obj:
+        raise ValueError(f"Aucun polygon trouvé dans le calque '{layer_name}'.")
 
     ox, oy = obj["x"], obj["y"]
-    return [Position(ox + p["x"], oy + p["y"]) for p in obj["polygon"]] 
+    return [Position(ox + p["x"], oy + p["y"]) for p in obj["polygon"]]
 
 
-def decouper_sprite(image: pygame.Surface, nb_images: int, horizontal: bool = True, copy: bool = True) -> list[pygame.Surface]:
+def decouper_sprite(
+    image: pygame.Surface, nb_images: int, horizontal: bool = True, copy: bool = True
+) -> list[pygame.Surface]:
     """
     Découpe une spritesheet simple en 'nb_images' parties égales.
     - image: Surface source.
@@ -63,7 +77,10 @@ def decouper_sprite(image: pygame.Surface, nb_images: int, horizontal: bool = Tr
 
     return slices
 
-def charger_et_scaler(sous_dossier: str, nom_fichier: str, nb_frames: int, scale: float = 1.0) -> list[pygame.Surface]:
+
+def charger_et_scaler(
+    sous_dossier: str, nom_fichier: str, nb_frames: int, scale: float = 1.0
+) -> list[pygame.Surface]:
     """
     Charge une spritesheet, découpe en nb_frames et applique un facteur d'échelle.
     sous_dossier: sous-dossier dans assets/enemy (ex: 'goblin')
@@ -75,5 +92,10 @@ def charger_et_scaler(sous_dossier: str, nom_fichier: str, nb_frames: int, scale
     image = pygame.image.load(chemin).convert_alpha()
     frames = decouper_sprite(image, nb_frames)
     if scale != 1.0:
-        frames = [pygame.transform.scale(f, (int(f.get_width()*scale), int(f.get_height()*scale))) for f in frames]
+        frames = [
+            pygame.transform.scale(
+                f, (int(f.get_width() * scale), int(f.get_height() * scale))
+            )
+            for f in frames
+        ]
     return frames

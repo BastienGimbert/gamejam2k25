@@ -1,7 +1,7 @@
-from abc import ABC, abstractmethod
-from typing import List, Optional, Callable, Tuple
-
 import os
+from abc import ABC, abstractmethod
+from typing import Callable, List, Optional, Tuple
+
 import pygame
 
 from classes.animation import DirectionalAnimator
@@ -40,7 +40,9 @@ class Tour(ABC):
         self._cible: Optional["Ennemi"] = None
         self._au_tir: Optional[Callable[["Tour", "Ennemi"], None]] = None
 
-        person_path = os.path.join(_project_root(), "assets", "tower", self.type_nom, "person")
+        person_path = os.path.join(
+            _project_root(), "assets", "tower", self.type_nom, "person"
+        )
         desired_total = 6 if self.type_nom == "catapulte" else 11
         side_faces_right = False if self.type_nom == "archer" else True
         self._anim = DirectionalAnimator(
@@ -65,7 +67,12 @@ class Tour(ABC):
             int(self.position.y) - self._person_offset_y,
         )
 
-    def maj(self, dt: float, ennemis: List["Ennemi"], au_tir: Optional[Callable[["Tour", "Ennemi"], None]] = None) -> None:
+    def maj(
+        self,
+        dt: float,
+        ennemis: List["Ennemi"],
+        au_tir: Optional[Callable[["Tour", "Ennemi"], None]] = None,
+    ) -> None:
         if dt < 0:
             return
 
@@ -98,12 +105,19 @@ class Tour(ABC):
                 d, fx = self._best_orient(self._cible)
                 self._anim.set_orientation(d, fx)
             if self._anim.update(dt):
-                if self._cible is not None and not self._cible.estMort() and self._cible.visible:
-                    if distance_positions(self.position, self._cible.position) <= self.portee:
+                if (
+                    self._cible is not None
+                    and not self._cible.estMort()
+                    and self._cible.visible
+                ):
+                    if (
+                        distance_positions(self.position, self._cible.position)
+                        <= self.portee
+                    ):
                         if self._au_tir is not None:
                             self._au_tir(self, self._cible)
                             self._time_since_last_shot = 0.0
-                
+
                 self._etat = "idle"
                 self._cible = None
                 self._au_tir = None
@@ -112,7 +126,9 @@ class Tour(ABC):
     def _best_orient(self, cible: Optional["Ennemi"]) -> Tuple[str, bool]:
         if cible is None:
             return "S", False
-        return self._anim.best_orientation(self.position.x, self.position.y, cible.position.x, cible.position.y)
+        return self._anim.best_orientation(
+            self.position.x, self.position.y, cible.position.x, cible.position.y
+        )
 
     def _choisir_cible(self, ennemis: List["Ennemi"]) -> Optional["Ennemi"]:
         candidats: List[tuple[float, Ennemi]] = []
@@ -203,13 +219,13 @@ class Mage(Tour):
 
     def attaquer(self, cible: "Ennemi") -> None:
         return
-    
+
 
 class Campement(Tour):
     TYPE_ID = 4
     TYPE_NOM = "Campement"
     PRIX = 120
-    PORTEE = 92.0  
+    PORTEE = 92.0
 
     _frames: list[pygame.Surface] | None = None
 
@@ -235,7 +251,7 @@ class Campement(Tour):
 
     def maj(self, dt: float, *args, **kwargs) -> None:
         self.frame_timer += dt
-        if self.frame_timer >= 0.12: 
+        if self.frame_timer >= 0.12:
             self.frame_timer = 0
             self.frame_index = (self.frame_index + 1) % len(Campement._frames)
 
@@ -244,7 +260,10 @@ class Campement(Tour):
             return
         frame = Campement._frames[self.frame_index]
         surf = pygame.transform.smoothscale(frame, (taille_case, taille_case))
-        ecran.blit(surf, (self.position.x - taille_case // 2, self.position.y - taille_case // 2))
+        ecran.blit(
+            surf,
+            (self.position.x - taille_case // 2, self.position.y - taille_case // 2),
+        )
 
     def attaquer(self, cible: "Ennemi") -> None:
         pass

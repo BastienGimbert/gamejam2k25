@@ -1,11 +1,16 @@
-import sys
-import pygame
 import os
 import random
+import sys
 
+import pygame
 
-from classes.menu import creer_boutons_menu, creer_boutons_credits, dessiner_menu, dessiner_credits
-from classes.constants import AUDIO_DIR, WINDOW_WIDTH, WINDOW_HEIGHT, FPS
+from classes.constants import AUDIO_DIR, FPS, WINDOW_HEIGHT, WINDOW_WIDTH
+from classes.menu import (
+    creer_boutons_credits,
+    creer_boutons_menu,
+    dessiner_credits,
+    dessiner_menu,
+)
 from game import Game
 
 # ------------------- INITIALISATION -------------------
@@ -32,13 +37,13 @@ ETAT_AVANT_CREDITS = "MENU"
 
 # Gestion du son (muet ou non)
 est_muet = False
-VOLUME_MUSIQUE = 1.0 
+VOLUME_MUSIQUE = 1.0
 
 # événement pour musique terminée
-MUSIQUE_FINIE = pygame.USEREVENT + 1  
-pygame.mixer.music.set_endevent(MUSIQUE_FINIE) 
+MUSIQUE_FINIE = pygame.USEREVENT + 1
+pygame.mixer.music.set_endevent(MUSIQUE_FINIE)
 
-derniere_piste = None   # piste jouée précédemment
+derniere_piste = None  # piste jouée précédemment
 
 
 def demarrer_musique_de_fond() -> None:
@@ -71,22 +76,24 @@ def demarrer_musique_de_fond() -> None:
     try:
         pygame.mixer.music.load(choix)
         pygame.mixer.music.set_volume(0.0 if est_muet else VOLUME_MUSIQUE)
-        pygame.mixer.music.play() 
+        pygame.mixer.music.play()
         print(f"Musique choisie et lancée : {choix}")
     except Exception as e:
         print(f"Impossible de charger la musique {choix}: {e}")
     # Si aucune piste trouvée/chargée, on ignore silencieusement
     return
 
+
 # Lancer la musique au démarrage
 demarrer_musique_de_fond()
 
 # ------------------- CALLBACKS D'ACTION -------------------
 
+
 def demarrer_jeu():
     global ETAT
     ETAT = "JEU"
-    #scene_jeu.lancerVague()
+    # scene_jeu.lancerVague()
 
 
 def reprendre_jeu():
@@ -117,13 +124,18 @@ def basculer_muet():
 
 def retour_depuis_credits():
     global ETAT
-    ETAT = ETAT_AVANT_CREDITS if ETAT_AVANT_CREDITS in {"MENU", "PAUSE", "JEU", "GAMEOVER"} else "MENU"
+    ETAT = (
+        ETAT_AVANT_CREDITS
+        if ETAT_AVANT_CREDITS in {"MENU", "PAUSE", "JEU", "GAMEOVER"}
+        else "MENU"
+    )
 
 
 def quitter_jeu():
     """Ferme proprement Pygame et le programme."""
     pygame.quit()
     sys.exit()
+
 
 # ------------------- CONSTRUCTION DES ÉCRANS -------------------
 
@@ -145,7 +157,9 @@ ACTIONS_MENU_PAUSE = {
     "quitter": quitter_jeu,
 }
 
-BOUTONS_MENU = creer_boutons_menu(POLICE, reprendre=False, actions=ACTIONS_MENU_PRINCIPAL)
+BOUTONS_MENU = creer_boutons_menu(
+    POLICE, reprendre=False, actions=ACTIONS_MENU_PRINCIPAL
+)
 BOUTONS_PAUSE = creer_boutons_menu(POLICE, reprendre=True, actions=ACTIONS_MENU_PAUSE)
 BOUTONS_CREDITS = creer_boutons_credits(POLICE, action_retour=retour_depuis_credits)
 
@@ -156,25 +170,31 @@ ACTIONS_GAMEOVER = {
     "quitter": lambda: quitter_jeu(),
 }
 
+
 def redemarrer_partie():
     global scene_jeu, ETAT
     scene_jeu = Game(POLICE, est_muet=est_muet)
     ETAT = "JEU"
 
+
 try:
     from classes.menu import creer_boutons_gameover, dessiner_gameover
+
     BOUTONS_GAMEOVER = creer_boutons_gameover(POLICE, actions=ACTIONS_GAMEOVER)
 except Exception:
     # Fallback si la fonction n'existe pas (ancienne version): pas de boutons spécifiques
     BOUTONS_GAMEOVER = []
+
     def dessiner_gameover(ecran: pygame.Surface, boutons: list):
         ecran.fill((0, 0, 0))
         txt = POLICE.render("Game Over", True, (255, 0, 0))
-        ecran.blit(txt, (ECRAN.get_width()//2 - txt.get_width()//2, 200))
+        ecran.blit(txt, (ECRAN.get_width() // 2 - txt.get_width() // 2, 200))
         for b in boutons:
             b.dessiner(ecran)
 
+
 # ------------------- BOUCLE PRINCIPALE -------------------
+
 
 def main() -> None:
     global ETAT
@@ -186,7 +206,7 @@ def main() -> None:
                 pygame.quit()
                 sys.exit()
             elif event.type == MUSIQUE_FINIE:
-                demarrer_musique_de_fond() 
+                demarrer_musique_de_fond()
 
             if ETAT == "MENU":
                 for b in BOUTONS_MENU:
@@ -204,7 +224,6 @@ def main() -> None:
             elif ETAT == "GAMEOVER":
                 for b in BOUTONS_GAMEOVER:
                     b.gerer_evenement(event)
-            
 
         # 2) Affichage
         if ETAT == "MENU":
@@ -229,7 +248,6 @@ def main() -> None:
             # fige le temps de jeu côté Game
             scene_jeu.decompte_dt()
             dessiner_gameover(ECRAN, BOUTONS_GAMEOVER)
-
 
         # 3) Mise à jour de l'écran + FPS
         pygame.display.flip()

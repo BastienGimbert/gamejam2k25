@@ -4,7 +4,7 @@ Ce module centralise chemins, tailles et couleurs utilisées par plusieurs modul
 """
 
 import os
-from typing import Tuple, Dict
+from typing import Dict, Tuple
 
 # Racine du projet (dossier contenant `src`)
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -19,11 +19,11 @@ TOWER_DIR = os.path.join(ASSETS_DIR, "tower")
 TILE_SIZE: int = 64
 GRID_COLS: int = 12
 GRID_ROWS: int = 12
-GAME_WIDTH: int = TILE_SIZE * GRID_COLS      # 768
-GAME_HEIGHT: int = TILE_SIZE * GRID_ROWS    # 768
+GAME_WIDTH: int = TILE_SIZE * GRID_COLS  # 768
+GAME_HEIGHT: int = TILE_SIZE * GRID_ROWS  # 768
 SHOP_WIDTH: int = 400
 SPELLS_HEIGHT: int = 200
-WINDOW_WIDTH: int = GAME_WIDTH + SHOP_WIDTH # 1168
+WINDOW_WIDTH: int = GAME_WIDTH + SHOP_WIDTH  # 1168
 WINDOW_HEIGHT: int = GAME_HEIGHT + SPELLS_HEIGHT
 FPS: int = 60
 GAME_NAME: str = "Protect The Castle"

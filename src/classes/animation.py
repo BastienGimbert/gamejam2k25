@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 import pygame
 
@@ -28,8 +28,16 @@ class DirectionalAnimator:
         side_faces_right: bool = True,
         desired_compound_total: Optional[int] = None,
     ) -> None:
-        self.base_person_path = base_person_path if os.path.isabs(base_person_path) else os.path.join(_project_root(), base_person_path)
-        self.frames_per_state = frames_per_state or {"Idle": 4, "Preattack": 1, "Attack": 6}
+        self.base_person_path = (
+            base_person_path
+            if os.path.isabs(base_person_path)
+            else os.path.join(_project_root(), base_person_path)
+        )
+        self.frames_per_state = frames_per_state or {
+            "Idle": 4,
+            "Preattack": 1,
+            "Attack": 6,
+        }
         self.state_order: List[str] = ["Idle", "Preattack", "Attack"]
         self.durations = durations or {"Idle": 0.18, "Preattack": 0.10, "Attack": 0.10}
         self.loop_states = set(loop_states)
@@ -84,7 +92,9 @@ class DirectionalAnimator:
         out: Dict[str, List[pygame.Surface]] = {}
         has_state = False
         for s in self.state_order:
-            if os.path.exists(os.path.join(self.base_person_path, f"{direction}_{s}.png")):
+            if os.path.exists(
+                os.path.join(self.base_person_path, f"{direction}_{s}.png")
+            ):
                 has_state = True
                 break
         self._has_state_sheet[direction] = has_state
@@ -133,7 +143,9 @@ class DirectionalAnimator:
             for s in self.state_order:
                 self.frames[(d, s)] = packs.get(s, packs.get("Idle", []))
 
-    def start(self, state: str, direction: Optional[str] = None, flip_x: Optional[bool] = None) -> None:
+    def start(
+        self, state: str, direction: Optional[str] = None, flip_x: Optional[bool] = None
+    ) -> None:
         if direction is not None:
             self.direction = direction
         if flip_x is not None:
@@ -176,7 +188,9 @@ class DirectionalAnimator:
         rect.midbottom = (center_x, base_y)
         surface.blit(img, rect)
 
-    def best_orientation(self, src_x: float, src_y: float, dst_x: float, dst_y: float) -> Tuple[str, bool]:
+    def best_orientation(
+        self, src_x: float, src_y: float, dst_x: float, dst_y: float
+    ) -> Tuple[str, bool]:
         dx = float(dst_x - src_x)
         dy = float(dst_y - src_y)
         ax, ay = abs(dx), abs(dy)

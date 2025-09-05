@@ -1,14 +1,11 @@
+from abc import ABC, abstractmethod
 from math import atan2, degrees, hypot
-from typing import Optional, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Optional
 
 import pygame
-from abc import ABC, abstractmethod
 
-from classes.position import Position
 from classes.ennemi import Ennemi
-
-
-from typing import TYPE_CHECKING
+from classes.position import Position
 
 if TYPE_CHECKING:
     from game import Game
@@ -55,7 +52,6 @@ class Projectile(ABC):
         # Chemin relatif depuis la racine du projet, ex: "assets/.../1.png"
         # Utilisé par le jeu pour charger l'image automatiquement
         # via une fonction générique.
-        
 
     def _angle_degres(self) -> float:
         # 0° = droite, 90° = haut (sens anti-horaire)
@@ -100,8 +96,14 @@ class ProjectileFleche(Projectile):
     CHEMIN_IMAGE: ClassVar[str] = "assets/tower/archer/Arrow/1.png"
 
     def __init__(self, origine: Position, cible_pos: Position) -> None:
-        super().__init__(origine=origine, cible_pos=cible_pos, degats=20, vitesse=720.0, rayon_collision=12.0)
-        self.image_base: Optional[pygame.Surface] = None 
+        super().__init__(
+            origine=origine,
+            cible_pos=cible_pos,
+            degats=20,
+            vitesse=720.0,
+            rayon_collision=12.0,
+        )
+        self.image_base: Optional[pygame.Surface] = None
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         if self.detruit or self.image_base is None:
@@ -117,8 +119,16 @@ class ProjectilePierre(Projectile):
 
     CHEMIN_IMAGE: ClassVar[str] = "assets/tower/catapulte/projectiles/1.png"
 
-    def __init__(self, origine: Position, cible_pos: Position, game_ref:  Optional["Game"]) -> None:
-        super().__init__(origine=origine, cible_pos=cible_pos, degats=70, vitesse=360.0, rayon_collision=16.0)
+    def __init__(
+        self, origine: Position, cible_pos: Position, game_ref: Optional["Game"]
+    ) -> None:
+        super().__init__(
+            origine=origine,
+            cible_pos=cible_pos,
+            degats=70,
+            vitesse=360.0,
+            rayon_collision=16.0,
+        )
         self.image_base: Optional[pygame.Surface] = None
 
     def dessiner(self, ecran: pygame.Surface) -> None:
@@ -138,7 +148,13 @@ class ProjectileTourMage(Projectile):
 
     def __init__(self, origine: Position, cible_pos: Position) -> None:
         # Moins rapide qu'une flèche, dégâts supérieurs
-        super().__init__(origine=origine, cible_pos=cible_pos, degats=40, vitesse=600.0, rayon_collision=14.0)
+        super().__init__(
+            origine=origine,
+            cible_pos=cible_pos,
+            degats=40,
+            vitesse=600.0,
+            rayon_collision=14.0,
+        )
         self.image_base: Optional[pygame.Surface] = None
 
     def dessiner(self, ecran: pygame.Surface) -> None:
@@ -155,11 +171,19 @@ class ProjectileMageEnnemi(Projectile):
 
     CHEMIN_IMAGE: ClassVar[str] = "assets/enemy/mage/Projectile2.png"
 
-    def __init__(self, origine: Position, cible_proj: "ProjectilePierre", vitesse: float = 700.0):
+    def __init__(
+        self, origine: Position, cible_proj: "ProjectilePierre", vitesse: float = 700.0
+    ):
         # On initialise avec la position initiale du projectile
         # Portée illimitée pour garantir l'interception, collision un peu plus large
-        super().__init__(origine=origine, cible_pos=Position(cible_proj.x, cible_proj.y),
-                         degats=0, vitesse=vitesse, rayon_collision=24.0, portee_max=None)
+        super().__init__(
+            origine=origine,
+            cible_pos=Position(cible_proj.x, cible_proj.y),
+            degats=0,
+            vitesse=vitesse,
+            rayon_collision=24.0,
+            portee_max=None,
+        )
         self.image_base: Optional[pygame.Surface] = None
         self.cible_proj = cible_proj  # On garde la référence pour le guidage
 
@@ -167,7 +191,9 @@ class ProjectileMageEnnemi(Projectile):
         if self.detruit:
             return
         # recalcul de la direction vers le projectilePierre
-        if self.cible_proj is not None and not getattr(self.cible_proj, "detruit", True):
+        if self.cible_proj is not None and not getattr(
+            self.cible_proj, "detruit", True
+        ):
             dx = self.cible_proj.x - self.x
             dy = self.cible_proj.y - self.y
             dist = max(1e-6, hypot(dx, dy))
@@ -200,4 +226,3 @@ class ProjectileMageEnnemi(Projectile):
         sprite = pygame.transform.rotozoom(self.image_base, 90 - angle, 1.0)
         rect = sprite.get_rect(center=(int(self.x), int(self.y)))
         ecran.blit(sprite, rect)
-
