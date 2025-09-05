@@ -13,7 +13,7 @@ class Sort(ABC):
     def __init__(self, nom: str, niveau: int = 1):
         self.nom = nom
         self.niveau = niveau
-        self.prix_base = 50  # Prix de base pour le niveau 1
+        self.prix_base = 25  # Prix de base pour le niveau 1
     
     @property
     def prix(self) -> int:
@@ -108,7 +108,7 @@ class SortFee(Sort):
     
     def __init__(self, niveau: int = 1):
         super().__init__("Fee", niveau)
-        self.prix_base = 120  # Prix fixe de 120 gold
+        self.prix_base = 40  # Prix fixe de 120 gold
         self.duree_eclairage = 5.0  # Durée en secondes
         self.temps_debut = None  # Timestamp du début de l'effet
         self.actif = False  # Si l'effet est actuellement actif
@@ -176,7 +176,7 @@ class SortEclair(Sort):
     
     def __init__(self, niveau: int = 1):
         super().__init__("Eclair", niveau)
-        self.prix_base = 80  # Prix de 80 gold
+        self.prix_base = 45  # Prix de 80 gold
         self.degats = 100  # Dégâts infligés
         self.max_niveau = 1  # Un seul niveau pour ce sort
         self.case_cible = None  # Case ciblée pour l'éclair
