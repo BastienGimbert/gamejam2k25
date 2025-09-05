@@ -367,6 +367,16 @@ class Game:
                 ecran.blit(coin_surf, (coin_x, coin_y))
 
         bouton_actif = self.vague_terminee()
+
+        # Affiche le numéro de vague au-dessus du bouton
+        try:
+            label_vague = self.police.render(f"Vague n° {self.numVague}", True, self.couleur_texte)
+            label_x = self.bouton_vague.rect.x + (self.bouton_vague.rect.w - label_vague.get_width()) // 2
+            label_y = self.bouton_vague.rect.y - 36
+            ecran.blit(label_vague, (label_x, label_y))
+        except Exception:
+            pass
+
         if bouton_actif:
             self.bouton_vague.dessiner(ecran)
         else:

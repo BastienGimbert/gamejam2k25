@@ -24,8 +24,9 @@ pygame.display.set_caption("Protect The Castle")
 POLICE = pygame.font.Font(None, 50)
 HORLOGE = pygame.time.Clock()
 
-# Etats possibles: "MENU", "JEU", "PAUSE", "CREDITS"
+# Etats possibles: "MENU", "JEU", "PAUSE", "CREDITS", "GAMEOVER"
 ETAT = "MENU"
+ETAT_AVANT_CREDITS = "MENU"
 
 # ------------------- MUSIQUE DE FOND -------------------
 
@@ -95,7 +96,9 @@ def reprendre_jeu():
 
 
 def afficher_credits():
-    global ETAT
+    global ETAT, ETAT_AVANT_CREDITS
+    # mémorise l'état actuel pour y revenir en quittant les crédits
+    ETAT_AVANT_CREDITS = ETAT
     ETAT = "CREDITS"
 
 
@@ -108,9 +111,9 @@ def basculer_muet():
     print("Muet activé" if est_muet else "Son activé")
 
 
-def retour_menu():
+def retour_depuis_credits():
     global ETAT
-    ETAT = "MENU"
+    ETAT = ETAT_AVANT_CREDITS if ETAT_AVANT_CREDITS in {"MENU", "PAUSE", "JEU", "GAMEOVER"} else "MENU"
 
 
 def quitter_jeu():
@@ -140,7 +143,32 @@ ACTIONS_MENU_PAUSE = {
 
 BOUTONS_MENU = creer_boutons_menu(POLICE, reprendre=False, actions=ACTIONS_MENU_PRINCIPAL)
 BOUTONS_PAUSE = creer_boutons_menu(POLICE, reprendre=True, actions=ACTIONS_MENU_PAUSE)
-BOUTONS_CREDITS = creer_boutons_credits(POLICE, action_retour=retour_menu)
+BOUTONS_CREDITS = creer_boutons_credits(POLICE, action_retour=retour_depuis_credits)
+
+# Game Over
+ACTIONS_GAMEOVER = {
+    "recommencer": lambda: redemarrer_partie(),
+    "credits": afficher_credits,
+    "quitter": lambda: quitter_jeu(),
+}
+
+def redemarrer_partie():
+    global scene_jeu, ETAT
+    scene_jeu = Game(POLICE)
+    ETAT = "JEU"
+
+try:
+    from classes.menu import creer_boutons_gameover, dessiner_gameover
+    BOUTONS_GAMEOVER = creer_boutons_gameover(POLICE, actions=ACTIONS_GAMEOVER)
+except Exception:
+    # Fallback si la fonction n'existe pas (ancienne version): pas de boutons spécifiques
+    BOUTONS_GAMEOVER = []
+    def dessiner_gameover(ecran: pygame.Surface, boutons: list):
+        ecran.fill((0, 0, 0))
+        txt = POLICE.render("Game Over", True, (255, 0, 0))
+        ecran.blit(txt, (ECRAN.get_width()//2 - txt.get_width()//2, 200))
+        for b in boutons:
+            b.dessiner(ecran)
 
 # ------------------- BOUCLE PRINCIPALE -------------------
 
@@ -169,6 +197,9 @@ def main() -> None:
                 changement = scene_jeu.gerer_evenement(event)
                 if changement == "PAUSE":
                     ETAT = "PAUSE"
+            elif ETAT == "GAMEOVER":
+                for b in BOUTONS_GAMEOVER:
+                    b.gerer_evenement(event)
             
 
         # 2) Affichage
@@ -184,6 +215,16 @@ def main() -> None:
                 b.dessiner(ECRAN)
         elif ETAT == "JEU":
             scene_jeu.dessiner(ECRAN)
+            # Détection Game Over
+            try:
+                if getattr(scene_jeu.joueur, "point_de_vie", 1) <= 0:
+                    ETAT = "GAMEOVER"
+            except Exception:
+                pass
+        elif ETAT == "GAMEOVER":
+            # fige le temps de jeu côté Game
+            scene_jeu.decompte_dt()
+            dessiner_gameover(ECRAN, BOUTONS_GAMEOVER)
 
 
         # 3) Mise à jour de l'écran + FPS
