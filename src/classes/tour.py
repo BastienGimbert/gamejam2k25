@@ -7,7 +7,7 @@ import pygame
 from classes.animation import DirectionalAnimator
 from classes.ennemi import Ennemi
 from classes.position import Position
-from classes.utils import distance_positions
+from classes.utils import charger_et_scaler, distance_positions
 
 
 def _project_root() -> str:
@@ -200,3 +200,47 @@ class Mage(Tour):
 
     def attaquer(self, cible: "Ennemi") -> None:
         return
+    
+
+class FeuDeCamps(Tour):
+    TYPE_ID = 4
+    TYPE_NOM = "Feu de camp"
+    PRIX = 50
+
+    _frames: list[pygame.Surface] | None = None
+
+    def __init__(self, id: int, position: Position) -> None:
+        super().__init__(
+            id=id,
+            type_id=self.TYPE_ID,
+            type_nom=self.TYPE_NOM,
+            cooldown_s=1.5,
+            portee=90.0,
+            position=position,
+            prix=self.PRIX,
+        )
+
+        if FeuDeCamps._frames is None:
+            # Charger les 6 frames de feu
+            FeuDeCamps._frames = charger_et_scaler(
+                "../tower/Feu de camp", "1.png", 6, scale=0.8
+            )
+
+        self.frame_index = 0
+        self.frame_timer = 0.0
+
+    def maj(self, dt: float, *args, **kwargs) -> None:
+        self.frame_timer += dt
+        if self.frame_timer >= 0.12: 
+            self.frame_timer = 0
+            self.frame_index = (self.frame_index + 1) % len(FeuDeCamps._frames)
+
+    def dessiner(self, ecran: pygame.Surface, taille_case: int) -> None:
+        if FeuDeCamps._frames is None:
+            return
+        frame = FeuDeCamps._frames[self.frame_index]
+        surf = pygame.transform.smoothscale(frame, (taille_case, taille_case))
+        ecran.blit(surf, (self.position.x - taille_case // 2, self.position.y - taille_case // 2))
+
+    def attaquer(self, cible: "Ennemi") -> None:
+        pass

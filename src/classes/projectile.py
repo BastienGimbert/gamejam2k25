@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 
 from classes.position import Position
 from classes.ennemi import Ennemi
+
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
