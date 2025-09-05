@@ -15,7 +15,9 @@ from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positi
 from classes.csv import creer_liste_ennemis_depuis_csv
 from classes.bouton import Bouton
 
-base_dir = os.path.dirname(os.path.dirname(__file__))
+from classes.constants import ASSETS_DIR, PROJECT_ROOT
+from src.classes.constants import MONEY_DIR, HEART_DIR, TOWER_DIR, COIN_ANIM_INTERVAL_MS, HEART_ANIM_INTERVAL_MS, \
+    MAP_PNG, DEFAULT_TOWER_TYPES, MAP_TILESET_TMJ
 
 
 class Game:
@@ -59,17 +61,17 @@ class Game:
         # Animation monnaie
         self.coin_frames = self._charger_piece()
         self.coin_frame_idx = 0
-        self.COIN_ANIM_INTERVAL = 120
+        self.COIN_ANIM_INTERVAL = COIN_ANIM_INTERVAL_MS
         self.last_coin_ticks = pygame.time.get_ticks()
 
         # Animation coeurs (PV)
         self.heart_frames = self._charger_coeurs()
         self.heart_frame_idx = 0
-        self.HEART_ANIM_INTERVAL = 120
+        self.HEART_ANIM_INTERVAL = HEART_ANIM_INTERVAL_MS
         self.last_heart_ticks = pygame.time.get_ticks()
 
         # Types de tours
-        self.tower_types = ["archer", "catapult", "mage", "Feu de camp"]
+        self.tower_types = DEFAULT_TOWER_TYPES
         # --- Ajout : sélection de tour pour affichage de la range ---
         self.tour_selectionnee: tuple[int, int] | None = None
         
@@ -109,7 +111,7 @@ class Game:
         # Carte / chemin
         self.clock = pygame.time.Clock()
         self.carte = self._charger_carte()
-        self.tmj_path = os.path.join(base_dir, "assets", "tilesets", "carte.tmj")
+        self.tmj_path = MAP_TILESET_TMJ
         chemin_positions = charger_chemin_tiled(self.tmj_path, layer_name="path")
         self.cases_bannies = self._cases_depuis_chemin(chemin_positions)
         # Bannir aussi les 6 cases des deux premières lignes (x=0..5, y=0..1)
@@ -170,14 +172,14 @@ class Game:
 
     # ---------- Chargements ----------
     def _charger_carte(self):
-        chemin_carte = os.path.join(base_dir, "assets", "tilesets", "carte.png")
+        chemin_carte = MAP_PNG
         if not os.path.exists(chemin_carte):
             raise FileNotFoundError(f"Carte non trouvée: {chemin_carte}")
         img = pygame.image.load(chemin_carte).convert_alpha()
         return img
 
     def _charger_piece(self):
-        coinImg = os.path.join(base_dir, "assets", "money", "MonedaD.png")
+        coinImg = os.path.join(MONEY_DIR, "MonedaD.png")
         if os.path.exists(coinImg):
             img = pygame.image.load(coinImg).convert_alpha()
             frames = decouper_sprite(img, 5, horizontal=True, copy=True)
@@ -188,15 +190,14 @@ class Game:
     def _charger_coeurs(self):
         """Charge toutes les images de coeur dans assets/heart et retourne une liste de surfaces."""
         frames = []
-        dossier = os.path.join(base_dir, "assets", "heart")
-        if not os.path.isdir(dossier):
+        if not os.path.isdir(HEART_DIR):
             return frames
-        fichiers = [f for f in os.listdir(dossier) if f.lower().endswith(".png")]
+        fichiers = [f for f in os.listdir(HEART_DIR) if f.lower().endswith(".png")]
         if not fichiers:
             return frames
         fichiers.sort()
         for fn in fichiers:
-            p = os.path.join(dossier, fn)
+            p = os.path.join(HEART_DIR, fn)
             try:
                 img = pygame.image.load(p).convert_alpha()
                 frames.append(img)
@@ -207,12 +208,11 @@ class Game:
     def _charger_tours(self):
         assets = {}
         for tower_type in self.tower_types:
-            dossier = os.path.join("assets", "tower", tower_type)
-            dossier_absolu = os.path.join(base_dir, dossier)
-            if not os.path.isdir(dossier_absolu):
+            tower_folder = os.path.join(TOWER_DIR, tower_type)
+            if not os.path.isdir(tower_folder):
                 continue
 
-            chemins = [f for f in os.listdir(dossier_absolu) if f.endswith(".png")]
+            chemins = [f for f in os.listdir(tower_folder) if f.endswith(".png")]
             if not chemins:
                 continue
 
@@ -220,7 +220,7 @@ class Game:
 
             # feu de camp : 6 images 
             if tower_type == "Feu de camp":
-                dernier_chemin = os.path.join(dossier_absolu, chemins[-1])
+                dernier_chemin = os.path.join(tower_folder, chemins[-1])
                 image = pygame.image.load(dernier_chemin).convert_alpha()
                 slices = decouper_sprite(image, 6, horizontal=True, copy=False)  
                 frames = [slices]
@@ -230,7 +230,7 @@ class Game:
                 }
             else:
                 # Cas tour classique : découpe en 4
-                dernier_chemin = os.path.join(dossier_absolu, chemins[-1])
+                dernier_chemin = os.path.join(tower_folder, chemins[-1])
                 image = pygame.image.load(dernier_chemin).convert_alpha()
                 slices = decouper_sprite(image, 4, horizontal=True, copy=False)
                 frames = [slices]
@@ -258,7 +258,7 @@ class Game:
             pygame.draw.circle(surf, (120, 120, 120), (11, 11), 10)
             return surf
 
-        p = os.path.join(base_dir, chemin_relatif)
+        p = os.path.join(PROJECT_ROOT, chemin_relatif)
         if os.path.exists(p):
             try:
                 return pygame.image.load(p).convert_alpha()
@@ -604,7 +604,7 @@ class Game:
                     self.projectiles.append(p)
                     # Joue le son de flèche
                     try:
-                        arrow_sound = pygame.mixer.Sound(os.path.join(base_dir, "assets", "audio", "bruitage", "arrow.mp3"))
+                        arrow_sound = pygame.mixer.Sound(os.path.join(ASSETS_DIR, "audio", "bruitage", "arrow.mp3"))
                         arrow_sound.play().set_volume(0.15)
                     except Exception:
                         pass
@@ -616,7 +616,7 @@ class Game:
                     self.projectiles.append(p)
                     # Joue le son de catapulte
                     try:
-                        fire_sound = pygame.mixer.Sound(os.path.join(base_dir, "assets", "audio", "bruitage", "fire-magic.mp3"))
+                        fire_sound = pygame.mixer.Sound(os.path.join(ASSETS_DIR, "audio", "bruitage", "fire-magic.mp3"))
                         fire_sound.play().set_volume(0.15)
                     except Exception:
                         pass
@@ -644,7 +644,7 @@ class Game:
                     self.projectiles.append(p)
                     # Joue le son du mage
                     try:
-                        wind_sound = pygame.mixer.Sound(os.path.join(base_dir, "assets", "audio", "bruitage", "wind-magic.mp3"))
+                        wind_sound = pygame.mixer.Sound(os.path.join(ASSETS_DIR, "audio", "bruitage", "wind-magic.mp3"))
                         wind_sound.play().set_volume(0.15)
                     except Exception:
                         pass
@@ -836,7 +836,7 @@ class Game:
                         # Joue le son du feu de camp si c'est un feu de camp
                         if self.type_selectionne == "Feu de camp":
                             try:
-                                campfire_sound = pygame.mixer.Sound(os.path.join(base_dir, "assets", "audio", "bruitage", "camp-fire.mp3"))
+                                campfire_sound = pygame.mixer.Sound(os.path.join(ASSETS_DIR, "audio", "bruitage", "camp-fire.mp3"))
                                 campfire_sound.play().set_volume(0.15)
                             except Exception:
                                 pass
