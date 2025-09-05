@@ -54,6 +54,20 @@ MAP_PNG: str = os.path.join(TILESETS_DIR, "carte.png")
 # Valeurs par défaut / listes partagées
 DEFAULT_TOWER_TYPES = ["archer", "catapulte", "mage", "campement"]
 
+# Valeurs de récompense par vague
+RECOMPENSES_PAR_VAGUE: dict[int, int] = {
+    1: 25,
+    2: 25,
+    3: 30,
+    4: 20,
+    5: 20,
+    6: 15,
+    7: 10,
+    8: 10,
+    9: 5,
+    10: 5,
+}
+
 # Export
 __all__ = [
     "PROJECT_ROOT",
@@ -78,4 +92,6 @@ __all__ = [
     "MAP_TILESET_TMJ",
     "MAP_PNG",
     "DEFAULT_TOWER_TYPES",
+    "GAME_NAME",
+    "RECOMPENSES_PAR_VAGUE",
 ]

@@ -116,6 +116,7 @@ class ProjectileFleche(Projectile):
     def appliquerDegats(self, e: Ennemi) -> None:
         if isinstance(e, Chevalier):
             # Les chevaliers en prennent pas de degats par des fleches
+            e.block()
             self.detruit = True
             return
         e.perdreVie(self.degats)
@@ -133,7 +134,7 @@ class ProjectilePierre(Projectile):
         super().__init__(
             origine=origine,
             cible_pos=cible_pos,
-            degats=70,
+            degats=200,
             vitesse=360.0,
             rayon_collision=16.0,
         )
@@ -143,7 +144,7 @@ class ProjectilePierre(Projectile):
         if self.detruit or self.image_base is None:
             return
         angle = self._angle_degres()
-        sprite = pygame.transform.rotozoom(self.image_base, 90 - angle, 1.0)
+        sprite = pygame.transform.rotozoom(self.image_base, 90 - angle, 1.5)
         rect = sprite.get_rect(center=(int(self.x), int(self.y)))
         ecran.blit(sprite, rect)
 
@@ -169,7 +170,7 @@ class ProjectileTourMage(Projectile):
         if self.detruit or self.image_base is None:
             return
         angle = self._angle_degres()
-        sprite = pygame.transform.rotozoom(self.image_base, 90 - angle, 1.0)
+        sprite = pygame.transform.rotozoom(self.image_base, 90 - angle, 1.5)
         rect = sprite.get_rect(center=(int(self.x), int(self.y)))
         ecran.blit(sprite, rect)
 
@@ -190,7 +191,7 @@ class ProjectileMageEnnemi(Projectile):
             degats=0,
             vitesse=vitesse,
             rayon_collision=24.0,
-            portee_max=None,
+            portee_max=400,
         )
         self.image_base: Optional[pygame.Surface] = None
         self.cible_proj = cible_proj  # On garde la référence pour le guidage
@@ -213,11 +214,11 @@ class ProjectileMageEnnemi(Projectile):
         self.y += self.vy * dt
         self._distance_parcourue += hypot(self.vx * dt, self.vy * dt)
 
-        # optionnel : détruit si dépasse la portée max
+        # détruit si dépasse la portée max
         if self.portee_max is not None and self._distance_parcourue >= self.portee_max:
             self.detruit = True
 
-        # optionnel : détruit si la cible est détruite
+        # détruit si la cible est détruite
         if getattr(self.cible_proj, "detruit", False):
             self.detruit = True
 
@@ -231,6 +232,6 @@ class ProjectileMageEnnemi(Projectile):
         if self.detruit or self.image_base is None:
             return
         angle = self._angle_degres()
-        sprite = pygame.transform.rotozoom(self.image_base, 90 - angle, 1.0)
+        sprite = pygame.transform.rotozoom(self.image_base, 90 - angle, 1.5)
         rect = sprite.get_rect(center=(int(self.x), int(self.y)))
         ecran.blit(sprite, rect)

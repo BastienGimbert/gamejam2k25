@@ -158,7 +158,7 @@ class Archer(Tour):
     PORTEE = 150.0
 
     # Prix indicatif de la tour Archer (affiché dans la boutique)
-    PRIX = 16
+    PRIX = 20
 
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
@@ -178,10 +178,10 @@ class Archer(Tour):
 class Catapulte(Tour):
     TYPE_ID = 2
     TYPE_NOM = "catapulte"
-    PORTEE = 200.0
+    PORTEE = 220.0
 
     # Prix indicatif de la tour Catapulte (affiché dans la boutique)
-    PRIX = 35
+    PRIX = 50
 
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
@@ -224,7 +224,7 @@ class Mage(Tour):
 class Campement(Tour):
     TYPE_ID = 4
     TYPE_NOM = "Campement"
-    PRIX = 120
+    PRIX = 60
     PORTEE = 92.0
 
     _frames: list[pygame.Surface] | None = None
@@ -260,9 +260,10 @@ class Campement(Tour):
             return
         frame = Campement._frames[self.frame_index]
         surf = pygame.transform.smoothscale(frame, (taille_case, taille_case))
+        offset_y = -15 # Ajustement vertical pour centrer le feu
         ecran.blit(
             surf,
-            (self.position.x - taille_case // 2, self.position.y - taille_case // 2),
+            (self.position.x - taille_case // 2, self.position.y - taille_case // 2 + offset_y),
         )
 
     def attaquer(self, cible: "Ennemi") -> None:

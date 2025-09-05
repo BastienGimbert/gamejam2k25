@@ -20,6 +20,7 @@ from classes.constants import (
     MAP_TILESET_TMJ,
     MONEY_DIR,
     PROJECT_ROOT,
+    RECOMPENSES_PAR_VAGUE,
     SHOP_WIDTH,
     SPELLS_HEIGHT,
     TILE_SIZE,
@@ -46,7 +47,13 @@ from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positi
 
 class Game:
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
-        self.joueur = Joueur(argent=3500, point_de_vie=100, sort="feu", etat="normal")
+        self.joueur = Joueur(argent=45, point_de_vie=100, sort="feu", etat="normal")
+
+        # Gestion des vagues
+        self.numVague = 0
+        self.debutVague = 0
+        self.ennemis: list[Ennemi] = []  # Rempli lors du lancement de vague
+
         self.police = police
         self.police_tour = pygame.font.Font(None, 44)
         # État muet propagé depuis main
@@ -100,7 +107,7 @@ class Game:
             "archer": getattr(Archer, "PORTEE"),
             "catapulte": getattr(Catapulte, "PORTEE"),
             "mage": getattr(TourMage, "PORTEE"),
-            "Feu de camp": getattr(Campement, "PORTEE"),
+            "campement": getattr(Campement, "PORTEE"),
         }
 
         # Animation monnaie
@@ -198,11 +205,6 @@ class Game:
             police_medievale,
             medieval_couleurs,
         )
-
-        # Gestion des vagues
-        self.numVague = 0
-        self.debutVague = 0
-        self.ennemis: list[Ennemi] = []  # Rempli lors du lancement de vague
 
         # État jour/nuit - jour entre les manches, nuit pendant les manches
         self.est_nuit = False
@@ -905,24 +907,7 @@ class Game:
                     # Déclenche la réaction du mage le plus proche pour intercepter la pierre
                     mage = self.get_closest_mage(p.position)
                     if mage is None:
-                        # Fallback: mage le plus proche non mort, même si cooldown pas prêt
-                        try:
-                            candidats = [
-                                e
-                                for e in self.ennemis
-                                if isinstance(e, Mage)
-                                and not e.estMort()
-                                and e.estApparu(self.debutVague)
-                            ]
-                            if candidats:
-                                mage = min(
-                                    candidats,
-                                    key=lambda m: distance_positions(
-                                        m.position, p.position
-                                    ),
-                                )
-                        except Exception:
-                            mage = None
+                        pass
                     if (
                         mage is not None
                         and getattr(self, "image_projectileMageEnnemi", None)
@@ -978,9 +963,10 @@ class Game:
                                 pass
                         break
             else:
-                # Collision spécifique projectile mage ennemi -> projectile de catapulte (si encore utilisé)
+                # Collision spécifique projectile mage ennemi -> projectile de catapulte
                 cible = getattr(pr, "cible_proj", None)
                 if cible and hasattr(pr, "aTouche") and pr.aTouche(cible):
+                    self.jouer_sfx("explosion-pierre.mp3", volume=0.5)
                     cible.detruit = True
                     pr.detruit = True
 
@@ -1002,6 +988,8 @@ class Game:
         # Désactiver l'effet de nuit si la vague est terminée
         if self.vague_terminee() and self.est_nuit:
             self.est_nuit = False
+            recompense = RECOMPENSES_PAR_VAGUE.get(self.numVague, 0)  # 0 = valeur par défaut
+            self.joueur.argent += recompense
 
     def get_closest_mage(self, pos: Position) -> None | Mage:
         """Retourne le mage le plus proche de la position pos."""
@@ -1045,7 +1033,7 @@ class Game:
             nuit_surface = pygame.Surface(
                 (self.largeur_ecran, self.hauteur_ecran), pygame.SRCALPHA
             )
-            nuit_surface.fill((0, 6, 25, int(255 * 0.8)))  # 80% opacity
+            nuit_surface.fill((0, 6, 25, int(255 * 0.7)))  # 70% opacity
 
             # Vérifier si la fée est active
             if "fee" in self.sorts and self.sorts["fee"].est_actif():
@@ -1247,7 +1235,7 @@ class Game:
                         "frame": 0,
                     }
 
-                    # 2) Crée l'instance de tour (logique)
+                    # 2) Crée l'instance de tour 
                     x_case, y_case = case
                     cx = x_case * self.taille_case + self.taille_case // 2
                     cy = y_case * self.taille_case + self.taille_case // 2
@@ -1282,17 +1270,22 @@ class Game:
                             except Exception:
                                 pass
 
-                        # Mémorise le prix d'achat pour revente éventuelle
+                        # Mémorise le prix d'achat pour revente éventuelle                        
                         self.positions_occupees[case]["prix"] = getattr(
                             nouvelle_tour,
                             "prix",
                             self.prix_par_type.get(self.type_selectionne, 0),
                         )
+                        self.positions_occupees[case]["type_selectionne"] = self.type_selectionne
 
                     # Débiter le prix correspondant
                     self.joueur.argent -= self.prix_par_type.get(
                         self.type_selectionne, 0
                     )
+                    # Augmente le prix du campement de 50% a chaque achat
+                    if self.type_selectionne == "campement":
+                        self.prix_par_type["campement"] = int(self.prix_par_type["campement"] * 1.5) 
+
                     self.type_selectionne = None
                     self.tour_selectionnee = None  # désélectionne la range
 
@@ -1310,6 +1303,11 @@ class Game:
                     prix_achat = int(self.positions_occupees[case].get("prix", 0))
                     remboursement = prix_achat // 2
                     self.joueur.argent += remboursement
+
+                    #rebaisse le prix du campement a chaque vente
+                    if self.positions_occupees[case]["type_selectionne"] == "campement":
+                        self.prix_par_type["campement"] = int(prix_achat)
+
                     # Retire l'instance de tour à cet emplacement (centre de case)
                     cx = case[0] * self.taille_case + self.taille_case // 2
                     cy = case[1] * self.taille_case + self.taille_case // 2

@@ -170,9 +170,9 @@ class Gobelin(Ennemi):
         super().__init__(
             tempsApparition=tempsApparition,
             vitesse=50.0,
-            pointsDeVie=130,
+            pointsDeVie=70,
             degats=8,
-            argent=3,
+            argent=0,
             chemin=chemin,
             **kw
         )
@@ -248,7 +248,7 @@ class Rat(Ennemi):
             vitesse=120.0,
             pointsDeVie=20,
             degats=3,
-            argent=1,
+            argent=0,
             chemin=chemin,
             **kw
         )
@@ -306,10 +306,10 @@ class Loup(Ennemi):
     ):
         super().__init__(
             tempsApparition=tempsApparition,
-            vitesse=100.0,
-            pointsDeVie=90,
+            vitesse=90.0,
+            pointsDeVie=80,
             degats=10,
-            argent=2,
+            argent=1,
             chemin=chemin,
             **kw
         )
@@ -363,7 +363,7 @@ class Loup(Ennemi):
 
 class Mage(Ennemi):
 
-    ATTACK_COOLDOWN = 2.5  # en secondes
+    ATTACK_COOLDOWN = 3  # en secondes
 
     _frames_by_dir: dict[str, list[pygame.Surface]] | None = None
 
@@ -376,10 +376,10 @@ class Mage(Ennemi):
     ):
         super().__init__(
             tempsApparition=tempsApparition,
-            vitesse=50.0,
-            pointsDeVie=180,
+            vitesse=40.0,
+            pointsDeVie=170,
             degats=12,
-            argent=5,
+            argent=3,
             chemin=chemin,
             **kw
         )
@@ -442,11 +442,9 @@ class Mage(Ennemi):
         """Déclenche l'animation d'attaque du mage."""
         if not self.ready_to_attack():
             return  # ignore si le cooldown n'est pas fini
-        print("Mage attaque !")
         # reset du timer
         self._time_since_last_attack = 0.0
-        self.frame_index = 0
-        self.frame_timer = 0
+
 
 
 class Ogre(Ennemi):
@@ -462,9 +460,9 @@ class Ogre(Ennemi):
         super().__init__(
             tempsApparition=tempsApparition,
             vitesse=25.0,
-            pointsDeVie=500,
+            pointsDeVie=700,
             degats=30,
-            argent=10,
+            argent=5,
             chemin=chemin,
             **kw
         )
@@ -524,9 +522,9 @@ class Chevalier(Ennemi):
         super().__init__(
             tempsApparition=tempsApparition,
             vitesse=35.0,
-            pointsDeVie=140,
+            pointsDeVie=130,
             degats=15,
-            argent=5,
+            argent=2,
             chemin=chemin,
             **kw
         )
@@ -536,14 +534,30 @@ class Chevalier(Ennemi):
                 "down": charger_et_scaler("knight", "D_Walk.png", 6, scale=SCALE_FACTOR*0.8),
                 "up": charger_et_scaler("knight", "U_Walk.png", 6, scale=SCALE_FACTOR*0.8),
                 "side": charger_et_scaler("knight", "S_Walk.png", 6, scale=SCALE_FACTOR*0.8),
+                "downBlock": charger_et_scaler("knight", "D_Block.png", 1, scale=SCALE_FACTOR*0.8),
+                "upBlock": charger_et_scaler("knight", "U_Block.png", 1, scale=SCALE_FACTOR*0.8),
+                "sideBlock": charger_et_scaler("knight", "S_Block.png", 1, scale=SCALE_FACTOR*0.8),
             }
 
         self.direction = "down"
         self.frame_index = 0
         self.frame_timer = 0
         self.flip = False
+        self.block_timer = 0.0
+        self.block_duration = 0.2
 
+    
     def update_animation(self, dt: float):
+        # Blocage
+        if self.block_timer > 0:
+            self.block_timer -= dt
+            if self.block_timer <= 0:
+                # Fin du blocage
+                if "Block" in self.direction:
+                    self.direction = self.direction.replace("Block", "")
+            return  # on fige sur la frame Block
+
+        # marche
         self.frame_timer += dt
         if self.frame_timer >= 0.15:
             self.frame_timer = 0
@@ -551,22 +565,84 @@ class Chevalier(Ennemi):
                 Chevalier._frames_by_dir[self.direction]
             )
 
+    def block(self):
+        self.frame_index = 0
+        self.frame_timer = 0
+        if self.direction == "down":
+            self.direction = "downBlock"
+        elif self.direction == "up":
+            self.direction = "upBlock"
+        elif self.direction == "side":
+            self.direction = "sideBlock"
+        self.block_timer = self.block_duration  
+
     def draw(self, ecran: pygame.Surface) -> None:
         if self.estMort():
             return
         frames = Chevalier._frames_by_dir[self.direction]
         frame = frames[self.frame_index]
-        if self.direction == "side" and self.flip:
+
+        if self.direction.startswith("side") and self.flip:
             frame = pygame.transform.flip(frame, True, False)
         pos = (
             int(self.position.x - frame.get_width() // 2),
             int(self.position.y - frame.get_height() // 2),
         )
         if self.visible:
-            temp = frame.copy()  # Copier pour ne pas modifier l'original
-            temp.set_alpha(204)  # 80% d'opacité (255 * 0.8 = 204)
+            temp = frame.copy()
+            temp.set_alpha(204)
             ecran.blit(temp, pos)
         else:
-            temp = frame.copy()  # Copier pour ne pas modifier l'original
-            temp.set_alpha(70)  # Réduit de 20% par rapport à 90
+            temp = frame.copy()
+            temp.set_alpha(70)
             ecran.blit(temp, pos)
+
+    def seDeplacer(self, dt: float):
+        if self.estMort() or self._arrive_au_bout:
+            return
+        d = max(0.0, self.vitesse * dt)
+        while d > 1e-6 and not self._arrive_au_bout:
+            if self._segment_index >= len(self._chemin) - 1:
+                self._arrive()
+                break
+
+            p0 = self._chemin[self._segment_index]
+            p1 = self._chemin[self._segment_index + 1]
+
+            dx = p1.x - p0.x
+            dy = p1.y - p0.y
+
+            # bloquage
+            is_blocked = getattr(self, "block_timer", 0) > 1e-9
+            if not is_blocked:
+                if abs(dx) > abs(dy):
+                    self.direction = "side"
+                    self.flip = dx > 0  # flip horizontal si on va vers la gauche
+                else:
+                    self.direction = "down" if dy > 0 else "up"
+                    self.flip = False
+            else:
+                if abs(dx) > abs(dy):
+                    self.direction = "sideBlock"
+                    self.flip = dx > 0  # flip horizontal si on va vers la gauche
+                else:
+                    self.direction = "downBlock" if dy > 0 else "upBlock"
+                    self.flip = False
+
+            seg_len = max(1e-9, distance_positions(p0, p1))
+            reste = seg_len - self._dist_on_segment
+
+            if d < reste:
+                self._dist_on_segment += d
+                t = self._dist_on_segment / seg_len
+                self.position.x = p0.x + (dx * t)
+                self.position.y = p0.y + (dy * t)
+                d = 0.0
+            else:
+                self.position.x, self.position.y = p1.x, p1.y
+                d -= reste
+                self._segment_index += 1
+                self._dist_on_segment = 0.0
+                if self._segment_index >= len(self._chemin) - 1:
+                    self._arrive()
+                    break
