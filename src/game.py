@@ -20,7 +20,7 @@ base_dir = os.path.dirname(os.path.dirname(__file__))
 
 class Game:
     def __init__(self, police: pygame.font.Font):
-        self.joueur = Joueur(argent=1030, point_de_vie=100, sort="feu", etat="normal")
+        self.joueur = Joueur(argent=35, point_de_vie=100, sort="feu", etat="normal")
         self.police = police
         self.couleurs = {
             "fond": (0, 6, 25),
