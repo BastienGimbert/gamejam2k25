@@ -569,7 +569,7 @@ class Game:
                     # Joue le son de flèche
                     try:
                         arrow_sound = pygame.mixer.Sound(os.path.join(base_dir, "assets", "audio", "bruitage", "arrow.mp3"))
-                        arrow_sound.play()
+                        arrow_sound.play().set_volume(0.15)
                     except Exception:
                         pass
 
@@ -581,7 +581,7 @@ class Game:
                     # Joue le son de catapulte
                     try:
                         fire_sound = pygame.mixer.Sound(os.path.join(base_dir, "assets", "audio", "bruitage", "fire-magic.mp3"))
-                        fire_sound.play()
+                        fire_sound.play().set_volume(0.15)
                     except Exception:
                         pass
                     # Déclenche la réaction du mage le plus proche pour intercepter la pierre
@@ -609,7 +609,7 @@ class Game:
                     # Joue le son du mage
                     try:
                         wind_sound = pygame.mixer.Sound(os.path.join(base_dir, "assets", "audio", "bruitage", "wind-magic.mp3"))
-                        wind_sound.play()
+                        wind_sound.play().set_volume(0.15)
                     except Exception:
                         pass
 
@@ -801,7 +801,7 @@ class Game:
                         if self.type_selectionne == "Feu de camp":
                             try:
                                 campfire_sound = pygame.mixer.Sound(os.path.join(base_dir, "assets", "audio", "bruitage", "camp-fire.mp3"))
-                                campfire_sound.play()
+                                campfire_sound.play().set_volume(0.15)
                             except Exception:
                                 pass
 
