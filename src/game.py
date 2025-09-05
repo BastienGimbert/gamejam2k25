@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import pygame
+import math
 
 from classes.pointeur import Pointeur
 from classes.ennemi import Gobelin, Mage, Ennemi 
@@ -59,6 +60,9 @@ class Game:
         self.last_heart_ticks = pygame.time.get_ticks()
 
         # Types de tours
+        # --- Ajout : sélection de tour pour affichage de la range ---
+        self.tour_selectionnee: tuple[int, int] | None = None
+
         self.tower_types = ["archer", "catapult", "mage"]
         self.tower_assets = self._charger_tours()
         self.shop_items = self._creer_boutons_boutique()
@@ -402,6 +406,34 @@ class Game:
                 surf.fill((150, 150, 180))
             ecran.blit(surf, (x_case * self.taille_case, y_case * self.taille_case))
 
+            # --- Ajout : affichage range si sélectionnée ---
+            if self.tour_selectionnee == (x_case, y_case):
+
+                # Cherche la tour correspondante
+                tour = None
+                cx = x_case * self.taille_case + self.taille_case // 2
+                cy = y_case * self.taille_case + self.taille_case // 2
+                for t in self.tours and i:
+                    if int(t.position.x) == cx and int(t.position.y) == cy:
+                        tour = t
+                        break
+
+                if tour and hasattr(tour, "portee"):
+                    portee = getattr(tour, "portee", 120)
+
+                    # Dessine un cercle
+                    dash_count = 15     # nombre de segments
+                    dash_length = 0.15  # en radians
+
+                    for i in range(dash_count):
+                        angle_start = 2 * math.pi * i / dash_count
+                        angle_end = angle_start + dash_length
+                        x1 = int(cx + portee * math.cos(angle_start))
+                        y1 = int(cy + portee * math.sin(angle_start))
+                        x2 = int(cx + portee * math.cos(angle_end))
+                        y2 = int(cy + portee * math.sin(angle_end))
+                        pygame.draw.line(ecran, (255, 255, 255), (x1, y1), (x2, y2), 3)
+
     def dessiner_ennemis(self, ecran):
         for e in self.ennemis:
             # Compat : certains ennemis peuvent avoir des états (apparu/mort/arrivé)
@@ -608,6 +640,7 @@ class Game:
             # Clic dans la boutique
             if self.bouton_vague.rect.collidepoint(pos) and self.vague_terminee():
                 self.bouton_vague.action()
+                self.tour_selectionnee = None  # désélectionne la range
                 return None
             if self.rect_boutique.collidepoint(pos):
                 for item in self.shop_items:
@@ -624,7 +657,20 @@ class Game:
                         else:
                             self.type_selectionne = None
                         break
+                self.tour_selectionnee = None  # désélectionne la range
                 return None
+
+            # --- Ajout : sélection/désélection d'une tour placée pour afficher la range ---
+            if self._position_dans_grille(pos):
+                case = self._case_depuis_pos(pos)
+                if case and case in self.positions_occupees:
+                    if self.tour_selectionnee == case:
+                        self.tour_selectionnee = None  # désélectionne si déjà sélectionnée
+                    else:
+                        self.tour_selectionnee = case  # sélectionne la tour
+                    return None
+                else:
+                    self.tour_selectionnee = None  # désélectionne si on clique ailleurs
 
             # Placement de tour
             if self.type_selectionne and self._position_dans_grille(pos):
@@ -666,12 +712,14 @@ class Game:
                     # Débiter le prix correspondant
                     self.joueur.argent -= self.prix_par_type.get(self.type_selectionne, 0)
                     self.type_selectionne = None
+                    self.tour_selectionnee = None  # désélectionne la range
 
         # Clic droit: vendre une tour posée (si on clique sur une case occupée)
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             pos = event.pos
             # On ignore si on clique dans la zone boutique
             if self.rect_boutique.collidepoint(pos):
+                self.tour_selectionnee = None  # désélectionne la range
                 return None
             if self._position_dans_grille(pos):
                 case = self._case_depuis_pos(pos)
@@ -686,6 +734,7 @@ class Game:
                     self.tours = [t for t in self.tours if not (int(t.position.x) == cx and int(t.position.y) == cy)]
                     # Libère la case pour placement futur
                     del self.positions_occupees[case]
+                    self.tour_selectionnee = None  # désélectionne la range
 
         return None
 
