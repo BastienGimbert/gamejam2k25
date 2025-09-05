@@ -22,7 +22,7 @@ from classes.constants import ASSETS_DIR, PROJECT_ROOT, MONEY_DIR, HEART_DIR, TO
 
 class Game:
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
-        self.joueur = Joueur(argent=35, point_de_vie=100, sort="feu", etat="normal")
+        self.joueur = Joueur(argent=3500000, point_de_vie=100, sort="feu", etat="normal")
         self.police = police
         # État muet propagé depuis main
         self.est_muet = est_muet
@@ -980,8 +980,12 @@ class Game:
                         is_fee_active = sort_key == "fee" and hasattr(sort, 'est_actif') and sort.est_actif()
                         
                         if sort_key == "eclair":
-                            # Pour l'éclair, sélectionner le sort au lieu de l'acheter directement
-                            if not is_max_level and sort.peut_etre_achete(self.joueur.argent):
+                            # Pour l'éclair, sélectionner/désélectionner le sort
+                            if self.eclair_selectionne:
+                                # Si déjà sélectionné, le désélectionner
+                                self.eclair_selectionne = False
+                            elif not is_max_level and sort.peut_etre_achete(self.joueur.argent):
+                                # Sinon, le sélectionner si on peut l'acheter
                                 self.eclair_selectionne = True
                                 self.type_selectionne = None  # Désélectionner les tours
                         elif not is_max_level and not is_fee_active:
@@ -1009,6 +1013,7 @@ class Game:
                             self.type_selectionne = None
                         elif self.joueur.argent >= prix_t:
                             self.type_selectionne = t
+                            self.eclair_selectionne = False  # Désélectionner l'éclair
                         else:
                             self.type_selectionne = None
                         break
