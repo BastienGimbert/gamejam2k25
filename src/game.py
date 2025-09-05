@@ -16,9 +16,8 @@ from classes.csv import creer_liste_ennemis_depuis_csv
 from classes.bouton import Bouton
 from classes.sort import SortVision, SortFee, SortEclair
 
-from classes.constants import ASSETS_DIR, PROJECT_ROOT
-from src.classes.constants import MONEY_DIR, HEART_DIR, TOWER_DIR, COIN_ANIM_INTERVAL_MS, HEART_ANIM_INTERVAL_MS, \
-    MAP_PNG, DEFAULT_TOWER_TYPES, MAP_TILESET_TMJ
+from classes.constants import ASSETS_DIR, PROJECT_ROOT, MONEY_DIR, HEART_DIR, TOWER_DIR, \
+    COIN_ANIM_INTERVAL_MS, HEART_ANIM_INTERVAL_MS, MAP_PNG, DEFAULT_TOWER_TYPES, MAP_TILESET_TMJ
 
 
 class Game:

@@ -8,7 +8,7 @@ import os
 #Evite les boucles dans les imports mutuels
 from typing import TYPE_CHECKING
 
-from src.classes.constants import TILESETS_DIR, MAP_TILESET_TMJ
+from classes.constants import TILESETS_DIR, MAP_TILESET_TMJ
 
 if TYPE_CHECKING:
     from game import Game
