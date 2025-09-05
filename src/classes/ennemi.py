@@ -7,13 +7,14 @@ import os
 
 #Evite les boucles dans les imports mutuels
 from typing import TYPE_CHECKING
+
+from src.classes.constants import TILESETS_DIR, MAP_TILESET_TMJ
+
 if TYPE_CHECKING:
     from game import Game
 
 
 SCALE_FACTOR = 2
-
-base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 
 class Ennemi(ABC):
@@ -26,7 +27,7 @@ class Ennemi(ABC):
         tempsApparition = 0,
         chemin: Optional[List[Position]] = None,
         on_reach_castle: Optional[Callable[["Ennemi"], None]] = None,
-        tmj_path: str = "assets/tilesets/carte.tmj",
+        tmj_path: str = MAP_TILESET_TMJ,
         layer_name: str = "path",
     ):
         if chemin is None:
