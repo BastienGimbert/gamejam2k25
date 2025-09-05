@@ -170,7 +170,7 @@ class Catapult(Tour):
             type_id=self.TYPE_ID,
             type_nom=self.TYPE_NOM,
             cooldown_s=2.0,
-            portee=400.0,
+            portee=200.0,
             position=position,
             prix=self.PRIX,
         )
