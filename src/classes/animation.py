@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Tuple
 
 import pygame
 
-from classes.utils import decouper_sprite
+from classes.utils import decouper_sprite, charger_image_simple
 
 
 def _project_root() -> str:
@@ -73,9 +73,8 @@ class DirectionalAnimator:
         return tuple(dirs)
 
     def _load_img(self, path: str) -> Optional[pygame.Surface]:
-        if os.path.exists(path):
-            return pygame.image.load(path).convert_alpha()
-        return None
+        # Utiliser la fonction utilitaire pour charger l'image
+        return charger_image_simple(path)
 
     def _count_if_divisible(self, width: int, preferred: int) -> int:
         if preferred and preferred >= 2 and width % preferred == 0:

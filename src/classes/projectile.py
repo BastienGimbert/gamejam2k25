@@ -93,7 +93,7 @@ class Projectile(ABC):
 class ProjectileFleche(Projectile):
     """Flèche: rapide, dégâts fixes = 20."""
 
-    CHEMIN_IMAGE: ClassVar[str] = "assets/tower/archer/Arrow/1.png"
+    CHEMIN_IMAGE: ClassVar[str] = "tower/archer/Arrow/1.png"
 
     def __init__(self, origine: Position, cible_pos: Position) -> None:
         super().__init__(
@@ -126,7 +126,7 @@ class ProjectileFleche(Projectile):
 class ProjectilePierre(Projectile):
     """Pierre: lente, dégâts fixes = 70."""
 
-    CHEMIN_IMAGE: ClassVar[str] = "assets/tower/catapulte/projectiles/1.png"
+    CHEMIN_IMAGE: ClassVar[str] = "tower/catapulte/projectiles/1.png"
 
     def __init__(
         self, origine: Position, cible_pos: Position, game_ref: Optional["Game"]
@@ -153,7 +153,7 @@ class ProjectilePierre(Projectile):
 class ProjectileTourMage(Projectile):
     """Projectile de la tour Mage: orbe magique avec dégâts de zone."""
 
-    CHEMIN_IMAGE: ClassVar[str] = "assets/tower/mage/projectiles/1.png"
+    CHEMIN_IMAGE: ClassVar[str] = "tower/mage/projectiles/1.png"
 
     def __init__(self, origine: Position, cible_pos: Position) -> None:
         # Moins rapide qu'une flèche, dégâts supérieurs
@@ -203,7 +203,7 @@ class ProjectileTourMage(Projectile):
 class ProjectileMageEnnemi(Projectile):
     """Projectile du mage qui suit un projectile de pierre."""
 
-    CHEMIN_IMAGE: ClassVar[str] = "assets/enemy/mage/Projectile2.png"
+    CHEMIN_IMAGE: ClassVar[str] = "enemy/mage/Projectile2.png"
 
     def __init__(
         self, origine: Position, cible_proj: "ProjectilePierre", vitesse: float = 700.0
