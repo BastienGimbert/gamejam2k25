@@ -47,6 +47,11 @@ from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positi
 
 
 class Game:
+    def afficher_victoire(self, ecran):
+        import pygame, os
+        img = pygame.image.load(os.path.join("assets", "VICTOIRE.png")).convert_alpha()
+        rect = img.get_rect(center=(ecran.get_width() // 2, ecran.get_height() // 2))
+        ecran.blit(img, rect)
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
         self.joueur = Joueur(argent=45, point_de_vie=100, sort="feu", etat="normal")
 
@@ -1048,7 +1053,34 @@ class Game:
                 radius = feu.portee
                 pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (feu.position.x, feu.position.y), radius)
 
+    def get_max_vague_csv(self) -> int:
+        import csv
+        max_vague = 0
+        try:
+            with open(os.path.join("src", "data", "jeu.csv"), newline='') as f:
+                reader = csv.DictReader(f, delimiter=';')
+                for row in reader:
+                    try:
+                        num = int(row.get('numVague', 0))
+                        if num > max_vague:
+                            max_vague = num
+                    except Exception:
+                        continue
+        except Exception:
+            pass
+        return max_vague  
+              
+    def afficher_victoire(self, ecran):
+        img = pygame.image.load(os.path.join("assets", "VICTOIRE.png")).convert_alpha()
+        rect = img.get_rect(center=(ecran.get_width() // 2, ecran.get_height() // 2))
+        ecran.blit(img, rect)
+
     def dessiner(self, ecran: pygame.Surface) -> None:
+        nb_vagues = self.get_max_vague_csv()
+        if self.numVague > nb_vagues:
+            self.afficher_victoire(ecran)
+            return
+
         dt = self.clock.tick(60) / 1000.0
         ecran.blit(self.carte, (0, 0))
         self._dessiner_tours_placees(ecran)
