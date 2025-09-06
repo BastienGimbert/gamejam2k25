@@ -84,7 +84,7 @@ class Game:
         # Boutique de sorts (en bas de l'écran)
         self.hauteur_boutique_sorts = SPELLS_HEIGHT
         self.rect_boutique_sorts = pygame.Rect(
-            0, self.hauteur_ecran, WINDOW_HEIGHT, self.hauteur_boutique_sorts
+            0, self.hauteur_ecran, self.largeur_ecran + self.largeur_boutique, self.hauteur_boutique_sorts
         )
 
         # Sorts du joueur
