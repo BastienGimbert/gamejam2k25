@@ -47,10 +47,10 @@ from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positi
 
 class Game:
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
-        self.joueur = Joueur(argent=245, point_de_vie=100, sort="feu", etat="normal")
+        self.joueur = Joueur(argent=45, point_de_vie=100, sort="feu", etat="normal")
 
         # Gestion des vagues
-        self.numVague = 6
+        self.numVague = 0
         self.debutVague = 0
         self.ennemis: list[Ennemi] = []  # Rempli lors du lancement de vague
 
