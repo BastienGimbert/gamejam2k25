@@ -48,10 +48,10 @@ from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positi
 
 class Game:
     def afficher_victoire(self, ecran):
-        import pygame, os
         img = pygame.image.load(os.path.join("assets", "VICTOIRE.png")).convert_alpha()
-        rect = img.get_rect(center=(ecran.get_width() // 2, ecran.get_height() // 2))
-        ecran.blit(img, rect)
+        img = pygame.transform.scale(img, (ecran.get_width(), ecran.get_height()))
+        ecran.blit(img, (0, 0))
+        
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
         self.joueur = Joueur(argent=45, point_de_vie=100, sort="feu", etat="normal")
 
@@ -1069,15 +1069,10 @@ class Game:
         except Exception:
             pass
         return max_vague  
-              
-    def afficher_victoire(self, ecran):
-        img = pygame.image.load(os.path.join("assets", "VICTOIRE.png")).convert_alpha()
-        rect = img.get_rect(center=(ecran.get_width() // 2, ecran.get_height() // 2))
-        ecran.blit(img, rect)
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         nb_vagues = self.get_max_vague_csv()
-        if self.numVague > nb_vagues:
+        if self.numVague == nb_vagues and self.vague_terminee():
             self.afficher_victoire(ecran)
             return
 
