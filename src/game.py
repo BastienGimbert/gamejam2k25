@@ -47,10 +47,10 @@ from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positi
 
 class Game:
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
-        self.joueur = Joueur(argent=45, point_de_vie=100, sort="feu", etat="normal")
+        self.joueur = Joueur(argent=245, point_de_vie=100, sort="feu", etat="normal")
 
         # Gestion des vagues
-        self.numVague = 0
+        self.numVague = 6
         self.debutVague = 0
         self.ennemis: list[Ennemi] = []  # Rempli lors du lancement de vague
 
@@ -1282,9 +1282,15 @@ class Game:
                     self.joueur.argent -= self.prix_par_type.get(
                         self.type_selectionne, 0
                     )
-                    # Augmente le prix du campement de 50% a chaque achat
+                    # Augmente les prix a chaque achat
                     if self.type_selectionne == "campement":
                         self.prix_par_type["campement"] = int(self.prix_par_type["campement"] * 1.5) 
+                    elif self.type_selectionne == "archer":
+                        self.prix_par_type["archer"] = int(self.prix_par_type["archer"] + 2)
+                    elif self.type_selectionne == "catapulte":
+                        self.prix_par_type["catapulte"] = int(self.prix_par_type["catapulte"] + 5)
+                    elif self.type_selectionne == "mage":
+                        self.prix_par_type["mage"] = int(self.prix_par_type["mage"] + 6)
 
                     self.type_selectionne = None
                     self.tour_selectionnee = None  # désélectionne la range
@@ -1304,9 +1310,8 @@ class Game:
                     remboursement = prix_achat // 2
                     self.joueur.argent += remboursement
 
-                    #rebaisse le prix du campement a chaque vente
-                    if self.positions_occupees[case]["type_selectionne"] == "campement":
-                        self.prix_par_type["campement"] = int(prix_achat)
+                    #rebaisse le prix de la tour a chaque vente
+                    self.prix_par_type[self.positions_occupees[case]["type_selectionne"]] = int(prix_achat)
 
                     # Retire l'instance de tour à cet emplacement (centre de case)
                     cx = case[0] * self.taille_case + self.taille_case // 2

@@ -134,7 +134,7 @@ class ProjectilePierre(Projectile):
         super().__init__(
             origine=origine,
             cible_pos=cible_pos,
-            degats=200,
+            degats=170,
             vitesse=250.0,
             rayon_collision=16.0,
         )
