@@ -79,7 +79,7 @@ def decouper_sprite(
 
 
 def charger_et_scaler(
-    sous_dossier: str, nom_fichier: str, nb_frames: int, scale: float = 1.0
+    sous_dossier: str, nom_fichier: str, nb_frames: int, scale: float = 1.0, notInEnemyFolder: bool = False
 ) -> list[pygame.Surface]:
     """
     Charge une spritesheet, découpe en nb_frames et applique un facteur d'échelle.
@@ -88,7 +88,10 @@ def charger_et_scaler(
     nb_frames: nombre de frames à découper
     scale: facteur d'échelle (1.0 = taille originale)
     """
-    chemin = os.path.join(ASSETS_DIR, "enemy", sous_dossier, nom_fichier)
+    if notInEnemyFolder:
+        chemin = os.path.join(ASSETS_DIR, sous_dossier, nom_fichier)
+    else:
+        chemin = os.path.join(ASSETS_DIR, "enemy", sous_dossier, nom_fichier)
     image = pygame.image.load(chemin).convert_alpha()
     frames = decouper_sprite(image, nb_frames)
     if scale != 1.0:

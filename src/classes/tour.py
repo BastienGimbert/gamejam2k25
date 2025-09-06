@@ -243,7 +243,7 @@ class Campement(Tour):
         if Campement._frames is None:
             # Charger les 6 frames de feu
             Campement._frames = charger_et_scaler(
-                "../tower/Campement", "1.png", 6, scale=0.8
+                "tower/campement", "1.png", 6, scale=0.8, notInEnemyFolder=True
             )
 
         self.frame_index = 0
