@@ -1269,13 +1269,10 @@ class Game:
                                 campfire_sound.play().set_volume(0.15)
                             except Exception:
                                 pass
-
+                        
+                        print("prix memorisé : ", self.prix_par_type.get(self.type_selectionne, 0))
                         # Mémorise le prix d'achat pour revente éventuelle                        
-                        self.positions_occupees[case]["prix"] = getattr(
-                            nouvelle_tour,
-                            "prix",
-                            self.prix_par_type.get(self.type_selectionne, 0),
-                        )
+                        self.positions_occupees[case]["prix"] = self.prix_par_type.get(self.type_selectionne, 0)
                         self.positions_occupees[case]["type_selectionne"] = self.type_selectionne
 
                     # Débiter le prix correspondant
@@ -1306,12 +1303,21 @@ class Game:
                 case = self._case_depuis_pos(pos)
                 if case and case in self.positions_occupees:
                     # Prix payé mémorisé au placement; remboursement = moitié (arrondi bas)
+                    print("REVENTE prix memorisé : ", self.positions_occupees[case].get("prix", 0))
                     prix_achat = int(self.positions_occupees[case].get("prix", 0))
                     remboursement = prix_achat // 2
                     self.joueur.argent += remboursement
 
                     #rebaisse le prix de la tour a chaque vente
-                    self.prix_par_type[self.positions_occupees[case]["type_selectionne"]] = int(prix_achat)
+                    #self.prix_par_type[self.positions_occupees[case]["type_selectionne"]] = int(prix_achat)
+                    if self.positions_occupees[case]["type_selectionne"] == "campement":
+                        self.prix_par_type["campement"] = int(round(self.prix_par_type["campement"] * 0.6666))
+                    elif self.positions_occupees[case]["type_selectionne"] == "archer":
+                        self.prix_par_type["archer"] = max(5, int(self.prix_par_type["archer"] - 2))
+                    elif self.positions_occupees[case]["type_selectionne"] == "catapulte":  
+                        self.prix_par_type["catapulte"] = max(10, int(self.prix_par_type["catapulte"] - 5))
+                    elif self.positions_occupees[case]["type_selectionne"] == "mage":
+                        self.prix_par_type["mage"] = max(12, int(self.prix_par_type["mage"] - 6))
 
                     # Retire l'instance de tour à cet emplacement (centre de case)
                     cx = case[0] * self.taille_case + self.taille_case // 2

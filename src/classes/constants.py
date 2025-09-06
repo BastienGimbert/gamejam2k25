@@ -56,8 +56,8 @@ DEFAULT_TOWER_TYPES = ["archer", "catapulte", "mage", "campement"]
 
 # Valeurs de récompense par vague
 RECOMPENSES_PAR_VAGUE: dict[int, int] = {
-    1: 25,
-    2: 25,
+    1: 35,
+    2: 35,
     3: 30,
     4: 20,
     5: 20,
