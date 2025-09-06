@@ -1270,7 +1270,6 @@ class Game:
                             except Exception:
                                 pass
                         
-                        print("prix memorisé : ", self.prix_par_type.get(self.type_selectionne, 0))
                         # Mémorise le prix d'achat pour revente éventuelle                        
                         self.positions_occupees[case]["prix"] = self.prix_par_type.get(self.type_selectionne, 0)
                         self.positions_occupees[case]["type_selectionne"] = self.type_selectionne
@@ -1303,7 +1302,6 @@ class Game:
                 case = self._case_depuis_pos(pos)
                 if case and case in self.positions_occupees:
                     # Prix payé mémorisé au placement; remboursement = moitié (arrondi bas)
-                    print("REVENTE prix memorisé : ", self.positions_occupees[case].get("prix", 0))
                     prix_achat = int(self.positions_occupees[case].get("prix", 0))
                     remboursement = prix_achat // 2
                     self.joueur.argent += remboursement
