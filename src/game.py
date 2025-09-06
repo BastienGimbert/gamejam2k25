@@ -33,6 +33,7 @@ from classes.joueur import Joueur
 from classes.pointeur import Pointeur
 from classes.position import Position
 from classes.projectile import (
+    EffetExplosion,
     ProjectileFleche,
     ProjectileMageEnnemi,
     ProjectilePierre,
@@ -139,6 +140,9 @@ class Game:
         self.projectiles: list[
             ProjectileFleche | ProjectilePierre | ProjectileTourMage
         ] = []
+        
+        # Effets visuels d'explosion
+        self.effets_explosion: list[EffetExplosion] = []
 
         # Couleurs UI
         # Projectiles actifs (flèches, etc.)
@@ -948,19 +952,35 @@ class Game:
                         continue
                     if hasattr(pr, "aTouche") and pr.aTouche(e):
                         if hasattr(pr, "appliquerDegats"):
-                            pr.appliquerDegats(e)
-                            if isinstance(pr, ProjectileFleche) and isinstance(e, Chevalier):
-                                self.jouer_sfx("arrow-hit-metal.mp3", volume=0.5)
-                            try:
-                                if (
-                                    e.estMort()
-                                    and not getattr(e, "_recompense_donnee", False)
-                                    and not getattr(e, "_ne_pas_recompenser", False)
-                                ):
-                                    self.joueur.argent += int(getattr(e, "argent", 0))
-                                    setattr(e, "_recompense_donnee", True)
-                            except Exception:
-                                pass
+                            # Gestion spéciale pour les projectiles de mage avec dégâts de zone
+                            if isinstance(pr, ProjectileTourMage):
+                                # Appliquer les dégâts de zone à tous les ennemis dans la zone
+                                pr.appliquerDegatsZone(self.ennemis)
+                                # Marquer le projectile comme détruit
+                                pr.detruit = True
+                                # Créer un effet d'explosion visuel
+                                effet = EffetExplosion(pr.x, pr.y, pr.rayon_zone_effet, 0.6)
+                                self.effets_explosion.append(effet)
+                                # Son d'explosion magique
+                                self.jouer_sfx("explosion-pierre.mp3", volume=0.3)
+                            else:
+                                # Comportement normal pour les autres projectiles
+                                pr.appliquerDegats(e)
+                                if isinstance(pr, ProjectileFleche) and isinstance(e, Chevalier):
+                                    self.jouer_sfx("arrow-hit-metal.mp3", volume=0.5)
+                            
+                            # Gestion des récompenses pour tous les ennemis morts
+                            for ennemi in self.ennemis:
+                                try:
+                                    if (
+                                        ennemi.estMort()
+                                        and not getattr(ennemi, "_recompense_donnee", False)
+                                        and not getattr(ennemi, "_ne_pas_recompenser", False)
+                                    ):
+                                        self.joueur.argent += int(getattr(ennemi, "argent", 0))
+                                        setattr(ennemi, "_recompense_donnee", True)
+                                except Exception:
+                                    pass
                         break
             else:
                 # Collision spécifique projectile mage ennemi -> projectile de catapulte
@@ -970,6 +990,13 @@ class Game:
                     cible.detruit = True
                     pr.detruit = True
 
+        # Mise à jour des effets d'explosion
+        for effet in self.effets_explosion:
+            effet.mettre_a_jour(dt)
+        
+        # Nettoyage des effets d'explosion terminés
+        self.effets_explosion = [effet for effet in self.effets_explosion if effet.actif]
+        
         # Nettoyage projectiles
         self.projectiles = [
             p for p in self.projectiles if not getattr(p, "detruit", False)
@@ -1073,6 +1100,10 @@ class Game:
         for pr in self.projectiles:
             if hasattr(pr, "dessiner"):
                 pr.dessiner(ecran)
+        
+        # Dessiner les effets d'explosion
+        for effet in self.effets_explosion:
+            effet.dessiner(ecran)
 
         # self.pointeur.draw(ecran, self)  # Désactivé pour enlever le filtre bleu
         self.maj(dt)
