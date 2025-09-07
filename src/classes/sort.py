@@ -1,6 +1,8 @@
 import math
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
+from classes.constants import ASSETS_DIR
+import os
 
 import pygame
 
@@ -270,7 +272,7 @@ class SortEclair(Sort):
         self.duree_effet = 0.6  # en sec
 
         if SortEclair._frames is None:
-            sheet = pygame.image.load("assets/spell/lightning.png").convert_alpha()
+            sheet = pygame.image.load(os.path.join(ASSETS_DIR, "spell", "lightning.png")).convert_alpha()
             w, h = sheet.get_width() // 10, sheet.get_height()
             SortEclair._frames = [
                 sheet.subsurface(pygame.Rect(i * w, 0, w, h)) for i in range(10)

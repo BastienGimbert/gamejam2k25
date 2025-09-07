@@ -8,6 +8,7 @@ import pygame
 from classes.bouton import Bouton
 from classes.constants import (
     ASSETS_DIR,
+    AUDIO_DIR,
     COIN_ANIM_INTERVAL_MS,
     DEFAULT_TOWER_TYPES,
     GAME_HEIGHT,
@@ -48,7 +49,7 @@ from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positi
 
 class Game:
     def afficher_victoire(self, ecran):
-        img = pygame.image.load(os.path.join("assets", "VICTOIRE.png")).convert_alpha()
+        img = pygame.image.load(os.path.join(ASSETS_DIR, "VICTOIRE.png")).convert_alpha()
         img = pygame.transform.scale(img, (ecran.get_width(), ecran.get_height()))
         ecran.blit(img, (0, 0))
         
@@ -1057,7 +1058,7 @@ class Game:
         import csv
         max_vague = 0
         try:
-            with open(os.path.join("src", "data", "jeu.csv"), newline='') as f:
+            with open(os.path.join(PROJECT_ROOT, "src", "data", "jeu.csv"), newline='') as f:
                 reader = csv.DictReader(f, delimiter=';')
                 for row in reader:
                     try:
@@ -1140,7 +1141,7 @@ class Game:
         try:
             if self.est_muet:
                 return
-            chemin = os.path.join( "assets", "audio", "bruitage", fichier)
+            chemin = os.path.join(AUDIO_DIR, "bruitage", fichier)
             if not os.path.exists(chemin):
                 return
             if fichier not in self._sons_cache:
