@@ -1,11 +1,12 @@
 import math
+import os
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
-from classes.constants import ASSETS_DIR
-from classes.sprites import charger_image_assets, decouper_sprite
-import os
 
 import pygame
+
+from classes.constants import ASSETS_DIR
+from classes.sprites import charger_image_assets, decouper_sprite
 
 if TYPE_CHECKING:
     from game import Game
@@ -64,7 +65,7 @@ class SortVision(Sort):
     def portee(self) -> int:
         """Calcule la portée de vision selon le niveau."""
         if self.niveau == 1:
-            return int(self.portee_base * 1.0) 
+            return int(self.portee_base * 1.0)
         elif self.niveau == 2:
             return int(self.portee_base * 1.25)  # +25%
         elif self.niveau >= 3:
@@ -112,10 +113,10 @@ class SortFee(Sort):
 
     def __init__(self, niveau: int = 1):
         super().__init__("Fee", niveau)
-        self.prix_base = 30  
+        self.prix_base = 30
         self.duree_eclairage = 5.0  # en sec
         self.temps_debut = None  # Timestamp du début de l'effet
-        self.actif = False  
+        self.actif = False
         self.max_niveau = 1  # Un seul niveau pour ce sort
 
     @property
@@ -180,20 +181,21 @@ class SortEclair(Sort):
 
     _frames: list[pygame.Surface] | None = None
 
-
     def __init__(self, niveau: int = 1):
         super().__init__("Eclair", niveau)
         self.prix_base = 30
         self.degats = 10  # Dégâts
         self.max_niveau = 1  # Un seul niveau pour ce sort
-        self.case_cible = None  # Case ciblée 
+        self.case_cible = None  # Case ciblée
         self.temps_activation = None  # Timestamp de l'activation
         self.duree_effet = 0.6  # en sec
 
         if SortEclair._frames is None:
             sheet = charger_image_assets("lightning.png", "spell")
             if sheet:
-                SortEclair._frames = decouper_sprite(sheet, 10, horizontal=True, copy=True)
+                SortEclair._frames = decouper_sprite(
+                    sheet, 10, horizontal=True, copy=True
+                )
             else:
                 SortEclair._frames = []
 
@@ -279,13 +281,19 @@ class SortEclair(Sort):
 
             # Centrer l’éclair sur la case
             vertical_offset = -80 * scale_factor_y
-            rect = frame.get_rect(center=(x_pos + taille_case // 2, y_pos + taille_case // 2 + vertical_offset))
+            rect = frame.get_rect(
+                center=(
+                    x_pos + taille_case // 2,
+                    y_pos + taille_case // 2 + vertical_offset,
+                )
+            )
             ecran.blit(frame, rect)
 
             # --- Éclaircissement blanc en overlay (déjà existant) ---
             alpha = int(255 * (1 - progress))
             alpha = max(0, min(255, alpha))
-            eclairage_surface = pygame.Surface((taille_case, taille_case), pygame.SRCALPHA)
+            eclairage_surface = pygame.Surface(
+                (taille_case, taille_case), pygame.SRCALPHA
+            )
             eclairage_surface.fill((255, 255, 255, alpha))
             ecran.blit(eclairage_surface, (x_pos, y_pos))
-

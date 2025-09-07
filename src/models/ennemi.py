@@ -37,8 +37,8 @@ class Ennemi(ABC):
             raise ValueError("Chemin invalide (>=2 points requis).")
         self.vitesse = float(vitesse)
         self.pointsDeVie = int(pointsDeVie)
-        self.pointsDeVieInitiaux = int(pointsDeVie)  
-        self.pointsDeVieMax = int(pointsDeVie)  
+        self.pointsDeVieInitiaux = int(pointsDeVie)
+        self.pointsDeVieMax = int(pointsDeVie)
         self.degats = int(degats)
         # Montant d'or donné au joueur quand cet ennemi est tué
         self.argent = int(argent)
@@ -346,7 +346,7 @@ class Loup(Ennemi):
                     "wolf", "S_Walk.png", 6, scale=SCALE_FACTOR * 0.8
                 ),
             }
-        
+
         self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"
         self.frame_index = 0
@@ -417,7 +417,7 @@ class Mage(Ennemi):
                     "mage", "S_Fly.png", 6, scale=SCALE_FACTOR * 0.6
                 ),
             }
-        
+
         self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"
         self.frame_index = 0
@@ -468,7 +468,6 @@ class Mage(Ennemi):
         self._time_since_last_attack = 0.0
 
 
-
 class Ogre(Ennemi):
     _frames_by_dir: dict[str, list[pygame.Surface]] | None = None
 
@@ -491,11 +490,17 @@ class Ogre(Ennemi):
 
         if Ogre._frames_by_dir is None:
             Ogre._frames_by_dir = {
-                "down": charger_sprites_ennemi("ogre", "D_Walk.png", 6, scale=SCALE_FACTOR),
-                "up": charger_sprites_ennemi("ogre", "U_Walk.png", 6, scale=SCALE_FACTOR),
-                "side": charger_sprites_ennemi("ogre", "S_Walk.png", 6, scale=SCALE_FACTOR),
+                "down": charger_sprites_ennemi(
+                    "ogre", "D_Walk.png", 6, scale=SCALE_FACTOR
+                ),
+                "up": charger_sprites_ennemi(
+                    "ogre", "U_Walk.png", 6, scale=SCALE_FACTOR
+                ),
+                "side": charger_sprites_ennemi(
+                    "ogre", "S_Walk.png", 6, scale=SCALE_FACTOR
+                ),
             }
-        
+
         self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"
         self.frame_index = 0
@@ -531,7 +536,6 @@ class Ogre(Ennemi):
             ecran.blit(temp, pos)
 
 
-
 class Chevalier(Ennemi):
     _frames_by_dir: dict[str, list[pygame.Surface]] | None = None
 
@@ -554,14 +558,26 @@ class Chevalier(Ennemi):
 
         if Chevalier._frames_by_dir is None:
             Chevalier._frames_by_dir = {
-                "down": charger_sprites_ennemi("knight", "D_Walk.png", 6, scale=SCALE_FACTOR*0.8),
-                "up": charger_sprites_ennemi("knight", "U_Walk.png", 6, scale=SCALE_FACTOR*0.8),
-                "side": charger_sprites_ennemi("knight", "S_Walk.png", 6, scale=SCALE_FACTOR*0.8),
-                "downBlock": charger_sprites_ennemi("knight", "D_Block.png", 1, scale=SCALE_FACTOR*0.8),
-                "upBlock": charger_sprites_ennemi("knight", "U_Block.png", 1, scale=SCALE_FACTOR*0.8),
-                "sideBlock": charger_sprites_ennemi("knight", "S_Block.png", 1, scale=SCALE_FACTOR*0.8),
+                "down": charger_sprites_ennemi(
+                    "knight", "D_Walk.png", 6, scale=SCALE_FACTOR * 0.8
+                ),
+                "up": charger_sprites_ennemi(
+                    "knight", "U_Walk.png", 6, scale=SCALE_FACTOR * 0.8
+                ),
+                "side": charger_sprites_ennemi(
+                    "knight", "S_Walk.png", 6, scale=SCALE_FACTOR * 0.8
+                ),
+                "downBlock": charger_sprites_ennemi(
+                    "knight", "D_Block.png", 1, scale=SCALE_FACTOR * 0.8
+                ),
+                "upBlock": charger_sprites_ennemi(
+                    "knight", "U_Block.png", 1, scale=SCALE_FACTOR * 0.8
+                ),
+                "sideBlock": charger_sprites_ennemi(
+                    "knight", "S_Block.png", 1, scale=SCALE_FACTOR * 0.8
+                ),
             }
-        
+
         self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"
         self.frame_index = 0
@@ -570,7 +586,6 @@ class Chevalier(Ennemi):
         self.block_timer = 0.0
         self.block_duration = 0.2
 
-    
     def update_animation(self, dt: float):
         # Blocage
         if self.block_timer > 0:
@@ -598,7 +613,7 @@ class Chevalier(Ennemi):
             self.direction = "upBlock"
         elif self.direction == "side":
             self.direction = "sideBlock"
-        self.block_timer = self.block_duration  
+        self.block_timer = self.block_duration
 
     def draw(self, ecran: pygame.Surface) -> None:
         if self.estMort():

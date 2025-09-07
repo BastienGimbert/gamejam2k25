@@ -56,9 +56,7 @@ def charger_fond(ecran: pygame.Surface):
     global FOND
     if FOND is None:  # on le fait une seule fois
         FOND = charger_image_avec_redimensionnement(
-            "assets/fond.png", 
-            ecran.get_size(), 
-            convert_alpha=False
+            "assets/fond.png", ecran.get_size(), convert_alpha=False
         )
 
 
@@ -203,8 +201,7 @@ def _charger_gameover(ecran: pygame.Surface):
     global _GAMEOVER_IMG
     if _GAMEOVER_IMG is None:
         _GAMEOVER_IMG = charger_image_avec_redimensionnement(
-            "assets/gameover.png", 
-            ecran.get_size()
+            "assets/gameover.png", ecran.get_size()
         )
 
 

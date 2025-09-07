@@ -14,10 +14,10 @@ def _obtenir_racine_projet() -> str:
 def _extraire_direction_du_nom_fichier(nom_fichier: str) -> Optional[str]:
     """
     Extrait la direction depuis le nom d'un fichier d'animation.
-    
+
     Args:
         nom_fichier: Nom du fichier (ex: "D_Idle.png", "S_Attack.png")
-    
+
     Returns:
         Direction extraite ("D", "S", "U", "DS", "US") ou None si invalide
     """
@@ -31,11 +31,11 @@ def _extraire_direction_du_nom_fichier(nom_fichier: str) -> Optional[str]:
 class AnimateurDirectionnel:
     """
     Gestionnaire d'animations directionnelles pour les personnages.
-    
+
     Cette classe gère les animations de personnages avec différentes directions
     (haut, bas, côtés, diagonales) et différents états (repos, pré-attaque, attaque).
     """
-    
+
     def __init__(
         self,
         chemin_personnage_base: str,
@@ -47,7 +47,7 @@ class AnimateurDirectionnel:
     ) -> None:
         """
         Initialise l'animateur directionnel.
-        
+
         Args:
             chemin_personnage_base: Chemin vers le dossier contenant les sprites du personnage
             frames_par_etat: Nombre de frames pour chaque état (défaut: Repos=4, PreAttaque=1, Attaque=6)
@@ -62,7 +62,7 @@ class AnimateurDirectionnel:
             if os.path.isabs(chemin_personnage_base)
             else os.path.join(_obtenir_racine_projet(), chemin_personnage_base)
         )
-        
+
         # Configuration des états d'animation
         self.frames_par_etat = frames_par_etat or {
             "Idle": 4,
@@ -97,7 +97,7 @@ class AnimateurDirectionnel:
     def _decouvrir_directions(self) -> Tuple[str, ...]:
         """
         Découvre automatiquement les directions disponibles dans le dossier.
-        
+
         Returns:
             Tuple des directions trouvées, triées par priorité
         """
@@ -109,7 +109,7 @@ class AnimateurDirectionnel:
                 direction = _extraire_direction_du_nom_fichier(nom_fichier)
                 if direction and direction not in directions:
                     directions.append(direction)
-        
+
         # Tri par priorité : diagonales d'abord, puis directions principales
         priorite = ["D", "S", "U", "DS", "US"]
         directions.sort(key=lambda d: priorite.index(d) if d in priorite else 99)
@@ -118,69 +118,77 @@ class AnimateurDirectionnel:
     def _charger_image(self, chemin: str) -> Optional[pygame.Surface]:
         """
         Charge une image avec gestion d'erreur.
-        
+
         Args:
             chemin: Chemin vers l'image à charger
-            
+
         Returns:
             Surface pygame ou None si erreur
         """
         return charger_image_simple(chemin, convert_alpha=True)
 
-    def _calculer_nombre_frames_divisible(self, largeur: int, nombre_prefere: int) -> int:
+    def _calculer_nombre_frames_divisible(
+        self, largeur: int, nombre_prefere: int
+    ) -> int:
         """
         Calcule le nombre de frames qui divise parfaitement la largeur de l'image.
-        
+
         Args:
             largeur: Largeur de l'image en pixels
             nombre_prefere: Nombre de frames préféré
-            
+
         Returns:
             Nombre de frames optimal pour la découpe
         """
         if nombre_prefere and nombre_prefere >= 2 and largeur % nombre_prefere == 0:
             return nombre_prefere
-        
+
         # Recherche dans des valeurs communes
         for n in (6, 8, 10, 12, 4, 5, 7, 9):
             if largeur % n == 0:
                 return n
-        
+
         # Recherche exhaustive si nécessaire
         for n in range(2, 41):
             if largeur % n == 0:
                 return n
-        
+
         return 1
 
-    def _charger_pour_direction(self, direction: str) -> Dict[str, List[pygame.Surface]]:
+    def _charger_pour_direction(
+        self, direction: str
+    ) -> Dict[str, List[pygame.Surface]]:
         """
         Charge toutes les animations pour une direction donnée.
-        
+
         Args:
             direction: Direction à charger ("D", "S", "U", "DS", "US")
-            
+
         Returns:
             Dictionnaire {état: [frames]} pour cette direction
         """
         resultat: Dict[str, List[pygame.Surface]] = {}
         a_sprite_par_etat = False
-        
+
         # Vérifier s'il y a des fichiers séparés par état
         for etat in self.ordre_etats:
-            chemin_etat = os.path.join(self.chemin_personnage_base, f"{direction}_{etat}.png")
+            chemin_etat = os.path.join(
+                self.chemin_personnage_base, f"{direction}_{etat}.png"
+            )
             if os.path.exists(chemin_etat):
                 a_sprite_par_etat = True
                 break
-        
+
         self._a_sprite_par_etat[direction] = a_sprite_par_etat
 
         if a_sprite_par_etat:
             # Chargement des fichiers séparés par état
             for etat in self.ordre_etats:
-                chemin_etat = os.path.join(self.chemin_personnage_base, f"{direction}_{etat}.png")
+                chemin_etat = os.path.join(
+                    self.chemin_personnage_base, f"{direction}_{etat}.png"
+                )
                 sprite = self._charger_image(chemin_etat)
-                
+
                 if sprite is None:
                     # Surface transparente de fallback
                     surface_fallback = pygame.Surface((1, 1), pygame.SRCALPHA)
@@ -189,19 +197,25 @@ class AnimateurDirectionnel:
                 else:
                     # Découpage selon le nombre de frames configuré
                     nb_frames = self.frames_par_etat.get(etat, 1)
-                    resultat[etat] = decouper_sprite(sprite, nb_frames, horizontal=True, copy=True)
-            
+                    resultat[etat] = decouper_sprite(
+                        sprite, nb_frames, horizontal=True, copy=True
+                    )
+
             return resultat
 
         # Chargement d'un fichier composé unique
         chemin_unique = os.path.join(self.chemin_personnage_base, f"{direction}.png")
         sprite = self._charger_image(chemin_unique)
-        
+
         if sprite is None:
             # Surface transparente de fallback
             surface_fallback = pygame.Surface((1, 1), pygame.SRCALPHA)
             surface_fallback.fill((0, 0, 0, 0))
-            return {"Idle": [surface_fallback], "Preattack": [surface_fallback], "Attack": [surface_fallback]}
+            return {
+                "Idle": [surface_fallback],
+                "Preattack": [surface_fallback],
+                "Attack": [surface_fallback],
+            }
 
         # Calcul du nombre optimal de frames
         largeur = sprite.get_width()
@@ -231,14 +245,16 @@ class AnimateurDirectionnel:
         for direction in self.directions:
             animations = self._charger_pour_direction(direction)
             for etat in self.ordre_etats:
-                self.frames[(direction, etat)] = animations.get(etat, animations.get("Idle", []))
+                self.frames[(direction, etat)] = animations.get(
+                    etat, animations.get("Idle", [])
+                )
 
     def demarrer(
         self, etat: str, direction: Optional[str] = None, flip_x: Optional[bool] = None
     ) -> None:
         """
         Démarre une nouvelle animation.
-        
+
         Args:
             etat: État à jouer ("Idle", "Preattack", "Attack")
             direction: Direction à utiliser (optionnel)
@@ -256,7 +272,7 @@ class AnimateurDirectionnel:
     def definir_orientation(self, direction: str, flip_x: bool) -> None:
         """
         Définit l'orientation du personnage.
-        
+
         Args:
             direction: Direction ("D", "S", "U", "DS", "US")
             flip_x: Inversion horizontale
@@ -267,26 +283,26 @@ class AnimateurDirectionnel:
     def mettre_a_jour(self, dt: float) -> bool:
         """
         Met à jour l'animation.
-        
+
         Args:
             dt: Temps écoulé depuis la dernière mise à jour en secondes
-            
+
         Returns:
             True si l'animation est terminée, False sinon
         """
         frames = self.frames.get((self.direction, self.etat), [])
         if not frames:
             return False
-        
+
         self.timer += max(0.0, dt)
         termine = False
         duree_frame = self.durees.get(self.etat, 0.1)
-        
+
         # Avancement des frames
         while self.timer >= duree_frame:
             self.timer -= duree_frame
             self.index += 1
-            
+
             if self.index >= len(frames):
                 if self.etat in self.etats_en_boucle:
                     # Boucle sur la première frame
@@ -296,13 +312,13 @@ class AnimateurDirectionnel:
                     self.index = len(frames) - 1
                     termine = True
                     break
-        
+
         return termine
 
     def dessiner(self, surface: pygame.Surface, centre_x: int, base_y: int) -> None:
         """
         Dessine l'animation sur la surface.
-        
+
         Args:
             surface: Surface de destination
             centre_x: Position X du centre du personnage
@@ -311,13 +327,13 @@ class AnimateurDirectionnel:
         frames = self.frames.get((self.direction, self.etat), [])
         if not frames:
             return
-        
+
         image = frames[self.index]
-        
+
         # Application de l'inversion horizontale si nécessaire
         if self.flip_x:
             image = pygame.transform.flip(image, True, False)
-        
+
         # Positionnement centré en bas
         rect = image.get_rect()
         rect.midbottom = (centre_x, base_y)
@@ -328,18 +344,18 @@ class AnimateurDirectionnel:
     ) -> Tuple[str, bool]:
         """
         Calcule la meilleure orientation pour regarder vers une cible.
-        
+
         Args:
             src_x, src_y: Position de la source
             dst_x, dst_y: Position de la cible
-            
+
         Returns:
             Tuple (direction, flip_x) optimal
         """
         dx = float(dst_x - src_x)
         dy = float(dst_y - src_y)
         ax, ay = abs(dx), abs(dy)
-        
+
         # Vérification de la disponibilité des directions diagonales
         a_diagonales = ("DS" in self.directions) or ("US" in self.directions)
 
@@ -347,18 +363,18 @@ class AnimateurDirectionnel:
         if a_diagonales and min(ax, ay) > 0 and max(ax, ay) / min(ax, ay) <= 1.75:
             direction = "DS" if dy >= 0 else "US"
             flip = dx < 0 if self.cote_face_droite else dx > 0
-            
+
             # Fallback si la direction diagonale n'est pas disponible
             if direction not in self.directions:
                 return ("D" if dy > 0 else "U"), flip
-            
+
             return direction, flip
 
         # Direction latérale si le mouvement horizontal est dominant
         if ax >= ay:
             flip = dx < 0 if self.cote_face_droite else dx > 0
             return "S", flip
-        
+
         # Direction verticale
         return ("D", False) if dy > 0 else ("U", False)
 

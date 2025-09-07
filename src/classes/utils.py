@@ -42,7 +42,9 @@ def charger_chemin_tiled(tmj_path: str, layer_name: str = "path") -> List[Positi
     return [Position(ox + p["x"], oy + p["y"]) for p in obj["polygon"]]
 
 
-def cases_depuis_chemin(chemin_positions: list[Position], taille_case: int) -> set[tuple[int, int]]:
+def cases_depuis_chemin(
+    chemin_positions: list[Position], taille_case: int
+) -> set[tuple[int, int]]:
     """Approxime les cases de grille traversées par le polygone du chemin."""
     bannies: set[tuple[int, int]] = set()
     if not chemin_positions:
@@ -87,17 +89,19 @@ def cases_depuis_chemin(chemin_positions: list[Position], taille_case: int) -> s
     return bannies
 
 
-def position_dans_grille(pos: tuple[int, int], largeur_ecran: int, hauteur_ecran: int) -> bool:
+def position_dans_grille(
+    pos: tuple[int, int], largeur_ecran: int, hauteur_ecran: int
+) -> bool:
     """Vérifie si une position est dans la grille de jeu."""
     return pos[0] < largeur_ecran and 0 <= pos[1] < hauteur_ecran
 
 
-def case_depuis_pos(pos: tuple[int, int], taille_case: int, colonnes: int, lignes: int) -> tuple[int, int] | None:
+def case_depuis_pos(
+    pos: tuple[int, int], taille_case: int, colonnes: int, lignes: int
+) -> tuple[int, int] | None:
     """Convertit une position en coordonnées de case de grille."""
     x_case = pos[0] // taille_case
     y_case = pos[1] // taille_case
     if 0 <= x_case < colonnes and 0 <= y_case < lignes:
         return (x_case, y_case)
     return None
-
-

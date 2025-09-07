@@ -28,20 +28,8 @@ from classes.constants import (
     TOWER_DIR,
     WINDOW_HEIGHT,
 )
-from models.ennemi import Chevalier, Ennemi, Gobelin, Mage
-from managers.ennemi_manager import EnnemiManager
-from managers.tour_manager import TourManager
-from managers.shop_manager import ShopManager
-from managers.audio_manager import AudioManager
-from managers.ui_manager import UIManager
-from models.joueur import Joueur
 from classes.pointeur import Pointeur
 from classes.position import Position
-from models.sort import SortEclair, SortFee, SortVision
-
-
-# Import nécessaire pour le type hint
-from models.tour import Campement
 from classes.sprites import (
     charger_animation_ui,
     charger_image_assets,
@@ -51,18 +39,35 @@ from classes.sprites import (
     charger_spritesheet_ui,
     decouper_sprite,
 )
-from classes.utils import charger_chemin_tiled, cases_depuis_chemin, position_dans_grille, case_depuis_pos, distance_positions
+from classes.utils import (
+    case_depuis_pos,
+    cases_depuis_chemin,
+    charger_chemin_tiled,
+    distance_positions,
+    position_dans_grille,
+)
+from managers.audio_manager import AudioManager
+from managers.ennemi_manager import EnnemiManager
+from managers.shop_manager import ShopManager
+from managers.tour_manager import TourManager
+from managers.ui_manager import UIManager
+from models.ennemi import Chevalier, Ennemi, Gobelin, Mage
+from models.joueur import Joueur
+from models.sort import SortEclair, SortFee, SortVision
+
+# Import nécessaire pour le type hint
+from models.tour import Campement
 
 
 class Game:
-        
+
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
         self.joueur = Joueur(argent=45, point_de_vie=100)
 
         # Gestion des vagues
         # Manager des ennemis
         self.ennemi_manager = EnnemiManager(self)
-        
+
         # Manager des tours
         self.tour_manager = TourManager(self)
 
@@ -84,7 +89,6 @@ class Game:
         self.hauteur_ecran = GAME_HEIGHT  # Taille normale de la carte
         self.case_survolee: tuple[int, int] | None = None
 
-
         # Sorts du joueur
         self.sorts = {
             "vision": SortVision(niveau=1),
@@ -95,22 +99,21 @@ class Game:
         # État de sélection des sorts
         self.eclair_selectionne = False
 
-
         # Types de tours
         self.tower_types = DEFAULT_TOWER_TYPES
 
         self.tower_assets = self._charger_tours()
-        
+
         # Manager de la boutique (après la définition des types de tours et assets)
         self.shop_manager = ShopManager(self)
-        
+
         # Manager audio
         self.audio_manager = AudioManager(self)
         self.audio_manager.set_muet(est_muet)
-        
+
         # Manager UI
         self.ui_manager = UIManager(self)
-        
+
         medieval_couleurs = {
             "fond_normal": (110, 70, 30),  # brun
             "fond_survol": (150, 100, 40),  # brun clair
@@ -128,9 +131,8 @@ class Game:
             police_medievale,
             medieval_couleurs,
         )
-        
-        self.type_selectionne: str | None = None
 
+        self.type_selectionne: str | None = None
 
         self.couleur_boutique_bg = (30, 30, 30)
         self.couleur_boutique_border = (80, 80, 80)
@@ -160,11 +162,10 @@ class Game:
     # ---------- Chargements ----------
     def _charger_carte(self):
         """Charge la carte en utilisant la fonction utilitaire."""
-        img = charger_image_assets(MAP_PNG.split('/')[-1], "tilesets")
+        img = charger_image_assets(MAP_PNG.split("/")[-1], "tilesets")
         if img is None:
             raise FileNotFoundError(f"Carte non trouvée: {MAP_PNG}")
         return img
-
 
     def _charger_tours(self):
         """Charge tous les assets des tours en utilisant la fonction utilitaire."""
@@ -173,13 +174,8 @@ class Game:
             assets[tower_type] = charger_sprites_tour_assets(tower_type)
         return assets
 
-
     def _dessiner_personnages_tours(self, ecran):
         self.tour_manager.dessiner_personnages_tours(ecran)
-
-
-
-
 
     # ---------- Update / boucle ----------
     def maj(self, dt: float):
@@ -190,17 +186,21 @@ class Game:
         # Appliquer les effets des sorts
         for sort in self.sorts.values():
             sort.appliquer_effet(self)
-        
+
         # Mettre à jour la visibilité des ennemis (après les sorts)
         for ennemi in self.ennemi_manager.get_ennemis_actifs():
             if hasattr(ennemi, "majVisible"):
                 ennemi.majVisible(self)
 
         # Mise à jour des tours (acquisition cible + tir)
-        self.tour_manager.mettre_a_jour_tours(dt, self.ennemi_manager.get_ennemis_actifs())
+        self.tour_manager.mettre_a_jour_tours(
+            dt, self.ennemi_manager.get_ennemis_actifs()
+        )
 
         # Mise à jour des projectiles + collisions
-        self.tour_manager.mettre_a_jour_projectiles(dt, self.ennemi_manager.get_ennemis_actifs())
+        self.tour_manager.mettre_a_jour_projectiles(
+            dt, self.ennemi_manager.get_ennemis_actifs()
+        )
 
         # Nettoyage ennemis
         self.ennemi_manager.nettoyer_ennemis_morts()
@@ -211,8 +211,7 @@ class Game:
     def get_closest_mage(self, pos: Position) -> None | Mage:
         """Retourne le mage le plus proche de la position pos."""
         mages = [
-            e for e in self.ennemi_manager.get_mages_actifs() 
-            if e.ready_to_attack()
+            e for e in self.ennemi_manager.get_mages_actifs() if e.ready_to_attack()
         ]
         if not mages:
             return None
@@ -225,12 +224,14 @@ class Game:
 
         return nearestMage
 
-    def majFeuxDeCamps(self, dt: float, nuit_surface: pygame.Surface | None = None) -> None:
+    def majFeuxDeCamps(
+        self, dt: float, nuit_surface: pygame.Surface | None = None
+    ) -> None:
         """Met à jour et dessine les effets de lumière des feux de camps."""
         self.tour_manager.mettre_a_jour_feux_de_camps(dt, nuit_surface)
 
     # def get_max_vague_csv(self) -> int:
-    #     return self.ennemi_manager.get_max_vague_csv()  
+    #     return self.ennemi_manager.get_max_vague_csv()
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         if self.ennemi_manager.est_victoire():
@@ -238,7 +239,7 @@ class Game:
             return
 
         dt = self.clock.tick(60) / 1000.0
-        
+
         # Délégation complète du rendu à l'UIManager
         self.ui_manager.dessiner_interface_jeu(ecran, dt)
 
@@ -264,7 +265,9 @@ class Game:
         if event.type == pygame.MOUSEMOTION:
             pos = pygame.mouse.get_pos()
             if position_dans_grille(pos, self.largeur_ecran, self.hauteur_ecran):
-                self.case_survolee = case_depuis_pos(pos, self.taille_case, self.colonnes, self.lignes)
+                self.case_survolee = case_depuis_pos(
+                    pos, self.taille_case, self.colonnes, self.lignes
+                )
             else:
                 self.case_survolee = None
 
@@ -275,7 +278,9 @@ class Game:
             # Vérifier si l'éclair est sélectionné et cliquer sur une case
             if hasattr(self, "eclair_selectionne") and self.eclair_selectionne:
                 if position_dans_grille(pos, self.largeur_ecran, self.hauteur_ecran):
-                    case = case_depuis_pos(pos, self.taille_case, self.colonnes, self.lignes)
+                    case = case_depuis_pos(
+                        pos, self.taille_case, self.colonnes, self.lignes
+                    )
                     if case and case in getattr(self, "cases_bannies", set()):
                         # L'éclair ne peut être utilisé que sur les cases du chemin
                         # Mais pas sur les 6 cases en haut à gauche (x=0..5, y=0..1)
@@ -297,7 +302,10 @@ class Game:
             if self.shop_manager.gerer_clic_boutique_sorts(pos):
                 return None
             # Clic dans la boutique des tours
-            if self.bouton_vague.rect.collidepoint(pos) and self.ennemi_manager.vague_terminee():
+            if (
+                self.bouton_vague.rect.collidepoint(pos)
+                and self.ennemi_manager.vague_terminee()
+            ):
                 self.bouton_vague.action()
                 self.tour_manager.tour_selectionnee = None  # désélectionne la range
                 return None
@@ -306,17 +314,27 @@ class Game:
                 return None
 
             # Placement de tour (priorité sur la sélection)
-            if self.type_selectionne and position_dans_grille(pos, self.largeur_ecran, self.hauteur_ecran):
-                case = case_depuis_pos(pos, self.taille_case, self.colonnes, self.lignes)
-                if case and self.tour_manager.peut_placer_tour(case, self.type_selectionne, self.cases_bannies):
+            if self.type_selectionne and position_dans_grille(
+                pos, self.largeur_ecran, self.hauteur_ecran
+            ):
+                case = case_depuis_pos(
+                    pos, self.taille_case, self.colonnes, self.lignes
+                )
+                if case and self.tour_manager.peut_placer_tour(
+                    case, self.type_selectionne, self.cases_bannies
+                ):
                     if self.tour_manager.placer_tour(case, self.type_selectionne):
                         self.type_selectionne = None
-                        self.tour_manager.tour_selectionnee = None  # désélectionne la range
+                        self.tour_manager.tour_selectionnee = (
+                            None  # désélectionne la range
+                        )
                 return None
-            
+
             # --- Ajout : sélection/désélection d'une tour placée pour afficher la range ---
             if position_dans_grille(pos, self.largeur_ecran, self.hauteur_ecran):
-                case = case_depuis_pos(pos, self.taille_case, self.colonnes, self.lignes)
+                case = case_depuis_pos(
+                    pos, self.taille_case, self.colonnes, self.lignes
+                )
                 self.tour_manager.selectionner_tour(case)
                 return None
 
@@ -328,10 +346,11 @@ class Game:
                 self.tour_manager.tour_selectionnee = None  # désélectionne la range
                 return None
             if position_dans_grille(pos, self.largeur_ecran, self.hauteur_ecran):
-                case = case_depuis_pos(pos, self.taille_case, self.colonnes, self.lignes)
+                case = case_depuis_pos(
+                    pos, self.taille_case, self.colonnes, self.lignes
+                )
                 if case and case in self.tour_manager.positions_occupees:
                     self.tour_manager.vendre_tour(case)
                     self.tour_manager.tour_selectionnee = None  # désélectionne la range
 
         return None
-

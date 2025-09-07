@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, ClassVar, Optional
 
 import pygame
 
-from models.ennemi import Chevalier, Ennemi
 from classes.position import Position
+from models.ennemi import Chevalier, Ennemi
 
 if TYPE_CHECKING:
     from game import Game
@@ -117,7 +117,7 @@ class ProjectileFleche(Projectile):
         if isinstance(e, Chevalier):
             # Les chevaliers prennent 10% de degats par des fleches
             e.block()
-            e.perdreVie(self.degats * 0.1)  
+            e.perdreVie(self.degats * 0.1)
             self.detruit = True
             return
         e.perdreVie(self.degats)
@@ -176,7 +176,7 @@ class ProjectileTourMage(Projectile):
         sprite = pygame.transform.rotozoom(self.image_base, 90 - angle, 1.5)
         rect = sprite.get_rect(center=(int(self.x), int(self.y)))
         ecran.blit(sprite, rect)
-        
+
         # Dessiner un cercle de zone d'effet en transparence (optionnel, pour debug)
         # pygame.draw.circle(ecran, (255, 0, 255, 50), (int(self.x), int(self.y)), int(self.rayon_zone_effet), 2)
 
@@ -191,10 +191,10 @@ class ProjectileTourMage(Projectile):
         for ennemi in ennemis:
             if ennemi.estMort():
                 continue
-            
+
             # Calculer la distance entre le point d'impact et l'ennemi
             distance = hypot(self.x - ennemi.position.x, self.y - ennemi.position.y)
-            
+
             # Si l'ennemi est dans la zone d'effet
             if distance <= self.rayon_zone_effet:
                 # Appliquer les dégâts complets
@@ -265,7 +265,7 @@ class ProjectileMageEnnemi(Projectile):
 
 class EffetExplosion:
     """Effet visuel temporaire pour les explosions de zone."""
-    
+
     def __init__(self, x: float, y: float, rayon: float, duree: float = 0.5):
         self.x = x
         self.y = y
@@ -273,36 +273,48 @@ class EffetExplosion:
         self.duree = duree
         self.temps_ecoule = 0.0
         self.actif = True
-    
+
     def mettre_a_jour(self, dt: float) -> None:
         """Met à jour l'effet d'explosion."""
         self.temps_ecoule += dt
         if self.temps_ecoule >= self.duree:
             self.actif = False
-    
+
     def dessiner(self, ecran: pygame.Surface) -> None:
         """Dessine l'effet d'explosion."""
         if not self.actif:
             return
-        
+
         # Calculer le rayon actuel (expansion progressive)
         progress = self.temps_ecoule / self.duree
         rayon_actuel = self.rayon_max * progress
-        
+
         # Calculer l'opacité (diminue avec le temps)
         alpha = int(255 * (1.0 - progress))
-        
+
         # Créer une surface temporaire pour l'effet
-        surface_effet = pygame.Surface((int(rayon_actuel * 2), int(rayon_actuel * 2)), pygame.SRCALPHA)
-        
+        surface_effet = pygame.Surface(
+            (int(rayon_actuel * 2), int(rayon_actuel * 2)), pygame.SRCALPHA
+        )
+
         # Dessiner le cercle d'explosion
-        pygame.draw.circle(surface_effet, (255, 100, 255, alpha), 
-                          (int(rayon_actuel), int(rayon_actuel)), int(rayon_actuel), 3)
-        
+        pygame.draw.circle(
+            surface_effet,
+            (255, 100, 255, alpha),
+            (int(rayon_actuel), int(rayon_actuel)),
+            int(rayon_actuel),
+            3,
+        )
+
         # Dessiner un cercle intérieur plus lumineux
-        pygame.draw.circle(surface_effet, (255, 200, 255, alpha // 2), 
-                          (int(rayon_actuel), int(rayon_actuel)), int(rayon_actuel * 0.7), 2)
-        
+        pygame.draw.circle(
+            surface_effet,
+            (255, 200, 255, alpha // 2),
+            (int(rayon_actuel), int(rayon_actuel)),
+            int(rayon_actuel * 0.7),
+            2,
+        )
+
         # Positionner et afficher l'effet
         rect_effet = surface_effet.get_rect(center=(int(self.x), int(self.y)))
         ecran.blit(surface_effet, rect_effet)

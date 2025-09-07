@@ -5,10 +5,10 @@ from typing import Callable, List, Optional, Tuple
 import pygame
 
 from classes.animation import AnimateurDirectionnel
-from models.ennemi import Ennemi
 from classes.position import Position
 from classes.sprites import charger_sprites_tour
 from classes.utils import distance_positions
+from models.ennemi import Ennemi
 
 
 def _project_root() -> str:
@@ -106,11 +106,7 @@ class Tour(ABC):
                 d, fx = self._best_orient(self._cible)
                 self._anim.definir_orientation(d, fx)
             if self._anim.mettre_a_jour(dt):
-                if (
-                    self._cible is not None
-                    and not self._cible.estMort()
-                    
-                ):
+                if self._cible is not None and not self._cible.estMort():
                     if (
                         distance_positions(self.position, self._cible.position)
                         <= self.portee
@@ -139,7 +135,7 @@ class Tour(ABC):
             if e.estMort() or not e.visible:
                 continue
             if distance_positions(self.position, e.position) <= self.portee:
-                d_end = e.get_distance_restante() 
+                d_end = e.get_distance_restante()
                 candidats.append((d_end, e))
 
         if not candidats:
@@ -151,7 +147,6 @@ class Tour(ABC):
                 meilleur_candidat = c
 
         return meilleur_candidat[1]
-
 
     @abstractmethod
     def attaquer(self, cible: "Ennemi") -> None:
@@ -202,9 +197,11 @@ class Catapulte(Tour):
 
     def attaquer(self, cible: "Ennemi") -> None:
         return
+
     def _choisir_cible(self, ennemis: List["Ennemi"]) -> Optional["Ennemi"]:
         """Choisit la cible parmi les ennemis dans la portée de la tour.
-        La cible choisie est celle qui a le plus de points de vie. En cas d'égalité, c'est celle qui est la plus proche de la fin."""
+        La cible choisie est celle qui a le plus de points de vie. En cas d'égalité, c'est celle qui est la plus proche de la fin.
+        """
         candidats: List[tuple[int, float, Ennemi]] = []
         for e in ennemis:
             if e.estMort() or not e.visible:
@@ -225,6 +222,7 @@ class Catapulte(Tour):
                 meilleur_candidat = c
 
         return meilleur_candidat[2]
+
 
 class Mage(Tour):
     TYPE_ID = 3
@@ -247,6 +245,7 @@ class Mage(Tour):
 
     def attaquer(self, cible: "Ennemi") -> None:
         return
+
     def maj(
         self,
         dt: float,
@@ -257,7 +256,7 @@ class Mage(Tour):
             return
 
         self._time_since_last_shot += dt
-        self._anim.mettre_a_jour(dt)  
+        self._anim.mettre_a_jour(dt)
 
         if self._time_since_last_shot >= self.cooldown_s:
             cible = self._choisir_cible(ennemis)
@@ -287,9 +286,7 @@ class Campement(Tour):
 
         if Campement._frames is None:
             # Charger les 6 frames de feu
-            Campement._frames = charger_sprites_tour(
-                "campement", "1.png", 6, scale=0.8
-            )
+            Campement._frames = charger_sprites_tour("campement", "1.png", 6, scale=0.8)
 
         self.frame_index = 0
         self.frame_timer = 0.0
@@ -305,10 +302,13 @@ class Campement(Tour):
             return
         frame = Campement._frames[self.frame_index]
         surf = pygame.transform.smoothscale(frame, (taille_case, taille_case))
-        offset_y = -15 # Ajustement vertical pour centrer le feu
+        offset_y = -15  # Ajustement vertical pour centrer le feu
         ecran.blit(
             surf,
-            (self.position.x - taille_case // 2, self.position.y - taille_case // 2 + offset_y),
+            (
+                self.position.x - taille_case // 2,
+                self.position.y - taille_case // 2 + offset_y,
+            ),
         )
 
     def attaquer(self, cible: "Ennemi") -> None:

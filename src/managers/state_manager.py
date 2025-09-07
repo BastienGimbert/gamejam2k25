@@ -1,5 +1,6 @@
 from enum import Enum
-from typing import Dict, Callable, Any, Optional
+from typing import Any, Callable, Dict, Optional
+
 import pygame
 
 from classes.constants import FPS, WINDOW_HEIGHT, WINDOW_WIDTH
@@ -13,6 +14,7 @@ from classes.menu import (
 
 class GameState(Enum):
     """États possibles du jeu."""
+
     MENU = "MENU"
     JEU = "JEU"
     PAUSE = "PAUSE"
@@ -22,22 +24,22 @@ class GameState(Enum):
 
 class StateManager:
     """Manager pour gérer les états du jeu de manière centralisée."""
-    
+
     def __init__(self, police: pygame.font.Font, game_instance: Any):
         self.police = police
         self.game = game_instance
         self.current_state = GameState.MENU
         self.previous_state: Optional[GameState] = None
-        
+
         # Configuration des états
         self._state_configs = self._setup_state_configs()
-        
+
         # Callbacks d'action
         self._callbacks = self._setup_callbacks()
-        
+
         # Boutons pour chaque état
         self._buttons = self._setup_buttons()
-    
+
     def _setup_state_configs(self) -> Dict[GameState, Dict[str, Any]]:
         """Configure les paramètres de chaque état."""
         return {
@@ -72,7 +74,7 @@ class StateManager:
                 "needs_game_update": True,  # Pour figer le temps
             },
         }
-    
+
     def _setup_callbacks(self) -> Dict[str, Callable]:
         """Configure les callbacks d'action."""
         return {
@@ -84,7 +86,7 @@ class StateManager:
             "redemarrer_partie": self._redemarrer_partie,
             "quitter_jeu": self._quitter_jeu,
         }
-    
+
     def _setup_buttons(self) -> Dict[GameState, list]:
         """Configure les boutons pour chaque état."""
         # Actions pour chaque menu
@@ -94,27 +96,28 @@ class StateManager:
             "muet": self._callbacks["basculer_muet"],
             "quitter": self._callbacks["quitter_jeu"],
         }
-        
+
         actions_menu_pause = {
             "reprendre": self._callbacks["reprendre_jeu"],
             "credits": self._callbacks["afficher_credits"],
             "muet": self._callbacks["basculer_muet"],
             "quitter": self._callbacks["quitter_jeu"],
         }
-        
+
         actions_gameover = {
             "recommencer": self._callbacks["redemarrer_partie"],
             "credits": self._callbacks["afficher_credits"],
             "quitter": self._callbacks["quitter_jeu"],
         }
-        
+
         # Création des boutons
         try:
             from classes.menu import creer_boutons_gameover
+
             buttons_gameover = creer_boutons_gameover(self.police, actions_gameover)
         except ImportError:
             buttons_gameover = []
-        
+
         return {
             GameState.MENU: creer_boutons_menu(
                 self.police, reprendre=False, actions=actions_menu_principal
@@ -128,7 +131,7 @@ class StateManager:
             GameState.GAMEOVER: buttons_gameover,
             GameState.JEU: [],  # Pas de boutons pour l'état de jeu
         }
-    
+
     def change_state(self, new_state: GameState) -> bool:
         """Change l'état du jeu avec validation."""
         if self._is_valid_transition(self.current_state, new_state):
@@ -136,7 +139,7 @@ class StateManager:
             self.current_state = new_state
             return True
         return False
-    
+
     def _is_valid_transition(self, from_state: GameState, to_state: GameState) -> bool:
         """Vérifie si une transition d'état est valide."""
         # Règles de transition
@@ -144,29 +147,34 @@ class StateManager:
             GameState.MENU: [GameState.JEU, GameState.CREDITS],
             GameState.JEU: [GameState.PAUSE, GameState.GAMEOVER],
             GameState.PAUSE: [GameState.JEU, GameState.CREDITS],
-            GameState.CREDITS: [GameState.MENU, GameState.PAUSE, GameState.JEU, GameState.GAMEOVER],
+            GameState.CREDITS: [
+                GameState.MENU,
+                GameState.PAUSE,
+                GameState.JEU,
+                GameState.GAMEOVER,
+            ],
             GameState.GAMEOVER: [GameState.JEU, GameState.CREDITS],
         }
-        
+
         return to_state in valid_transitions.get(from_state, [])
-    
+
     def get_current_state(self) -> GameState:
         """Retourne l'état actuel."""
         return self.current_state
-    
+
     def get_previous_state(self) -> Optional[GameState]:
         """Retourne l'état précédent."""
         return self.previous_state
-    
+
     def get_buttons(self) -> list:
         """Retourne les boutons de l'état actuel."""
         return self._buttons.get(self.current_state, [])
-    
+
     def needs_game_update(self) -> bool:
         """Vérifie si l'état actuel nécessite une mise à jour du jeu."""
         config = self._state_configs.get(self.current_state, {})
         return config.get("needs_game_update", False)
-    
+
     def handle_event(self, event: pygame.event.Event) -> None:
         """Gère un événement selon l'état actuel."""
         # Gestion de la musique via l'AudioManager
@@ -174,7 +182,7 @@ class StateManager:
             self.game.audio_manager.gerer_evenement_musique(event)
         except Exception:
             pass
-        
+
         # Gestion des événements selon l'état
         if self.current_state == GameState.JEU:
             changement = self.game.gerer_evenement(event)
@@ -184,7 +192,7 @@ class StateManager:
             # Gestion des boutons pour les autres états
             for button in self.get_buttons():
                 button.gerer_evenement(event)
-    
+
     def update(self) -> None:
         """Met à jour l'état actuel."""
         if self.current_state == GameState.JEU:
@@ -194,7 +202,7 @@ class StateManager:
                     self.change_state(GameState.GAMEOVER)
             except Exception:
                 pass
-    
+
     def render(self, screen: pygame.Surface) -> None:
         """Affiche l'état actuel."""
         if self.current_state == GameState.MENU:
@@ -211,11 +219,12 @@ class StateManager:
         elif self.current_state == GameState.GAMEOVER:
             self.game.decompte_dt()
             self._render_gameover(screen)
-    
+
     def _render_gameover(self, screen: pygame.Surface) -> None:
         """Affiche l'écran de Game Over."""
         try:
             from classes.menu import dessiner_gameover
+
             dessiner_gameover(screen, self.get_buttons())
         except ImportError:
             # Fallback si la fonction n'existe pas
@@ -224,44 +233,46 @@ class StateManager:
             screen.blit(txt, (screen.get_width() // 2 - txt.get_width() // 2, 200))
             for button in self.get_buttons():
                 button.dessiner(screen)
-    
+
     # Callbacks d'action
     def _demarrer_jeu(self) -> None:
         """Démarre le jeu."""
         self.change_state(GameState.JEU)
-    
+
     def _reprendre_jeu(self) -> None:
         """Reprend le jeu depuis la pause."""
         self.change_state(GameState.JEU)
-    
+
     def _afficher_credits(self) -> None:
         """Affiche les crédits."""
         self.change_state(GameState.CREDITS)
-    
+
     def _retour_depuis_credits(self) -> None:
         """Retourne depuis les crédits."""
         if self.previous_state and self.previous_state != GameState.CREDITS:
             self.change_state(self.previous_state)
         else:
             self.change_state(GameState.MENU)
-    
+
     def _basculer_muet(self) -> None:
         """Bascule l'état muet."""
         try:
             self.game.audio_manager.basculer_muet()
         except Exception:
             pass
-    
+
     def _redemarrer_partie(self) -> None:
         """Redémarre une nouvelle partie."""
         # Recréer le jeu
         from game import Game
+
         self.game = Game(self.police, est_muet=self.game.audio_manager.est_muet)
         self.game.audio_manager.demarrer_musique_de_fond()
         self.change_state(GameState.JEU)
-    
+
     def _quitter_jeu(self) -> None:
         """Quitte le jeu."""
         pygame.quit()
         import sys
+
         sys.exit()
