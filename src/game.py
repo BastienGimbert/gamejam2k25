@@ -30,20 +30,23 @@ from classes.constants import (
 )
 from classes.ennemi import Chevalier, Ennemi, Gobelin, Mage
 from classes.ennemi_manager import EnnemiManager
+from classes.tour_manager import TourManager
 from classes.joueur import Joueur
 from classes.pointeur import Pointeur
 from classes.position import Position
-from classes.projectile import (
-    EffetExplosion,
-    ProjectileFleche,
-    ProjectileMageEnnemi,
-    ProjectilePierre,
-    ProjectileTourMage,
-)
+# Les projectiles sont maintenant gérés par TourManager
+# from classes.projectile import (
+#     EffetExplosion,
+#     ProjectileFleche,
+#     ProjectileMageEnnemi,
+#     ProjectilePierre,
+#     ProjectileTourMage,
+# )
 from classes.sort import SortEclair, SortFee, SortVision
-from classes.tour import Archer, Campement, Catapulte
-from classes.tour import Mage as TourMage
-from classes.tour import Tour
+# Les tours sont maintenant gérées par TourManager
+# from classes.tour import Archer, Campement, Catapulte
+# from classes.tour import Mage as TourMage
+# from classes.tour import Tour
 from classes.sprites import (
     charger_animation_ui,
     charger_image_assets,
@@ -71,6 +74,9 @@ class Game:
         # Gestion des vagues
         # Manager des ennemis
         self.ennemi_manager = EnnemiManager(self)
+        
+        # Manager des tours
+        self.tour_manager = TourManager(self)
 
         self.police = police
         self.police_tour = pygame.font.Font(None, 44)
@@ -113,20 +119,21 @@ class Game:
 
         # État de sélection des sorts
         self.eclair_selectionne = False
-        # Prix par type de tour (affichage et logique d'achat/vente)
-        self.prix_par_type: dict[str, int] = {
-            "archer": getattr(Archer, "PRIX"),
-            "catapulte": getattr(Catapulte, "PRIX"),
-            "mage": getattr(TourMage, "PRIX"),
-            "campement": getattr(Campement, "PRIX"),
-        }
+        # Prix par type de tour (affichage et logique d'achat/vente) - maintenant géré par TourManager
+        # self.prix_par_type: dict[str, int] = {
+        #     "archer": getattr(Archer, "PRIX"),
+        #     "catapulte": getattr(Catapulte, "PRIX"),
+        #     "mage": getattr(TourMage, "PRIX"),
+        #     "campement": getattr(Campement, "PRIX"),
+        # }
 
-        self.portee_par_type: dict[str, float] = {
-            "archer": getattr(Archer, "PORTEE"),
-            "catapulte": getattr(Catapulte, "PORTEE"),
-            "mage": getattr(TourMage, "PORTEE"),
-            "campement": getattr(Campement, "PORTEE"),
-        }
+        # Portée par type de tour - maintenant géré par TourManager
+        # self.portee_par_type: dict[str, float] = {
+        #     "archer": getattr(Archer, "PORTEE"),
+        #     "catapulte": getattr(Catapulte, "PORTEE"),
+        #     "mage": getattr(TourMage, "PORTEE"),
+        #     "campement": getattr(Campement, "PORTEE"),
+        # }
 
         # Animation monnaie
         self.coin_frames = self._charger_piece()
@@ -142,43 +149,42 @@ class Game:
 
         # Types de tours
         self.tower_types = DEFAULT_TOWER_TYPES
-        # --- Ajout : sélection de tour pour affichage de la range ---
-        self.tour_selectionnee: tuple[int, int] | None = None
+        # --- Ajout : sélection de tour pour affichage de la range - maintenant géré par TourManager ---
+        # self.tour_selectionnee: tuple[int, int] | None = None
 
         self.tower_assets = self._charger_tours()
         self.shop_items = self._creer_boutons_boutique()
         self.type_selectionne: str | None = None
 
-        # Occupation des cases (affichage)
-        self.positions_occupees: dict[tuple[int, int], dict] = {}
+        # Occupation des cases (affichage) - maintenant géré par TourManager
+        # self.positions_occupees: dict[tuple[int, int], dict] = {}
 
-        # Tours / projectiles (logique)
-        self.tours: list[Tour] = []
-        self.projectiles: list[
-            ProjectileFleche | ProjectilePierre | ProjectileTourMage
-        ] = []
-        
-        # Effets visuels d'explosion
-        self.effets_explosion: list[EffetExplosion] = []
+        # Tours / projectiles (logique) - maintenant gérés par TourManager
+        # self.tours: list[Tour] = []
+        # self.projectiles: list[
+        #     ProjectileFleche | ProjectilePierre | ProjectileTourMage
+        # ] = []
+        # 
+        # # Effets visuels d'explosion
+        # self.effets_explosion: list[EffetExplosion] = []
 
         # Couleurs UI
-        # Projectiles actifs (flèches, etc.)
-        # Peut contenir ProjectileFleche et ProjectilePierre
-        self.projectiles: list = []
-        # Images de base des projectiles (chargées via une fonction générique)
-        self.image_fleche = self._charger_image_projectile(
-            ProjectileFleche.CHEMIN_IMAGE
-        )
-        self.image_pierre = self._charger_image_projectile(
-            ProjectilePierre.CHEMIN_IMAGE
-        )
-        # Projectile de la tour mage
-        self.image_orbe_mage = self._charger_image_projectile(
-            ProjectileTourMage.CHEMIN_IMAGE
-        )
-        self.image_projectileMageEnnemi = self._charger_image_projectile(
-            ProjectileMageEnnemi.CHEMIN_IMAGE
-        )
+        # Projectiles actifs (flèches, etc.) - maintenant gérés par TourManager
+        # self.projectiles: list = []
+        # # Images de base des projectiles (chargées via une fonction générique)
+        # self.image_fleche = self._charger_image_projectile(
+        #     ProjectileFleche.CHEMIN_IMAGE
+        # )
+        # self.image_pierre = self._charger_image_projectile(
+        #     ProjectilePierre.CHEMIN_IMAGE
+        # )
+        # # Projectile de la tour mage
+        # self.image_orbe_mage = self._charger_image_projectile(
+        #     ProjectileTourMage.CHEMIN_IMAGE
+        # )
+        # self.image_projectileMageEnnemi = self._charger_image_projectile(
+        #     ProjectileMageEnnemi.CHEMIN_IMAGE
+        # )
 
         self.couleur_quadrillage = (40, 60, 100)
         self.couleur_surbrillance = (80, 180, 255)
@@ -234,13 +240,10 @@ class Game:
         # self.bouton = Bouton("Bouton", 100, 100, 200, 50, self.action_bouton, self.police, self.couleurs)
 
     def getToursFeuDeCamp(self) -> list[Campement]:
-        return [t for t in self.tours if isinstance(t, Campement)]
+        return self.tour_manager.get_tours_feu_de_camp()
 
     def dansFeuDeCamp(self, position: Position) -> bool:
-        for t in self.getToursFeuDeCamp():
-            if distance_positions(t.position, position) <= t.portee:
-                return True
-        return False
+        return self.tour_manager.dans_feu_de_camp(position)
 
 
     # ---------- Chargements ----------
@@ -282,9 +285,9 @@ class Game:
             y += espace_y
         return boutons
 
-    def _charger_image_projectile(self, chemin_relatif: str):
-        """Charge une image de projectile en utilisant la fonction utilitaire."""
-        return charger_image_projectile(chemin_relatif)
+    # def _charger_image_projectile(self, chemin_relatif: str):
+    #     """Charge une image de projectile en utilisant la fonction utilitaire."""
+    #     return charger_image_projectile(chemin_relatif)
 
     # ---------- Utilitaires ----------
 
@@ -308,8 +311,7 @@ class Game:
             pygame.draw.line(ecran, self.couleur_quadrillage, (0, y), (largeur_draw, y))
 
     def _dessiner_personnages_tours(self, ecran):
-        for t in self.tours:
-            t.draw_person(ecran)
+        self.tour_manager.dessiner_personnages_tours(ecran)
 
     def _dessiner_boutique(self, ecran):
         pygame.draw.rect(ecran, self.couleur_boutique_bg, self.rect_boutique)
@@ -398,7 +400,7 @@ class Game:
             ecran.blit(label, (label_x, label_y))
 
             # prix : aligné à droite et centré verticalement, couleur selon solvabilité
-            prix_val = self.prix_par_type.get(t, 0)
+            prix_val = self.tour_manager.prix_par_type.get(t, 0)
             can_buy = self.joueur.argent >= prix_val
             prix_color = (240, 240, 240) if can_buy else (220, 80, 80)
             prix = self.police.render(f"{prix_val}", True, prix_color)
@@ -647,7 +649,7 @@ class Game:
         interdit = (x_case, y_case) in getattr(self, "cases_bannies", set()) or (
             x_case,
             y_case,
-        ) in self.positions_occupees
+        ) in self.tour_manager.positions_occupees
         couleur = (
             self.couleur_surbrillance_interdite
             if interdit
@@ -659,7 +661,7 @@ class Game:
 
         # Cercle autour de la case
 
-        portee = self.portee_par_type.get(self.type_selectionne, 0)
+        portee = self.tour_manager.portee_par_type.get(self.type_selectionne, 0)
         cx = x_case * self.taille_case + self.taille_case // 2
         cy = y_case * self.taille_case + self.taille_case // 2
 
@@ -678,54 +680,7 @@ class Game:
 
     def _dessiner_tours_placees(self, ecran):
         """Dessine les tours, avec un traitement spécial pour Campement."""
-        for (x_case, y_case), data in self.positions_occupees.items():
-            tour = data.get("instance")
-
-            if tour and hasattr(tour, "dessiner"):
-                # Campement (et éventuellement d'autres tours spéciales)
-                tour.dessiner(ecran, self.taille_case)
-            else:
-                # Cas standard (anciennes tours fixes)
-                ttype = data["type"]
-                surf = None
-                if ttype in self.tower_assets and self.tower_assets[ttype]["frames"]:
-                    slices = self.tower_assets[ttype]["frames"][0]
-                    surf = slices[2]
-                    surf = pygame.transform.smoothscale(
-                        surf, (self.taille_case, self.taille_case)
-                    )
-                if surf is None:
-                    surf = pygame.Surface((self.taille_case, self.taille_case))
-                    surf.fill((150, 150, 180))
-                ecran.blit(surf, (x_case * self.taille_case, y_case * self.taille_case))
-
-            # --- Ajout : affichage range si sélectionnée ---
-            if self.tour_selectionnee == (x_case, y_case):
-
-                # Cherche la tour correspondante
-                tour = None
-                cx = x_case * self.taille_case + self.taille_case // 2
-                cy = y_case * self.taille_case + self.taille_case // 2
-                for t in self.tours:
-                    if int(t.position.x) == cx and int(t.position.y) == cy:
-                        tour = t
-                        break
-
-                if tour and hasattr(tour, "portee"):
-                    portee = getattr(tour, "portee", 120)
-
-                    # Dessine un cercle
-                    dash_count = 15  # nombre de segments
-                    dash_length = 0.15  # en radians
-
-                    for i in range(dash_count):
-                        angle_start = 2 * math.pi * i / dash_count
-                        angle_end = angle_start + dash_length
-                        x1 = int(cx + portee * math.cos(angle_start))
-                        y1 = int(cy + portee * math.sin(angle_start))
-                        x2 = int(cx + portee * math.cos(angle_end))
-                        y2 = int(cy + portee * math.sin(angle_end))
-                        pygame.draw.line(ecran, (255, 255, 255), (x1, y1), (x2, y2), 3)
+        self.tour_manager.dessiner_tours_placees(ecran, self.taille_case)
 
 
     # ---------- Update / boucle ----------
@@ -744,117 +699,10 @@ class Game:
                 ennemi.majVisible(self)
 
         # Mise à jour des tours (acquisition cible + tir)
-        for t in self.tours:
-
-            if isinstance(t, Campement):
-                continue
-
-            def au_tir(tour: Tour, cible: Gobelin):
-                if isinstance(tour, Archer) and self.image_fleche is not None:
-                    p = ProjectileFleche(
-                        origine=tour.position, cible_pos=cible.position.copy()
-                    )
-                    p.cible = cible  # suivi de la cible (comme une flèche)
-                    p.image_base = self.image_fleche
-                    self.projectiles.append(p)
-                    # Joue le son de flèche
-                    self.jouer_sfx("arrow.mp3", volume=0.1)
-
-                
-
-                elif isinstance(tour, Catapulte) and self.image_pierre is not None:
-                    p = ProjectilePierre(
-                        origine=tour.position,
-                        cible_pos=cible.position.copy(),
-                        game_ref=self,
-                    )
-                    p.cible = cible
-                    p.image_base = self.image_pierre
-                    self.projectiles.append(p)
-                    # Joue le son de catapulte
-                    self.jouer_sfx("catapult.mp3", volume=0.3)
-
-                    # Déclenche la réaction du mage le plus proche pour intercepter la pierre
-                    mage = self.get_closest_mage(p.position)
-                    if mage is None:
-                        pass
-                    if (
-                        mage is not None
-                        and getattr(self, "image_projectileMageEnnemi", None)
-                        is not None
-                    ):
-                        mage.react_to_projectile()
-                        pm = ProjectileMageEnnemi(
-                            origine=mage.position.copy(), cible_proj=p, vitesse=700.0
-                        )
-                        pm.image_base = self.image_projectileMageEnnemi
-                        self.projectiles.append(pm)
-
-                elif isinstance(tour, TourMage) and self.image_orbe_mage is not None:
-                    # LOGIQUE SIMPLE identique à l'archer (pas d'interception ici)
-                    p = ProjectileTourMage(
-                        origine=tour.position, cible_pos=cible.position.copy()
-                    )
-                    p.cible = cible
-                    p.image_base = self.image_orbe_mage
-                    self.projectiles.append(p)
-                    # Joue le son du mage
-                    self.jouer_sfx("fire-magic.mp3", volume=0.2)
-
-            if hasattr(t, "maj"):
-                t.maj(dt, self.ennemi_manager.get_ennemis_actifs(), au_tir=au_tir)
+        self.tour_manager.mettre_a_jour_tours(dt, self.ennemi_manager.get_ennemis_actifs())
 
         # Mise à jour des projectiles + collisions
-        for pr in self.projectiles:
-            if hasattr(pr, "mettreAJour"):
-                pr.mettreAJour(dt)
-            if getattr(pr, "detruit", False):
-                continue
-
-            if not isinstance(pr, ProjectileMageEnnemi):
-                # Collision projectiles tours -> ennemis
-                for e in self.ennemi_manager.get_ennemis_actifs():
-                    if hasattr(pr, "aTouche") and pr.aTouche(e):
-                        if hasattr(pr, "appliquerDegats"):
-                            # Gestion spéciale pour les projectiles de mage avec dégâts de zone
-                            if isinstance(pr, ProjectileTourMage):
-                                # Appliquer les dégâts de zone à tous les ennemis dans la zone
-                                pr.appliquerDegatsZone(self.ennemi_manager.get_ennemis_actifs())
-                                # Marquer le projectile comme détruit
-                                pr.detruit = True
-                                # Créer un effet d'explosion visuel
-                                effet = EffetExplosion(pr.x, pr.y, pr.rayon_zone_effet, 0.6)
-                                self.effets_explosion.append(effet)
-                                # Son d'explosion magique
-                                self.jouer_sfx("explosion-pierre.mp3", volume=0.3)
-                            else:
-                                # Comportement normal pour les autres projectiles
-                                pr.appliquerDegats(e)
-                                if isinstance(pr, ProjectileFleche) and isinstance(e, Chevalier):
-                                    self.jouer_sfx("arrow-hit-metal.mp3", volume=0.5)
-                            
-                            # Gestion des récompenses pour tous les ennemis morts
-                            self.ennemi_manager.gerer_collisions_projectiles([pr])
-                        break
-            else:
-                # Collision spécifique projectile mage ennemi -> projectile de catapulte
-                cible = getattr(pr, "cible_proj", None)
-                if cible and hasattr(pr, "aTouche") and pr.aTouche(cible):
-                    self.jouer_sfx("explosion-pierre.mp3", volume=0.5)
-                    cible.detruit = True
-                    pr.detruit = True
-
-        # Mise à jour des effets d'explosion
-        for effet in self.effets_explosion:
-            effet.mettre_a_jour(dt)
-        
-        # Nettoyage des effets d'explosion terminés
-        self.effets_explosion = [effet for effet in self.effets_explosion if effet.actif]
-        
-        # Nettoyage projectiles
-        self.projectiles = [
-            p for p in self.projectiles if not getattr(p, "detruit", False)
-        ]
+        self.tour_manager.mettre_a_jour_projectiles(dt, self.ennemi_manager.get_ennemis_actifs())
 
         # Nettoyage ennemis
         self.ennemi_manager.nettoyer_ennemis_morts()
@@ -884,12 +732,7 @@ class Game:
 
     def majFeuxDeCamps(self, dt: float, nuit_surface: pygame.Surface | None = None) -> None:
         """Met à jour et dessine les effets de lumière des feux de camps."""
-        feux_de_camps = [t for t in self.tours if t.__class__.__name__ == "Campement"]
-        for feu in feux_de_camps:
-            feu.maj(dt)
-            if nuit_surface is not None:
-                radius = feu.portee
-                pygame.draw.circle(nuit_surface, (0, 0, 0, 0), (feu.position.x, feu.position.y), radius)
+        self.tour_manager.mettre_a_jour_feux_de_camps(dt, nuit_surface)
 
     def get_max_vague_csv(self) -> int:
         import csv
@@ -962,13 +805,9 @@ class Game:
         for sort in self.sorts.values():
             sort.dessiner_effet(ecran, self)
 
-        for pr in self.projectiles:
-            if hasattr(pr, "dessiner"):
-                pr.dessiner(ecran)
-        
-        # Dessiner les effets d'explosion
-        for effet in self.effets_explosion:
-            effet.dessiner(ecran)
+        # Dessiner les projectiles et effets d'explosion
+        self.tour_manager.dessiner_projectiles(ecran)
+        self.tour_manager.dessiner_effets_explosion(ecran)
 
         # self.pointeur.draw(ecran, self)  # Désactivé pour enlever le filtre bleu
         self.maj(dt)
@@ -1080,14 +919,14 @@ class Game:
             # Clic dans la boutique
             if self.bouton_vague.rect.collidepoint(pos) and self.vague_terminee():
                 self.bouton_vague.action()
-                self.tour_selectionnee = None  # désélectionne la range
+                self.tour_manager.tour_selectionnee = None  # désélectionne la range
                 return None
             if self.rect_boutique.collidepoint(pos):
                 for item in self.shop_items:
                     if item["rect"].collidepoint(pos):
                         # Sélectionne le type uniquement si le joueur a assez d'argent
                         t = item["type"]
-                        prix_t = self.prix_par_type.get(t, 0)
+                        prix_t = self.tour_manager.prix_par_type.get(t, 0)
 
                         # Si déjà sélectionné, on désélectionne
                         if self.type_selectionne == t:
@@ -1098,132 +937,36 @@ class Game:
                         else:
                             self.type_selectionne = None
                         break
-                self.tour_selectionnee = None  # désélectionne la range
+                self.tour_manager.tour_selectionnee = None  # désélectionne la range
                 return None
 
+            # Placement de tour (priorité sur la sélection)
+            if self.type_selectionne and self._position_dans_grille(pos):
+                case = self._case_depuis_pos(pos)
+                if case and self.tour_manager.peut_placer_tour(case, self.type_selectionne, self.cases_bannies):
+                    if self.tour_manager.placer_tour(case, self.type_selectionne):
+                        self.type_selectionne = None
+                        self.tour_manager.tour_selectionnee = None  # désélectionne la range
+                return None
+            
             # --- Ajout : sélection/désélection d'une tour placée pour afficher la range ---
             if self._position_dans_grille(pos):
                 case = self._case_depuis_pos(pos)
-                if case and case in self.positions_occupees:
-                    if self.tour_selectionnee == case:
-                        self.tour_selectionnee = (
-                            None  # désélectionne si déjà sélectionnée
-                        )
-                    else:
-                        self.tour_selectionnee = case  # sélectionne la tour
-                    return None
-                else:
-                    self.tour_selectionnee = None  # désélectionne si on clique ailleurs
-
-            # Placement de tour
-            if self.type_selectionne and self._position_dans_grille(pos):
-                case = self._case_depuis_pos(pos)
-                if (
-                    case
-                    and case not in self.positions_occupees
-                    and self.joueur.argent
-                    >= self.prix_par_type.get(self.type_selectionne, 0)
-                    and case not in getattr(self, "cases_bannies", set())
-                ):
-                    # 1) Marque la case occupée (affichage)
-                    self.positions_occupees[case] = {
-                        "type": self.type_selectionne,
-                        "frame": 0,
-                    }
-
-                    # 2) Crée l'instance de tour 
-                    x_case, y_case = case
-                    cx = x_case * self.taille_case + self.taille_case // 2
-                    cy = y_case * self.taille_case + self.taille_case // 2
-                    pos_tour = Position(cx, cy)
-                    tour_id = len(self.tours) + 1
-                    nouvelle_tour = None
-                    if self.type_selectionne == "archer":
-                        nouvelle_tour = Archer(id=tour_id, position=pos_tour)
-                    elif self.type_selectionne == "catapulte":
-                        nouvelle_tour = Catapulte(id=tour_id, position=pos_tour)
-                    elif self.type_selectionne == "mage":
-                        nouvelle_tour = TourMage(id=tour_id, position=pos_tour)
-                    elif self.type_selectionne == "campement":
-                        nouvelle_tour = Campement(id=tour_id, position=pos_tour)
-                    else:
-                        # Types non encore implémentés
-                        nouvelle_tour = None
-                    if nouvelle_tour is not None:
-
-                        self.tours.append(nouvelle_tour)
-                        self.positions_occupees[case]["instance"] = nouvelle_tour
-
-                        # Joue le son du campement si c'est un campement
-                        if self.type_selectionne == "campement":
-                            try:
-                                campfire_sound = pygame.mixer.Sound(
-                                    os.path.join(
-                                        ASSETS_DIR, "audio", "bruitage", "camp-fire.mp3"
-                                    )
-                                )
-                                campfire_sound.play().set_volume(0.15)
-                            except Exception:
-                                pass
-                        
-                        # Mémorise le prix d'achat pour revente éventuelle                        
-                        self.positions_occupees[case]["prix"] = self.prix_par_type.get(self.type_selectionne, 0)
-                        self.positions_occupees[case]["type_selectionne"] = self.type_selectionne
-
-                    # Débiter le prix correspondant
-                    self.joueur.argent -= self.prix_par_type.get(
-                        self.type_selectionne, 0
-                    )
-                    # Augmente les prix a chaque achat
-                    if self.type_selectionne == "campement":
-                        self.prix_par_type["campement"] = int(self.prix_par_type["campement"] * 1.5) 
-                    elif self.type_selectionne == "archer":
-                        self.prix_par_type["archer"] = int(self.prix_par_type["archer"] + 2)
-                    elif self.type_selectionne == "catapulte":
-                        self.prix_par_type["catapulte"] = int(self.prix_par_type["catapulte"] + 5)
-                    elif self.type_selectionne == "mage":
-                        self.prix_par_type["mage"] = int(self.prix_par_type["mage"] * 1.5)
-
-                    self.type_selectionne = None
-                    self.tour_selectionnee = None  # désélectionne la range
+                self.tour_manager.selectionner_tour(case)
+                return None
 
         # Clic droit: vendre une tour posée (si on clique sur une case occupée)
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             pos = event.pos
             # On ignore si on clique dans la zone boutique
             if self.rect_boutique.collidepoint(pos):
-                self.tour_selectionnee = None  # désélectionne la range
+                self.tour_manager.tour_selectionnee = None  # désélectionne la range
                 return None
             if self._position_dans_grille(pos):
                 case = self._case_depuis_pos(pos)
-                if case and case in self.positions_occupees:
-                    # Prix payé mémorisé au placement; remboursement = moitié (arrondi bas)
-                    prix_achat = int(self.positions_occupees[case].get("prix", 0))
-                    remboursement = prix_achat // 2
-                    self.joueur.argent += remboursement
-
-                    #rebaisse le prix de la tour a chaque vente
-                    #self.prix_par_type[self.positions_occupees[case]["type_selectionne"]] = int(prix_achat)
-                    if self.positions_occupees[case]["type_selectionne"] == "campement":
-                        self.prix_par_type["campement"] = int(round(self.prix_par_type["campement"] * 0.6666))
-                    elif self.positions_occupees[case]["type_selectionne"] == "archer":
-                        self.prix_par_type["archer"] = max(5, int(self.prix_par_type["archer"] - 2))
-                    elif self.positions_occupees[case]["type_selectionne"] == "catapulte":  
-                        self.prix_par_type["catapulte"] = max(10, int(self.prix_par_type["catapulte"] - 5))
-                    elif self.positions_occupees[case]["type_selectionne"] == "mage":
-                        self.prix_par_type["mage"] = int(round(self.prix_par_type["mage"] * 0.6666))
-
-                    # Retire l'instance de tour à cet emplacement (centre de case)
-                    cx = case[0] * self.taille_case + self.taille_case // 2
-                    cy = case[1] * self.taille_case + self.taille_case // 2
-                    self.tours = [
-                        t
-                        for t in self.tours
-                        if not (int(t.position.x) == cx and int(t.position.y) == cy)
-                    ]
-                    # Libère la case pour placement futur
-                    del self.positions_occupees[case]
-                    self.tour_selectionnee = None  # désélectionne la range
+                if case and case in self.tour_manager.positions_occupees:
+                    self.tour_manager.vendre_tour(case)
+                    self.tour_manager.tour_selectionnee = None  # désélectionne la range
 
         return None
 
