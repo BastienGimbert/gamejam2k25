@@ -234,8 +234,8 @@ class Game:
         # Pointeur
         self.pointeur = Pointeur()
 
-        # État jour/nuit - jour entre les manches, nuit pendant les manches
-        self.est_nuit = False
+        # État jour/nuit - maintenant géré par EnnemiManager
+        # self.est_nuit = False
 
         # self.action_bouton= self.lancerVague()
         # self.bouton = Bouton("Bouton", 100, 100, 200, 50, self.action_bouton, self.police, self.couleurs)
@@ -399,7 +399,7 @@ class Game:
 
     # ---------- Update / boucle ----------
     def maj(self, dt: float):
-        # Mise à jour du manager d'ennemis
+        # Mise à jour du manager d'ennemis et des vagues
         self.ennemi_manager.mettre_a_jour_vague()
         self.ennemi_manager.mettre_a_jour_ennemis(dt)
 
@@ -421,11 +421,8 @@ class Game:
         # Nettoyage ennemis
         self.ennemi_manager.nettoyer_ennemis_morts()
 
-        # Désactiver l'effet de nuit si la vague est terminée
-        if self.vague_terminee() and self.est_nuit:
-            self.est_nuit = False
-            recompense = RECOMPENSES_PAR_VAGUE.get(self.ennemi_manager.num_vague, 0)  # 0 = valeur par défaut
-            self.joueur.argent += recompense
+        # Gérer la fin de vague (récompenses, nuit, etc.)
+        self.ennemi_manager.gerer_fin_vague()
 
     def get_closest_mage(self, pos: Position) -> None | Mage:
         """Retourne le mage le plus proche de la position pos."""
@@ -448,26 +445,12 @@ class Game:
         """Met à jour et dessine les effets de lumière des feux de camps."""
         self.tour_manager.mettre_a_jour_feux_de_camps(dt, nuit_surface)
 
-    def get_max_vague_csv(self) -> int:
-        import csv
-        max_vague = 0
-        try:
-            with open(os.path.join(PROJECT_ROOT, "src", "data", "jeu.csv"), newline='') as f:
-                reader = csv.DictReader(f, delimiter=';')
-                for row in reader:
-                    try:
-                        num = int(row.get('numVague', 0))
-                        if num > max_vague:
-                            max_vague = num
-                    except Exception:
-                        continue
-        except Exception:
-            pass
-        return max_vague  
+    # def get_max_vague_csv(self) -> int:
+    #     # Maintenant géré par EnnemiManager
+    #     return self.ennemi_manager.get_max_vague_csv()  
 
     def dessiner(self, ecran: pygame.Surface) -> None:
-        nb_vagues = self.get_max_vague_csv()
-        if self.ennemi_manager.num_vague == nb_vagues and self.vague_terminee():
+        if self.ennemi_manager.est_victoire():
             self.afficher_victoire(ecran)
             return
 
@@ -478,7 +461,7 @@ class Game:
         self._dessiner_surbrillance(ecran)
 
         # Effet nuit - seulement pendant les manches
-        if self.est_nuit:
+        if self.ennemi_manager.est_nuit:
             nuit_surface = pygame.Surface(
                 (self.largeur_ecran, self.hauteur_ecran), pygame.SRCALPHA
             )
@@ -634,9 +617,6 @@ class Game:
     def lancerVague(self):
         """Démarre une nouvelle vague d'ennemis, chargée depuis un CSV."""
         self.ennemi_manager.lancer_vague()
-        self.est_nuit = True  # Active l'effet de nuit pendant la manche
-
-        
 
     def majvague(self):
         """Fait apparaître les ennemis au moment de leur temps d'apparition."""

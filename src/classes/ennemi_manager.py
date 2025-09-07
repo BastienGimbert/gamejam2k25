@@ -5,7 +5,7 @@ import pygame
 
 from classes.csv import creer_liste_ennemis_depuis_csv
 from classes.ennemi import Ennemi
-from classes.constants import PROJECT_ROOT
+from classes.constants import PROJECT_ROOT, RECOMPENSES_PAR_VAGUE
 
 if TYPE_CHECKING:
     from game import Game
@@ -19,11 +19,17 @@ class EnnemiManager:
         self.ennemis: list[Ennemi] = []
         self.num_vague = 0
         self.debut_vague = 0
+        
+        # Gestion de l'état jour/nuit
+        self.est_nuit = False
     
     def lancer_vague(self) -> None:
         """Démarre une nouvelle vague d'ennemis, chargée depuis un CSV."""
         self.num_vague += 1
         self.debut_vague = pygame.time.get_ticks()
+        
+        # Active l'effet de nuit pendant la vague
+        self.est_nuit = True
         
         print("Vague n°", self.num_vague, "lancée")
         
@@ -248,6 +254,22 @@ class EnnemiManager:
                 return False
         return True
     
+    def gerer_fin_vague(self) -> None:
+        """Gère la fin de vague : désactive la nuit et donne les récompenses."""
+        if self.vague_terminee() and self.est_nuit:
+            self.est_nuit = False
+            recompense = RECOMPENSES_PAR_VAGUE.get(self.num_vague, 0)
+            self.game.joueur.argent += recompense
+            print(f"Vague {self.num_vague} terminée ! Récompense : {recompense} pièces")
+    
+    def est_victoire(self) -> bool:
+        """Vérifie si le joueur a gagné (toutes les vagues terminées)."""
+        max_vague = self.get_max_vague_csv()
+        # Debug
+        print(f"Debug victoire: num_vague={self.num_vague}, max_vague={max_vague}, vague_terminee={self.vague_terminee()}")
+        # Le joueur a gagné s'il a terminé la dernière vague ET qu'il a au moins lancé une vague
+        return self.num_vague > 0 and self.num_vague >= max_vague and self.vague_terminee()
+    
     def get_max_vague_csv(self) -> int:
         """Retourne le nombre maximum de vagues disponibles dans le CSV."""
         import csv
@@ -256,12 +278,16 @@ class EnnemiManager:
             with open(os.path.join(PROJECT_ROOT, "src", "data", "jeu.csv"), newline='') as f:
                 reader = csv.DictReader(f, delimiter=';')
                 for row in reader:
-                    vague = int(row.get('vague', 0))
-                    if vague > max_vague:
-                        max_vague = vague
+                    try:
+                        num = int(row.get('numVague', 0))
+                        if num > max_vague:
+                            max_vague = num
+                    except Exception:
+                        continue
         except Exception:
             pass
         return max_vague
+    
     
     def _case_depuis_pos(self, pos):
         """Calcule la case de grille à partir d'une position en pixels."""
