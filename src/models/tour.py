@@ -179,7 +179,7 @@ class Archer(Tour):
 class Catapulte(Tour):
     TYPE_ID = 2
     TYPE_NOM = "catapulte"
-    PORTEE = 220.0
+    PORTEE = 230.0
 
     # Prix indicatif de la tour Catapulte (affiché dans la boutique)
     PRIX = 50
@@ -227,7 +227,7 @@ class Catapulte(Tour):
 class Mage(Tour):
     TYPE_ID = 3
     TYPE_NOM = "mage"
-    PORTEE = 150.0
+    PORTEE = 190.0
 
     # Prix indicatif de la tour Mage (affiché dans la boutique)
     PRIX = 100
@@ -269,7 +269,7 @@ class Campement(Tour):
     TYPE_ID = 4
     TYPE_NOM = "Campement"
     PRIX = 60
-    PORTEE = 92.0
+    PORTEE = 100.0
 
     _frames: list[pygame.Surface] | None = None
 

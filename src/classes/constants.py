@@ -63,9 +63,9 @@ RECOMPENSES_PAR_VAGUE: dict[int, int] = {
     5: 20,
     6: 15,
     7: 15,
-    8: 0,
-    9: 0,
-    10: 0,
+    8: 10,
+    9: 30,
+    10: 20,
 }
 
 # Export
