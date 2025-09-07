@@ -252,7 +252,12 @@ class EnnemiManager:
                         break
 
     def nettoyer_ennemis_morts(self) -> None:
-        """Supprime les ennemis morts de la liste."""
+        """Supprime les ennemis morts de la liste et donne de l'argent pour les ennemis morts."""
+        for e in self.ennemis:
+            if getattr(e, "estMort", lambda: False)() and not getattr(e, "_recompense_donnee", False):
+                self.game.joueur.argent += int(getattr(e, "argent", 0))
+                setattr(e, "_recompense_donnee", True)
+
         self.ennemis = [
             e
             for e in self.ennemis
