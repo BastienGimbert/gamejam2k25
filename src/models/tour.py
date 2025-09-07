@@ -128,23 +128,44 @@ class Tour(ABC):
         )
 
     def _choisir_cible(self, ennemis: List["Ennemi"]) -> Optional["Ennemi"]:
-        """Choisit la cible parmi les ennemis dans la portée de la tour.
-        La cible choisie est celle qui a le moins de distance restante à parcourir."""
+        """
+        Choisit la cible parmi les ennemis dans la portée de la tour.
+        
+        Stratégie de ciblage : Priorité aux ennemis les plus proches de l'arrivée.
+        Cette stratégie maximise l'efficacité en éliminant d'abord les ennemis
+        qui représentent le plus grand danger immédiat.
+        
+        Args:
+            ennemis: Liste de tous les ennemis du jeu
+            
+        Returns:
+            L'ennemi ciblé ou None si aucun ennemi valide dans la portée
+        """
         candidats: List[tuple[float, Ennemi]] = []
-        for e in ennemis:
-            if e.estMort() or not e.visible:
+        
+        # 1. Filtrer les ennemis valides dans la portée
+        for ennemi in ennemis:
+            # Ignorer les ennemis morts ou invisibles
+            if ennemi.estMort() or not ennemi.visible:
                 continue
-            if distance_positions(self.position, e.position) <= self.portee:
-                d_end = e.get_distance_restante()
-                candidats.append((d_end, e))
+                
+            # Vérifier si l'ennemi est dans la portée de la tour
+            distance_tour_ennemi = distance_positions(self.position, ennemi.position)
+            if distance_tour_ennemi <= self.portee:
+                # Calculer la distance restante jusqu'à l'arrivée
+                distance_restante = ennemi.get_distance_restante()
+                candidats.append((distance_restante, ennemi))
 
+        # 2. Aucun ennemi valide trouvé
         if not candidats:
             return None
 
+        # 3. Trouver l'ennemi avec la plus petite distance restante
+        # (le plus proche de l'arrivée = le plus dangereux)
         meilleur_candidat = candidats[0]
-        for c in candidats[1:]:
-            if c[0] < meilleur_candidat[0]:
-                meilleur_candidat = c
+        for candidat in candidats[1:]:
+            if candidat[0] < meilleur_candidat[0]:
+                meilleur_candidat = candidat
 
         return meilleur_candidat[1]
 
@@ -199,29 +220,61 @@ class Catapulte(Tour):
         return
 
     def _choisir_cible(self, ennemis: List["Ennemi"]) -> Optional["Ennemi"]:
-        """Choisit la cible parmi les ennemis dans la portée de la tour.
-        La cible choisie est celle qui a le plus de points de vie. En cas d'égalité, c'est celle qui est la plus proche de la fin.
+        """
+        Choisit la cible parmi les ennemis dans la portée de la catapulte.
+        
+        Stratégie de ciblage spéciale pour la catapulte : Priorité aux ennemis
+        avec le plus de points de vie (boss/ennemis forts). En cas d'égalité de PV,
+        on privilégie celui le plus proche de l'arrivée.
+        
+        Cette stratégie est logique car la catapulte a un cooldown élevé et des
+        dégâts élevés, donc elle doit cibler les ennemis les plus résistants.
+        
+        Args:
+            ennemis: Liste de tous les ennemis du jeu
+            
+        Returns:
+            L'ennemi ciblé ou None si aucun ennemi valide dans la portée
         """
         candidats: List[tuple[int, float, Ennemi]] = []
-        for e in ennemis:
-            if e.estMort() or not e.visible:
+        
+        # 1. Filtrer les ennemis valides dans la portée
+        for ennemi in ennemis:
+            # Ignorer les ennemis morts ou invisibles
+            if ennemi.estMort() or not ennemi.visible:
                 continue
-            if distance_positions(self.position, e.position) <= self.portee:
-                candidats.append((e.pointsDeVieInitiaux, e.get_distance_restante(), e))
+                
+            # Vérifier si l'ennemi est dans la portée de la catapulte
+            distance_tour_ennemi = distance_positions(self.position, ennemi.position)
+            if distance_tour_ennemi <= self.portee:
+                # Stocker (PV_initiaux, distance_restante, ennemi) pour le tri
+                candidats.append((
+                    ennemi.pointsDeVieInitiaux,  # PV initiaux (critère principal)
+                    ennemi.get_distance_restante(),  # Distance restante (critère secondaire)
+                    ennemi
+                ))
 
+        # 2. Aucun ennemi valide trouvé
         if not candidats:
             return None
 
-        # Trouver l’ennemi le plus de pv
+        # 3. Trouver l'ennemi avec le plus de PV (boss/ennemis forts)
         meilleur_candidat = candidats[0]
-        for c in candidats[1:]:
-            if c[0] > meilleur_candidat[0]:
-                meilleur_candidat = c
-            elif c[0] == meilleur_candidat[0] and c[1] < meilleur_candidat[1]:
-                # égalité sur les PV donc on prend le plus proche de la fin
-                meilleur_candidat = c
+        for candidat in candidats[1:]:
+            pv_candidat = candidat[0]
+            pv_meilleur = meilleur_candidat[0]
+            
+            if pv_candidat > pv_meilleur:
+                # Candidat a plus de PV → nouveau meilleur
+                meilleur_candidat = candidat
+            elif pv_candidat == pv_meilleur:
+                # Égalité de PV → privilégier celui le plus proche de l'arrivée
+                distance_candidat = candidat[1]
+                distance_meilleur = meilleur_candidat[1]
+                if distance_candidat < distance_meilleur:
+                    meilleur_candidat = candidat
 
-        return meilleur_candidat[2]
+        return meilleur_candidat[2]  # Retourner l'ennemi (3ème élément du tuple)
 
 
 class Mage(Tour):

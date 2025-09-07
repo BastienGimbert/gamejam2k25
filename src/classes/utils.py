@@ -44,48 +44,78 @@ def charger_chemin_tiled(tmj_path: str, layer_name: str = "path") -> List[Positi
 def cases_depuis_chemin(
     chemin_positions: list[Position], taille_case: int
 ) -> set[tuple[int, int]]:
-    """Approxime les cases de grille traversées par le polygone du chemin."""
-    bannies: set[tuple[int, int]] = set()
-    if not chemin_positions:
-        return bannies
+    """
+    Calcule les cases de grille traversées par un chemin polygonal.
+    
+    Cette fonction utilise l'algorithme de ligne de Bresenham pour déterminer
+    toutes les cases de grille qui sont traversées par un chemin défini par
+    une série de points. C'est utilisé pour marquer les cases "interdites"
+    où on ne peut pas placer de tours.
+    
+    Args:
+        chemin_positions: Liste des points du chemin (Position)
+        taille_case: Taille d'une case en pixels (ex: 64)
+        
+    Returns:
+        Set des coordonnées (x, y) des cases traversées
+        
+    Exemple:
+        chemin = [Position(0, 0), Position(128, 64)]
+        cases = cases_depuis_chemin(chemin, 64)
+        # Retourne {(0, 0), (1, 0), (2, 1)} pour un chemin diagonal
+    """
+    cases_traversees: set[tuple[int, int]] = set()
+    
+    # Vérification des paramètres
+    if not chemin_positions or taille_case <= 0:
+        return cases_traversees
 
+    # Traiter chaque segment du chemin
     for i in range(len(chemin_positions)):
         p1 = chemin_positions[i]
-        p2 = chemin_positions[(i + 1) % len(chemin_positions)]
+        p2 = chemin_positions[(i + 1) % len(chemin_positions)]  # Boucle sur le dernier point
 
-        # Calculer les cases traversées par le segment
+        # Convertir les positions en coordonnées entières
         x1, y1 = int(p1.x), int(p1.y)
         x2, y2 = int(p2.x), int(p2.y)
 
-        # Algorithme de ligne de Bresenham simplifié
-        dx = abs(x2 - x1)
-        dy = abs(y2 - y1)
-        x_step = 1 if x1 < x2 else -1
-        y_step = 1 if y1 < y2 else -1
+        # ALGORITHME DE LIGNE DE BRESENHAM
+        # Cet algorithme trace une ligne pixel par pixel entre deux points
+        # et détermine quelles cases de grille sont traversées
+        
+        # Calculer les différences et directions
+        dx = abs(x2 - x1)  # Distance horizontale absolue
+        dy = abs(y2 - y1)  # Distance verticale absolue
+        x_step = 1 if x1 < x2 else -1  # Direction horizontale (+1 ou -1)
+        y_step = 1 if y1 < y2 else -1  # Direction verticale (+1 ou -1)
 
+        # Point de départ
         x, y = x1, y1
-        bannies.add((x // taille_case, y // taille_case))
+        cases_traversees.add((x // taille_case, y // taille_case))
 
+        # Tracer la ligne selon l'orientation dominante
         if dx > dy:
-            error = dx / 2
+            # Ligne principalement horizontale
+            error = dx / 2  # Erreur accumulée pour décider du déplacement vertical
             while x != x2:
                 error -= dy
                 if error < 0:
-                    y += y_step
-                    error += dx
-                x += x_step
-                bannies.add((x // taille_case, y // taille_case))
+                    y += y_step  # Déplacement vertical
+                    error += dx  # Réinitialiser l'erreur
+                x += x_step  # Déplacement horizontal
+                cases_traversees.add((x // taille_case, y // taille_case))
         else:
-            error = dy / 2
+            # Ligne principalement verticale
+            error = dy / 2  # Erreur accumulée pour décider du déplacement horizontal
             while y != y2:
                 error -= dx
                 if error < 0:
-                    x += x_step
-                    error += dy
-                y += y_step
-                bannies.add((x // taille_case, y // taille_case))
+                    x += x_step  # Déplacement horizontal
+                    error += dy  # Réinitialiser l'erreur
+                y += y_step  # Déplacement vertical
+                cases_traversees.add((x // taille_case, y // taille_case))
 
-    return bannies
+    return cases_traversees
 
 
 def position_dans_grille(

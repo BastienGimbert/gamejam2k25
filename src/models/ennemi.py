@@ -66,40 +66,74 @@ class Ennemi(ABC):
         self.est_Apparu = True
 
     def seDeplacer(self, dt: float):
+        """
+        Déplace l'ennemi le long du chemin défini.
+        
+        Cette méthode gère le déplacement fluide de l'ennemi le long d'un chemin
+        composé de segments. Elle calcule la position interpolée entre les points
+        du chemin et gère la transition entre les segments.
+        
+        Args:
+            dt: Temps écoulé depuis la dernière mise à jour (en secondes)
+        """
+        # Vérifications préliminaires
         if self.estMort() or self._arrive_au_bout:
             return
+            
+        # Calcul de la distance à parcourir ce frame
         d = max(0.0, self.vitesse * dt)
+        
+        # Boucle de déplacement : traite la distance restante segment par segment
         while d > 1e-6 and not self._arrive_au_bout:
+            # Vérifier si on est arrivé au bout du chemin
             if self._segment_index >= len(self._chemin) - 1:
                 self._arrive()
                 break
 
-            p0 = self._chemin[self._segment_index]
-            p1 = self._chemin[self._segment_index + 1]
+            # Récupérer les points du segment actuel
+            p0 = self._chemin[self._segment_index]      # Point de départ du segment
+            p1 = self._chemin[self._segment_index + 1]  # Point d'arrivée du segment
 
-            dx = p1.x - p0.x
-            dy = p1.y - p0.y
+            # Calculer la direction du mouvement pour l'animation
+            dx = p1.x - p0.x  # Distance horizontale
+            dy = p1.y - p0.y  # Distance verticale
+            
+            # Déterminer la direction d'animation selon le mouvement dominant
             if abs(dx) > abs(dy):
+                # Mouvement principalement horizontal
                 self.direction = "side"
-                self.flip = dx > 0  # flip horizontal si on va vers la gauche
+                self.flip = dx > 0  # flip si on va vers la droite (convention du jeu)
             else:
+                # Mouvement principalement vertical
                 self.direction = "down" if dy > 0 else "up"
-                self.flip = False
+                self.flip = False  # Pas de flip pour les mouvements verticaux
 
-            seg_len = max(1e-9, distance_positions(p0, p1))
-            reste = seg_len - self._dist_on_segment
+            # Calculer la longueur du segment et la distance restante
+            seg_len = max(1e-9, distance_positions(p0, p1))  # Longueur du segment
+            reste = seg_len - self._dist_on_segment  # Distance restante sur ce segment
 
             if d < reste:
+                # CAS 1: On reste sur le segment actuel
+                # On avance de la distance d sur le segment
                 self._dist_on_segment += d
+                
+                # Calculer la position interpolée (entre 0 et 1)
                 t = self._dist_on_segment / seg_len
                 self.position.x = p0.x + (dx * t)
                 self.position.y = p0.y + (dy * t)
-                d = 0.0
+                
+                d = 0.0  # Toute la distance a été consommée
             else:
+                # CAS 2: On termine le segment et on passe au suivant
+                # Se positionner exactement sur le point d'arrivée
                 self.position.x, self.position.y = p1.x, p1.y
+                
+                # Consommer la distance utilisée et passer au segment suivant
                 d -= reste
                 self._segment_index += 1
                 self._dist_on_segment = 0.0
+                
+                # Vérifier si on est arrivé au bout après le changement de segment
                 if self._segment_index >= len(self._chemin) - 1:
                     self._arrive()
                     break
@@ -155,20 +189,32 @@ class Ennemi(ABC):
         )  # conversion en sec
 
     def get_distance_restante(self) -> float:
-        """Retourne la distance réelle restante sur le chemin jusqu'à l'arrivée."""
+        """
+        Retourne la distance réelle restante sur le chemin jusqu'à l'arrivée.
+        
+        Cette méthode calcule la distance totale qu'il reste à parcourir pour
+        que l'ennemi atteigne la fin du chemin. Elle est utilisée par les tours
+        pour prioriser les ennemis les plus proches de l'arrivée.
+        
+        Returns:
+            Distance restante en pixels (0.0 si déjà arrivé)
+        """
+        # Vérifier si on est déjà arrivé au bout
         if not self._chemin or self._segment_index >= len(self._chemin) - 1:
             return 0.0
 
-        # segment actuel
-        p0 = self._chemin[self._segment_index]
-        p1 = self._chemin[self._segment_index + 1]
-        seg_len = distance_positions(p0, p1)
-
+        # 1. Calculer la distance restante sur le segment actuel
+        p0 = self._chemin[self._segment_index]      # Point de départ du segment actuel
+        p1 = self._chemin[self._segment_index + 1]  # Point d'arrivée du segment actuel
+        seg_len = distance_positions(p0, p1)        # Longueur totale du segment
+        
+        # Distance restante sur le segment actuel
         dist_restante = max(0.0, seg_len - self._dist_on_segment)
 
-        # segments suivants
+        # 2. Ajouter la distance de tous les segments suivants
         for i in range(self._segment_index + 1, len(self._chemin) - 1):
-            dist_restante += distance_positions(self._chemin[i], self._chemin[i + 1])
+            segment_suivant = distance_positions(self._chemin[i], self._chemin[i + 1])
+            dist_restante += segment_suivant
 
         return dist_restante
 

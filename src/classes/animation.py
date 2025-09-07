@@ -132,27 +132,41 @@ class AnimateurDirectionnel:
     ) -> int:
         """
         Calcule le nombre de frames qui divise parfaitement la largeur de l'image.
+        
+        Cette fonction trouve le nombre optimal de frames pour découper une spritesheet
+        en parties égales. Elle privilégie le nombre préféré, puis teste des valeurs
+        communes, et enfin fait une recherche exhaustive si nécessaire.
 
         Args:
             largeur: Largeur de l'image en pixels
-            nombre_prefere: Nombre de frames préféré
+            nombre_prefere: Nombre de frames préféré (ex: 6 pour une animation de marche)
 
         Returns:
-            Nombre de frames optimal pour la découpe
+            Nombre de frames optimal pour la découpe (minimum 1, maximum 40)
+            
+        Exemple:
+            largeur=120, nombre_prefere=6 → retourne 6 (120/6=20 pixels par frame)
+            largeur=100, nombre_prefere=6 → retourne 4 (100/4=25 pixels par frame)
         """
+        # 1. Vérifier si le nombre préféré fonctionne
         if nombre_prefere and nombre_prefere >= 2 and largeur % nombre_prefere == 0:
             return nombre_prefere
 
-        # Recherche dans des valeurs communes
-        for n in (6, 8, 10, 12, 4, 5, 7, 9):
+        # 2. Tester des valeurs communes pour les animations (par ordre de préférence)
+        # Ces valeurs sont courantes dans les spritesheets de jeux
+        valeurs_communes = (6, 8, 10, 12, 4, 5, 7, 9)
+        for n in valeurs_communes:
             if largeur % n == 0:
                 return n
 
-        # Recherche exhaustive si nécessaire
+        # 3. Recherche exhaustive de 2 à 40 si aucune valeur commune ne fonctionne
+        # On limite à 40 pour éviter des frames trop petites (moins de 3 pixels)
         for n in range(2, 41):
             if largeur % n == 0:
                 return n
 
+        # 4. Fallback : retourner 1 si aucune division n'est possible
+        # Cela signifie qu'on utilisera l'image entière comme une seule frame
         return 1
 
     def _charger_pour_direction(
@@ -344,40 +358,54 @@ class AnimateurDirectionnel:
     ) -> Tuple[str, bool]:
         """
         Calcule la meilleure orientation pour regarder vers une cible.
+        
+        Cette fonction détermine quelle direction d'animation utiliser pour qu'un
+        personnage regarde vers une cible. Elle gère les directions diagonales,
+        latérales et verticales, ainsi que l'inversion horizontale.
 
         Args:
-            src_x, src_y: Position de la source
-            dst_x, dst_y: Position de la cible
+            src_x, src_y: Position de la source (ex: position de la tour)
+            dst_x, dst_y: Position de la cible (ex: position de l'ennemi)
 
         Returns:
             Tuple (direction, flip_x) optimal
+            - direction: "D" (bas), "U" (haut), "S" (côté), "DS" (diag bas), "US" (diag haut)
+            - flip_x: True si le personnage doit être retourné horizontalement
         """
-        dx = float(dst_x - src_x)
-        dy = float(dst_y - src_y)
-        ax, ay = abs(dx), abs(dy)
+        # Calcul des différences de position
+        dx = float(dst_x - src_x)  # Distance horizontale (positif = cible à droite)
+        dy = float(dst_y - src_y)  # Distance verticale (positif = cible en bas)
+        ax, ay = abs(dx), abs(dy)  # Valeurs absolues pour les calculs
 
-        # Vérification de la disponibilité des directions diagonales
+        # Vérifier si des sprites diagonaux sont disponibles
         a_diagonales = ("DS" in self.directions) or ("US" in self.directions)
 
-        # Utilisation des diagonales si le ratio est approprié
+        # 1. UTILISATION DES DIAGONALES (si disponibles et appropriées)
+        # On utilise les diagonales si le mouvement n'est pas trop déséquilibré
         if a_diagonales and min(ax, ay) > 0 and max(ax, ay) / min(ax, ay) <= 1.75:
-            direction = "DS" if dy >= 0 else "US"
+            # Choisir la diagonale selon la direction verticale
+            direction = "DS" if dy >= 0 else "US"  # DS = diagonale bas, US = diagonale haut
+            
+            # Déterminer l'inversion horizontale selon la convention du personnage
+            # Si cote_face_droite=True : flip si on va vers la gauche (dx < 0)
+            # Si cote_face_droite=False : flip si on va vers la droite (dx > 0)
             flip = dx < 0 if self.cote_face_droite else dx > 0
 
-            # Fallback si la direction diagonale n'est pas disponible
+            # Vérifier que la direction diagonale existe dans les sprites
             if direction not in self.directions:
+                # Fallback vers une direction verticale simple
                 return ("D" if dy > 0 else "U"), flip
 
             return direction, flip
 
-        # Direction latérale si le mouvement horizontal est dominant
+        # 2. DIRECTION LATÉRALE (si le mouvement horizontal domine)
+        # Utilisé quand on va principalement vers la gauche ou la droite
         if ax >= ay:
             flip = dx < 0 if self.cote_face_droite else dx > 0
             return "S", flip
 
-        # Direction verticale
+        # 3. DIRECTION VERTICALE (si le mouvement vertical domine)
+        # Utilisé quand on va principalement vers le haut ou le bas
         return ("D", False) if dy > 0 else ("U", False)
 
 
-# Alias pour la compatibilité avec l'ancien code
-DirectionalAnimator = AnimateurDirectionnel

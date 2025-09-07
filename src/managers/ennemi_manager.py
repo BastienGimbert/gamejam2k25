@@ -34,10 +34,13 @@ class EnnemiManager:
         # Génère la liste d'ennemis depuis le CSV
         self.ennemis = creer_liste_ennemis_depuis_csv(self.num_vague)
 
-        for e in self.ennemis:
+        # Initialiser les callbacks d'arrivée au château pour tous les ennemis
+        for ennemi in self.ennemis:
             try:
-                setattr(e, "_on_reach_castle", None)
-            except Exception:
+                setattr(ennemi, "_on_reach_castle", None)
+            except (AttributeError, TypeError) as e:
+                # Log l'erreur pour debug mais continue l'exécution
+                print(f"Erreur lors de l'initialisation de l'ennemi {type(ennemi).__name__}: {e}")
                 pass
 
     def mettre_a_jour_vague(self) -> None:
@@ -46,28 +49,39 @@ class EnnemiManager:
             return
         now = pygame.time.get_ticks()
         elapsed_s = round((now - self.debut_vague) / 1000, 1)
-        for e in self.ennemis:
+        # Faire apparaître les ennemis selon leur temps d'apparition
+        for ennemi in self.ennemis:
             try:
+                # Vérifier si l'ennemi doit apparaître maintenant
                 if (
-                    hasattr(e, "tempsApparition")
-                    and elapsed_s >= e.tempsApparition
-                    and not getattr(e, "estApparu", lambda x: False)(self.debut_vague)
+                    hasattr(ennemi, "tempsApparition")
+                    and elapsed_s >= ennemi.tempsApparition
+                    and not getattr(ennemi, "estApparu", lambda x: False)(self.debut_vague)
                 ):
-                    e.estApparu = lambda x: True
-            except Exception:
+                    # Marquer l'ennemi comme apparu
+                    ennemi.estApparu = lambda x: True
+            except (AttributeError, TypeError) as e:
+                # Log l'erreur pour debug mais continue l'exécution
+                print(f"Erreur lors de l'apparition de l'ennemi {type(ennemi).__name__}: {e}")
                 pass
 
     def mettre_a_jour_ennemis(self, dt: float) -> None:
         """Met à jour tous les ennemis actifs."""
         # Déplacement des ennemis actifs
-        for e in self.ennemis:
+        for ennemi in self.ennemis:
             try:
-                if not hasattr(e, "estApparu") or e.estApparu(self.debut_vague):
-                    e.seDeplacer(dt)
-                    e.update_animation(dt)
-            except Exception:
-                if hasattr(e, "seDeplacer"):
-                    e.seDeplacer(dt)
+                # Vérifier si l'ennemi est apparu avant de le déplacer
+                if not hasattr(ennemi, "estApparu") or ennemi.estApparu(self.debut_vague):
+                    ennemi.seDeplacer(dt)
+                    ennemi.update_animation(dt)
+            except (AttributeError, TypeError) as e:
+                # Fallback : essayer de déplacer l'ennemi même en cas d'erreur
+                print(f"Erreur lors du déplacement de l'ennemi {type(ennemi).__name__}: {e}")
+                if hasattr(ennemi, "seDeplacer"):
+                    try:
+                        ennemi.seDeplacer(dt)
+                    except Exception:
+                        pass  # Ignorer les erreurs de fallback
 
         # Perte de PV si un ennemi touche certaines cases "château"
         for e in self.ennemis:
