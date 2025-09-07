@@ -16,7 +16,6 @@ ENEMY_CLASSES = {
 
 def creer_liste_ennemis_depuis_csv(numVague=int, chemin_csv="src/data/jeu.csv") -> list:
     ennemis = []
-    # Split chemin_csv into parts and join with base_dir
     chemin_csv = os.path.join(PROJECT_ROOT, *chemin_csv.split("/"))
     with open(chemin_csv, newline="", encoding="utf-8") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=";")
@@ -26,12 +25,9 @@ def creer_liste_ennemis_depuis_csv(numVague=int, chemin_csv="src/data/jeu.csv") 
             temps = float(row["temps"])
 
             if vague == numVague:
-                # On récupère la classe correspondante
                 cls = ENEMY_CLASSES.get(id_ennemi)
                 if cls is None:
                     raise ValueError(f"ID ennemi inconnu : {id_ennemi}")
-
-                # Création de l’ennemi avec le temps d’apparition
                 ennemi = cls(tempsApparition=temps)
 
                 ennemis.append(ennemi)
