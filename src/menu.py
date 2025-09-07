@@ -57,9 +57,21 @@ def creer_boutons_menu(
 
     boutons.append(
         Bouton(
+            "Règles du jeu",
+            300,
+            300,
+            200,
+            50,
+            actions.get("regles"),
+            police,
+            COULEURS_BOUTON,
+        )
+    )
+    boutons.append(
+        Bouton(
             "Crédits",
             300,
-            300,
+            360,
             200,
             50,
             actions.get("credits"),
@@ -98,8 +110,7 @@ def dessiner_menu(ecran: pygame.Surface, boutons: list) -> None:
     """Dessine le fond et les boutons du menu (principal ou pause)."""
     ecran.fill((100, 150, 200))
     for b in boutons:
-        b.dessiner(ecran)
-
+        b.dessiner(ecran) 
 
 def dessiner_credits(
     ecran: pygame.Surface, police: pygame.font.Font, largeur: int
@@ -109,4 +120,4 @@ def dessiner_credits(
     lignes = [GAME_NAME, "Par ...", "2025"]
     for i, ligne in enumerate(lignes):
         surf = police.render(ligne, True, NOIR)
-        ecran.blit(surf, (largeur // 2 - surf.get_width() // 2, 150 + i * 60))
+        ecran.blit(surf, (largeur // 2 - surf.get_width() // 2, 150 + i * 60))     

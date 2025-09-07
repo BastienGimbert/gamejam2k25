@@ -10,7 +10,9 @@ from classes.menu import (
     creer_boutons_menu,
     dessiner_credits,
     dessiner_menu,
+    afficher_regles,
 )
+from classes.bouton import Bouton
 from game import Game
 
 # ------------------- INITIALISATION -------------------
@@ -45,6 +47,7 @@ pygame.mixer.music.set_endevent(MUSIQUE_FINIE)
 
 derniere_piste = None  # piste jouée précédemment
 
+page_regles = 0
 
 def demarrer_musique_de_fond() -> None:
     """Choisit une musique aléatoirement et la joue"""
@@ -95,6 +98,9 @@ def demarrer_jeu():
     ETAT = "JEU"
     # scene_jeu.lancerVague()
 
+def afficher_regles_callback():
+    global ETAT
+    ETAT = "REGLES"
 
 def reprendre_jeu():
     global ETAT
@@ -139,12 +145,13 @@ def quitter_jeu():
 
 # ------------------- CONSTRUCTION DES ÉCRANS -------------------
 
+
 # Game (scène)
 scene_jeu = Game(POLICE, est_muet=est_muet)
 
-# Menus (listes de boutons), on génère à partir des callbacks ci-dessus
 ACTIONS_MENU_PRINCIPAL = {
     "jouer": demarrer_jeu,
+    "regles": afficher_regles_callback,
     "credits": afficher_credits,
     "muet": basculer_muet,
     "quitter": quitter_jeu,
@@ -162,6 +169,16 @@ BOUTONS_MENU = creer_boutons_menu(
 )
 BOUTONS_PAUSE = creer_boutons_menu(POLICE, reprendre=True, actions=ACTIONS_MENU_PAUSE)
 BOUTONS_CREDITS = creer_boutons_credits(POLICE, action_retour=retour_depuis_credits)
+
+def retour_depuis_regles():
+    global ETAT
+    ETAT = "MENU"
+BOUTONS_REGLES = [Bouton("Retour", WINDOW_WIDTH - 220, WINDOW_HEIGHT - 80, 160, 50, retour_depuis_regles, POLICE, {
+    "fond_normal": (255, 255, 255),
+    "fond_survol": (200, 200, 200),
+    "contour": (0, 0, 0),
+    "texte": (0, 0, 0),
+})]
 
 # Game Over
 ACTIONS_GAMEOVER = {
@@ -217,6 +234,9 @@ def main() -> None:
             elif ETAT == "CREDITS":
                 for b in BOUTONS_CREDITS:
                     b.gerer_evenement(event)
+            elif ETAT == "REGLES":
+                for b in BOUTONS_REGLES:
+                    b.gerer_evenement(event)
             elif ETAT == "JEU":
                 changement = scene_jeu.gerer_evenement(event)
                 if changement == "PAUSE":
@@ -235,6 +255,10 @@ def main() -> None:
             dessiner_credits(ECRAN, POLICE, WINDOW_WIDTH)
             # Dessine le bouton Retour
             for b in BOUTONS_CREDITS:
+                b.dessiner(ECRAN)
+        elif ETAT == "REGLES":
+            afficher_regles(ECRAN, POLICE, WINDOW_WIDTH)
+            for b in BOUTONS_REGLES:
                 b.dessiner(ECRAN)
         elif ETAT == "JEU":
             scene_jeu.dessiner(ECRAN)
