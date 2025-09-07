@@ -32,6 +32,7 @@ from classes.ennemi import Chevalier, Ennemi, Gobelin, Mage
 from classes.ennemi_manager import EnnemiManager
 from classes.tour_manager import TourManager
 from classes.shop_manager import ShopManager
+from classes.audio_manager import AudioManager
 from classes.joueur import Joueur
 from classes.pointeur import Pointeur
 from classes.position import Position
@@ -84,10 +85,10 @@ class Game:
 
         self.police = police
         self.police_tour = pygame.font.Font(None, 44)
-        # État muet propagé depuis main
-        self.est_muet = est_muet
-        # Cache de sons ponctuels
-        self._sons_cache: dict[str, pygame.mixer.Sound] = {}
+        # État muet propagé depuis main - maintenant géré par AudioManager
+        # self.est_muet = est_muet
+        # Cache de sons ponctuels - maintenant géré par AudioManager
+        # self._sons_cache: dict[str, pygame.mixer.Sound] = {}
         self.couleurs = {
             "fond": (0, 6, 25),
             "bordure": (40, 40, 60),
@@ -161,6 +162,10 @@ class Game:
         
         # Manager de la boutique (après la définition des types de tours et assets)
         self.shop_manager = ShopManager(self)
+        
+        # Manager audio
+        self.audio_manager = AudioManager(self)
+        self.audio_manager.set_muet(est_muet)
         
         # Créer le bouton de vague maintenant que le ShopManager est initialisé
         medieval_couleurs = {
@@ -510,22 +515,8 @@ class Game:
         self.maj(dt)
 
     def jouer_sfx(self, fichier: str, volume: float = 1.0) -> None:
-        """Joue un son ponctuel depuis assets/audio/bruitage en respectant l'état muet."""
-        try:
-            if self.est_muet:
-                return
-            chemin = os.path.join(AUDIO_DIR, "bruitage", fichier)
-            if not os.path.exists(chemin):
-                return
-            if fichier not in self._sons_cache:
-                self._sons_cache[fichier] = pygame.mixer.Sound(chemin)
-            son = self._sons_cache[fichier]
-            son.set_volume(volume)
-            son.play()
-        except Exception:
-            print("Erreur lors de la lecture du son ")
-            # On ignore silencieusement les erreurs audio (pas de périphérique, etc.)
-            pass
+        """Joue un son ponctuel via l'AudioManager."""
+        self.audio_manager.jouer_sfx(fichier, volume)
 
     def decompte_dt(self) -> None:
         dt = self.clock.tick(60) / 1000.0

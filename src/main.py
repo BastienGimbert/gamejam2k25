@@ -115,9 +115,9 @@ def basculer_muet():
     if MIXER_DISPONIBLE:
         pygame.mixer.music.set_volume(0.0 if est_muet else VOLUME_MUSIQUE)
     print("Muet activé" if est_muet else "Son activé")
-    # Propager l'état muet au jeu pour les SFX
+    # Propager l'état muet au jeu via l'AudioManager
     try:
-        scene_jeu.est_muet = est_muet
+        scene_jeu.audio_manager.set_muet(est_muet)
     except Exception:
         pass
 
