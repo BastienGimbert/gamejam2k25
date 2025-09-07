@@ -90,25 +90,36 @@ class ShopManager:
             ),
         )
 
-        # Monnaie
+        # Monnaie - chiffre puis icône (icône à droite)
+        txt_solde = self.game.police.render(
+            f"{self.game.joueur.argent}", True, self.couleur_texte
+        )
+        ecran.blit(txt_solde, (self.rect_boutique.x + 20, 56))
+        
         if self.coin_frames:
             coin = self.coin_frames[self.coin_frame_idx % len(self.coin_frames)]
-            ecran.blit(coin, (self.rect_boutique.x + 20, 60))
+            # Positionner l'icône à droite du texte
+            coin_x = self.rect_boutique.x + 20 + txt_solde.get_width() + 5
+            ecran.blit(coin, (coin_x, 60))
             now = pygame.time.get_ticks()
             if now - self.last_coin_ticks >= self.COIN_ANIM_INTERVAL:
                 self.coin_frame_idx = (self.coin_frame_idx + 1) % len(self.coin_frames)
                 self.last_coin_ticks = now
-        txt_solde = self.game.police.render(
-            f"{self.game.joueur.argent}", True, self.couleur_texte
-        )
-        ecran.blit(txt_solde, (self.rect_boutique.x + 50, 56))
 
-        # Points de vie
-        coeur_pos = (self.rect_boutique.x + 140, 60)
+        # Points de vie - chiffre puis icône (icône à droite)
+        txt_pv = self.game.police.render(
+            f"{self.game.joueur.point_de_vie}", True, self.couleur_texte
+        )
+        # Positionner le texte des PV à droite de la monnaie
+        pv_x = self.rect_boutique.x + 140
+        ecran.blit(txt_pv, (pv_x, 56))
+        
         if self.heart_frames:
             coeur = self.heart_frames[self.heart_frame_idx % len(self.heart_frames)]
             coeur_s = pygame.transform.smoothscale(coeur, (24, 24))
-            ecran.blit(coeur_s, coeur_pos)
+            # Positionner l'icône à droite du texte
+            coeur_x = pv_x + txt_pv.get_width() + 5
+            ecran.blit(coeur_s, (coeur_x, 60))
             now = pygame.time.get_ticks()
             if now - self.last_heart_ticks >= self.HEART_ANIM_INTERVAL:
                 self.heart_frame_idx = (self.heart_frame_idx + 1) % len(
@@ -117,13 +128,10 @@ class ShopManager:
                 self.last_heart_ticks = now
         else:
             # Petit fallback visuel si aucun asset
+            coeur_x = pv_x + txt_pv.get_width() + 5
             pygame.draw.circle(
-                ecran, (220, 50, 50), (coeur_pos[0] + 12, coeur_pos[1] + 12), 12
+                ecran, (220, 50, 50), (coeur_x + 12, 72), 12
             )
-        txt_pv = self.game.police.render(
-            f"{self.game.joueur.point_de_vie}", True, self.couleur_texte
-        )
-        ecran.blit(txt_pv, (coeur_pos[0] + 30, coeur_pos[1]))
 
         # Boutons tours
         for item in self.shop_items:
@@ -185,19 +193,19 @@ class ShopManager:
                     coin_surf, (220, 200, 40), (coin_w // 2, coin_h // 2), coin_w // 2
                 )
 
-            # aligne coin au bord droit du bouton, prix à sa gauche
+            # aligne prix au bord droit du bouton, coin à sa gauche
             gap = 6
-            coin_x = rect.right - 10 - coin_surf.get_width()
-            prix_x = coin_x - gap - prix.get_width()
+            prix_x = rect.right - 10 - prix.get_width()
+            coin_x = prix_x - gap - coin_surf.get_width()
 
             # centrage vertical
             prix_y = rect.y + (rect.h - prix.get_height()) // 2
             coin_y = rect.y + (rect.h - coin_surf.get_height()) // 2
 
-            # dessin: prix puis icône (icône à droite)
-            ecran.blit(prix, (prix_x, prix_y))
+            # dessin: icône puis prix (prix à droite)
             if coin_surf:
                 ecran.blit(coin_surf, (coin_x, coin_y))
+            ecran.blit(prix, (prix_x, prix_y))
 
         # Bouton de vague
         bouton_actif = self.game.ennemi_manager.vague_terminee()

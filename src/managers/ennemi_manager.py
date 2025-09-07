@@ -31,7 +31,6 @@ class EnnemiManager:
         # Active l'effet de nuit pendant la vague
         self.est_nuit = True
         
-        print("Vague n°", self.num_vague, "lancée")
         
         # Génère la liste d'ennemis depuis le CSV
         self.ennemis = creer_liste_ennemis_depuis_csv(self.num_vague)
@@ -260,13 +259,10 @@ class EnnemiManager:
             self.est_nuit = False
             recompense = RECOMPENSES_PAR_VAGUE.get(self.num_vague, 0)
             self.game.joueur.argent += recompense
-            print(f"Vague {self.num_vague} terminée ! Récompense : {recompense} pièces")
     
     def est_victoire(self) -> bool:
         """Vérifie si le joueur a gagné (toutes les vagues terminées)."""
         max_vague = self.get_max_vague_csv()
-        # Debug
-        print(f"Debug victoire: num_vague={self.num_vague}, max_vague={max_vague}, vague_terminee={self.vague_terminee()}")
         # Le joueur a gagné s'il a terminé la dernière vague ET qu'il a au moins lancé une vague
         return self.num_vague > 0 and self.num_vague >= max_vague and self.vague_terminee()
     

@@ -1,4 +1,5 @@
 import os
+import random
 from typing import TYPE_CHECKING, Dict
 
 import pygame
@@ -16,9 +17,15 @@ class AudioManager:
         self.game = game
         self.est_muet = False
         self._sons_cache: Dict[str, pygame.mixer.Sound] = {}
+        self.derniere_piste = None  # piste jouée précédemment
+        self.volume_musique = 1.0
         
         # Initialisation du mixer pygame
         self._initialiser_mixer()
+        
+        # Configuration de l'événement pour musique terminée
+        self.MUSIQUE_FINIE = pygame.USEREVENT + 1
+        pygame.mixer.music.set_endevent(self.MUSIQUE_FINIE)
     
     def _initialiser_mixer(self) -> None:
         """Initialise le mixer pygame pour la gestion audio."""
@@ -28,12 +35,12 @@ class AudioManager:
         except Exception:
             # Si pas de périphérique audio dispo, on continue sans mixer
             self.mixer_disponible = False
-            print("Avertissement: Aucun périphérique audio disponible")
     
     def set_muet(self, muet: bool) -> None:
         """Active ou désactive le mode muet."""
         self.est_muet = muet
-        print("Mode muet activé" if muet else "Son activé")
+        # Met à jour le volume de la musique en cours
+        self.set_volume_musique(self.volume_musique)
     
     def jouer_sfx(self, fichier: str, volume: float = 1.0) -> None:
         """Joue un son ponctuel depuis assets/audio/bruitage en respectant l'état muet."""
@@ -43,7 +50,6 @@ class AudioManager:
             
             chemin = os.path.join(AUDIO_DIR, "bruitage", fichier)
             if not os.path.exists(chemin):
-                print(f"Fichier audio non trouvé: {chemin}")
                 return
             
             # Utiliser le cache pour éviter de recharger les sons
@@ -54,9 +60,9 @@ class AudioManager:
             son.set_volume(volume)
             son.play()
             
-        except Exception as e:
-            print(f"Erreur lors de la lecture du son {fichier}: {e}")
+        except Exception:
             # On ignore silencieusement les erreurs audio (pas de périphérique, etc.)
+            pass
     
     def jouer_musique(self, fichier: str, volume: float = 1.0, loop: int = -1) -> None:
         """Joue une musique de fond."""
@@ -66,31 +72,31 @@ class AudioManager:
             
             chemin = os.path.join(AUDIO_DIR, fichier)
             if not os.path.exists(chemin):
-                print(f"Fichier musique non trouvé: {chemin}")
                 return
             
             pygame.mixer.music.load(chemin)
             pygame.mixer.music.set_volume(0.0 if self.est_muet else volume)
             pygame.mixer.music.play(loop)
             
-        except Exception as e:
-            print(f"Erreur lors de la lecture de la musique {fichier}: {e}")
+        except Exception:
+            pass
     
     def arreter_musique(self) -> None:
         """Arrête la musique de fond."""
         try:
             if self.mixer_disponible:
                 pygame.mixer.music.stop()
-        except Exception as e:
-            print(f"Erreur lors de l'arrêt de la musique: {e}")
+        except Exception:
+            pass
     
     def set_volume_musique(self, volume: float) -> None:
         """Définit le volume de la musique de fond."""
+        self.volume_musique = volume
         try:
             if self.mixer_disponible:
                 pygame.mixer.music.set_volume(0.0 if self.est_muet else volume)
-        except Exception as e:
-            print(f"Erreur lors du changement de volume: {e}")
+        except Exception:
+            pass
     
     def precharger_son(self, fichier: str) -> None:
         """Précharge un son dans le cache."""
@@ -102,8 +108,8 @@ class AudioManager:
             if os.path.exists(chemin) and fichier not in self._sons_cache:
                 self._sons_cache[fichier] = pygame.mixer.Sound(chemin)
                 
-        except Exception as e:
-            print(f"Erreur lors du préchargement du son {fichier}: {e}")
+        except Exception:
+            pass
     
     def precharger_sons_communs(self) -> None:
         """Précharge les sons les plus utilisés pour améliorer les performances."""
@@ -133,6 +139,47 @@ class AudioManager:
             "mixer_disponible": self.mixer_disponible,
             "mode_muet": self.est_muet
         }
+    
+    def demarrer_musique_de_fond(self) -> None:
+        """Choisit une musique aléatoirement et la joue."""
+        if not self.mixer_disponible:
+            return
+            
+        pistes_candidates = [
+            "Aqua-Barbie-Girl.mp3",
+            "Camila-Cabello-Havana.mp3",
+            "Crab-Rave-medieval-style.mp3",
+            "Nirvana-Smells-Like-Teen-Spirit.mp3",
+            "Shakira-Hips-Don-t-Lie.mp3",
+            "We-Found-Love-Bardcore.mp3",
+        ]
+
+        # Filtrer celles qui existent vraiment
+        pistes_existantes = []
+        for piste in pistes_candidates:
+            chemin = os.path.join(AUDIO_DIR, piste)
+            if os.path.exists(chemin):
+                pistes_existantes.append(piste)
+                
+        if not pistes_existantes:
+            return
+
+        # Choisir une piste différente de la précédente
+        choix = random.choice(pistes_existantes)
+        while len(pistes_existantes) > 1 and choix == self.derniere_piste:
+            choix = random.choice(pistes_existantes)
+
+        self.derniere_piste = choix
+        self.jouer_musique(choix, self.volume_musique)
+    
+    def gerer_evenement_musique(self, event: pygame.event.Event) -> None:
+        """Gère l'événement de fin de musique pour relancer automatiquement."""
+        if event.type == self.MUSIQUE_FINIE:
+            self.demarrer_musique_de_fond()
+    
+    def basculer_muet(self) -> None:
+        """Bascule l'état muet."""
+        self.set_muet(not self.est_muet)
     
     def nettoyer(self) -> None:
         """Nettoie les ressources audio."""
