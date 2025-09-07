@@ -57,7 +57,7 @@ from classes.utils import charger_chemin_tiled, cases_depuis_chemin, position_da
 class Game:
         
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
-        self.joueur = Joueur(argent=450, point_de_vie=100, sort="feu", etat="normal")
+        self.joueur = Joueur(argent=45, point_de_vie=100)
 
         # Gestion des vagues
         # Manager des ennemis
