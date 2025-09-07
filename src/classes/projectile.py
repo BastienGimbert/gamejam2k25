@@ -82,8 +82,9 @@ class Projectile(ABC):
         return hypot(self.x - ex, self.y - ey) <= self.rayon_collision
 
     def appliquerDegats(self, e: Ennemi) -> None:
-        e.perdreVie(self.degats)
-        self.detruit = True
+        if e.est_Apparu:
+            e.perdreVie(self.degats)
+            self.detruit = True
 
     @abstractmethod
     def dessiner(self, ecran: pygame.Surface) -> None:
@@ -115,8 +116,9 @@ class ProjectileFleche(Projectile):
 
     def appliquerDegats(self, e: Ennemi) -> None:
         if isinstance(e, Chevalier):
-            # Les chevaliers en prennent pas de degats par des fleches
+            # Les chevaliers prennent 10% de degats par des fleches
             e.block()
+            e.perdreVie(self.degats * 0.1)  
             self.detruit = True
             return
         e.perdreVie(self.degats)
@@ -160,7 +162,7 @@ class ProjectileTourMage(Projectile):
         super().__init__(
             origine=origine,
             cible_pos=cible_pos,
-            degats=40,
+            degats=10,
             vitesse=400.0,
             rayon_collision=14.0,
         )
@@ -188,7 +190,7 @@ class ProjectileTourMage(Projectile):
     def appliquerDegatsZone(self, ennemis: list[Ennemi]) -> None:
         """Applique les dégâts de zone à tous les ennemis dans le rayon d'effet."""
         for ennemi in ennemis:
-            if ennemi.estMort():
+            if ennemi.estMort() or not ennemi.est_Apparu:
                 continue
             
             # Calculer la distance entre le point d'impact et l'ennemi

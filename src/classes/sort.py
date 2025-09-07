@@ -14,7 +14,7 @@ class Sort(ABC):
     def __init__(self, nom: str, niveau: int = 1):
         self.nom = nom
         self.niveau = niveau
-        self.prix_base = 25  # Prix de base pour le niveau 1
+        self.prix_base = 30  # Prix de base pour le niveau 1
 
     @property
     def prix(self) -> int:
@@ -61,11 +61,11 @@ class SortVision(Sort):
     def portee(self) -> int:
         """Calcule la portée de vision selon le niveau."""
         if self.niveau == 1:
-            return int(self.portee_base * 1.1)  # +10%
+            return int(self.portee_base * 1.0) 
         elif self.niveau == 2:
-            return int(self.portee_base * 1.2)  # +20%
+            return int(self.portee_base * 1.25)  # +25%
         elif self.niveau >= 3:
-            return int(self.portee_base * 1.3)  # +30%
+            return int(self.portee_base * 1.5)  # +50%
         return self.portee_base
 
     @property
@@ -109,15 +109,14 @@ class SortFee(Sort):
 
     def __init__(self, niveau: int = 1):
         super().__init__("Fee", niveau)
-        self.prix_base = 40  # Prix fixe de 120 gold
-        self.duree_eclairage = 5.0  # Durée en secondes
+        self.prix_base = 30  
+        self.duree_eclairage = 5.0  # en sec
         self.temps_debut = None  # Timestamp du début de l'effet
-        self.actif = False  # Si l'effet est actuellement actif
+        self.actif = False  
         self.max_niveau = 1  # Un seul niveau pour ce sort
 
     @property
     def prix(self) -> int:
-        """Prix fixe de 120 gold."""
         return self.prix_base
 
     @property
@@ -173,16 +172,109 @@ class SortFee(Sort):
 
 
 class SortEclair(Sort):
-    """Sort d'éclair qui inflige 100 dégâts aux ennemis sur une case cliquée."""
+    """Sort d'éclair qui inflige 10 dégâts aux ennemis sur une case cliquée."""
+
+    _frames: list[pygame.Surface] | None = None
+
 
     def __init__(self, niveau: int = 1):
         super().__init__("Eclair", niveau)
-        self.prix_base = 45  # Prix de 80 gold
-        self.degats = 100  # Dégâts infligés
+        self.prix_base = 30
+        self.degats = 10  # Dégâts
         self.max_niveau = 1  # Un seul niveau pour ce sort
-        self.case_cible = None  # Case ciblée pour l'éclair
+        self.case_cible = None  # Case ciblée 
         self.temps_activation = None  # Timestamp de l'activation
-        self.duree_effet = 0.5  # Durée de l'effet visuel en secondes
+        self.duree_effet = 0.5  # en sec
+
+        if SortEclair._frames is None:
+            sheet = pygame.image.load("assets/spell/lightning.png").convert_alpha()
+            w, h = sheet.get_width() // 10, sheet.get_height()
+            SortEclair._frames = [
+                sheet.subsurface(pygame.Rect(i * w, 0, w, h)) for i in range(10)
+            ]
+
+    @property
+    def prix(self) -> int:
+        """Prix fixe de 80 gold."""
+        return self.prix_base
+
+    @property
+    def nom_complet(self) -> str:
+        """Retourne le nom complet du sort."""
+        return "Eclair"
+
+    def peut_etre_achete(self, argent_joueur: int) -> bool:
+        """Vérifie si le joueur a assez d'argent pour acheter ce sort."""
+        return argent_joueur >= self.prix
+
+    def est_au_niveau_maximum(self) -> bool:
+        """Retourne False car ce sort n'a pas de niveau maximum (on peut toujours le racheter)."""
+        return False
+
+    def activer_sur_case(self, case_x: int, case_y: int) -> bool:
+        """Active l'éclair sur une case spécifique. Retourne True si l'activation a réussi."""
+        if self.case_cible is not None:
+            return False  # Déjà en cours d'activation
+
+        self.case_cible = (case_x, case_y)
+        self.temps_activation = pygame.time.get_ticks() / 1000.0
+
+        return True
+
+    def est_actif(self) -> bool:
+        """Vérifie si l'effet d'éclair est encore actif."""
+        if self.case_cible is None or self.temps_activation is None:
+            return False
+
+        temps_ecoule = (pygame.time.get_ticks() / 1000.0) - self.temps_activation
+        if temps_ecoule >= self.duree_effet:
+            self.case_cible = None
+            self.temps_activation = None
+            return False
+
+        return True
+
+    def appliquer_effet(self, game: "Game") -> None:
+        """Applique les dégâts de l'éclair aux ennemis sur la case ciblée."""
+        if self.est_actif() and self.case_cible:
+            case_x, case_y = self.case_cible
+            taille_case = 64  # Taille d'une case en pixels
+
+            # Calculer la zone de la case en pixels
+            x_min = case_x * taille_case
+            x_max = (case_x + 1) * taille_case
+            y_min = case_y * taille_case
+            y_max = (case_y + 1) * taille_case
+
+            # Infliger des dégâts aux ennemis dans cette zone
+            for ennemi in game.ennemis:
+                if (
+                    x_min <= ennemi.position.x <= x_max
+                    and y_min <= ennemi.position.y <= y_max
+                ):
+                    ennemi.perdreVie(self.degats)
+
+class SortEclair(Sort):
+    """Sort d'éclair qui inflige 10 dégâts aux ennemis sur une case cliquée."""
+
+    _frames: list[pygame.Surface] | None = None
+
+
+    def __init__(self, niveau: int = 1):
+        super().__init__("Eclair", niveau)
+        self.prix_base = 30
+        self.degats = 10  # Dégâts
+        self.max_niveau = 1  # Un seul niveau pour ce sort
+        self.case_cible = None  # Case ciblée 
+        self.temps_activation = None  # Timestamp de l'activation
+        self.duree_effet = 0.6  # en sec
+
+        if SortEclair._frames is None:
+            sheet = pygame.image.load("assets/spell/lightning.png").convert_alpha()
+            w, h = sheet.get_width() // 10, sheet.get_height()
+            SortEclair._frames = [
+                sheet.subsurface(pygame.Rect(i * w, 0, w, h)) for i in range(10)
+            ]
 
     @property
     def prix(self) -> int:
@@ -246,25 +338,33 @@ class SortEclair(Sort):
                     ennemi.perdreVie(self.degats)
 
     def dessiner_effet(self, ecran: pygame.Surface, game: "Game") -> None:
-        """Dessine l'effet visuel de l'éclair sur la case ciblée."""
         if self.est_actif() and self.case_cible:
             case_x, case_y = self.case_cible
             taille_case = 64
+            x_pos, y_pos = case_x * taille_case, case_y * taille_case
 
-            # Calculer la position de la case en pixels
-            x_pos = case_x * taille_case
-            y_pos = case_y * taille_case
-
-            # Créer un effet d'éclair (rectangle blanc clignotant)
-            eclairage_surface = pygame.Surface(
-                (taille_case, taille_case), pygame.SRCALPHA
-            )
-
-            # Effet de clignotement basé sur le temps
+            # --- Animation lightning ---
             temps_ecoule = (pygame.time.get_ticks() / 1000.0) - self.temps_activation
-            alpha = int(255 * (1 - temps_ecoule / self.duree_effet))
-            alpha = max(0, min(255, alpha))
+            progress = temps_ecoule / self.duree_effet
+            frame_index = int(progress * len(SortEclair._frames))
+            frame_index = min(frame_index, len(SortEclair._frames) - 1)
+            frame = SortEclair._frames[frame_index]
 
-            # Dessiner un rectangle blanc semi-transparent
+            # Appliquer une échelle verticale pour étirer l’éclair
+            scale_factor_y = 2.0  # Facteur d'échelle vertical
+            new_w = frame.get_width()
+            new_h = int(frame.get_height() * scale_factor_y)
+            frame = pygame.transform.scale(frame, (new_w, new_h))
+
+            # Centrer l’éclair sur la case
+            vertical_offset = -80 * scale_factor_y
+            rect = frame.get_rect(center=(x_pos + taille_case // 2, y_pos + taille_case // 2 + vertical_offset))
+            ecran.blit(frame, rect)
+
+            # --- Éclaircissement blanc en overlay (déjà existant) ---
+            alpha = int(255 * (1 - progress))
+            alpha = max(0, min(255, alpha))
+            eclairage_surface = pygame.Surface((taille_case, taille_case), pygame.SRCALPHA)
             eclairage_surface.fill((255, 255, 255, alpha))
             ecran.blit(eclairage_surface, (x_pos, y_pos))
+

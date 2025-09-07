@@ -41,7 +41,8 @@ class Ennemi(ABC):
             raise ValueError("Chemin invalide (>=2 points requis).")
         self.vitesse = float(vitesse)
         self.pointsDeVie = int(pointsDeVie)
-        self.pointsDeVieMax = int(pointsDeVie)  # PV Max et donc initiaux de l'ennemi
+        self.pointsDeVieInitiaux = int(pointsDeVie)  
+        self.pointsDeVieMax = int(pointsDeVie)  
         self.degats = int(degats)
         # Montant d'or donné au joueur quand cet ennemi est tué
         self.argent = int(argent)
@@ -53,6 +54,7 @@ class Ennemi(ABC):
         self.visible = False
         self._on_reach_castle = on_reach_castle
         self.tempsApparition = tempsApparition
+        self.est_Apparu = False
 
     @abstractmethod
     def draw(self, ecran: pygame.Surface) -> None:
@@ -65,6 +67,8 @@ class Ennemi(ABC):
         self._dist_on_segment = 0.0
         self._arrive_au_bout = False
         self.visible = False
+        self.pointsDeVie = self.pointsDeVieInitiaux
+        self.est_Apparu = True
 
     def seDeplacer(self, dt: float):
         if self.estMort() or self._arrive_au_bout:
@@ -155,6 +159,24 @@ class Ennemi(ABC):
             (pygame.time.get_ticks() - debutVague) / 1000, 1
         )  # conversion en sec
 
+    def get_distance_restante(self) -> float:
+        """Retourne la distance réelle restante sur le chemin jusqu'à l'arrivée."""
+        if not self._chemin or self._segment_index >= len(self._chemin) - 1:
+            return 0.0
+
+        # segment actuel
+        p0 = self._chemin[self._segment_index]
+        p1 = self._chemin[self._segment_index + 1]
+        seg_len = distance_positions(p0, p1)
+
+        dist_restante = max(0.0, seg_len - self._dist_on_segment)
+
+        # segments suivants
+        for i in range(self._segment_index + 1, len(self._chemin) - 1):
+            dist_restante += distance_positions(self._chemin[i], self._chemin[i + 1])
+
+        return dist_restante
+
 
 class Gobelin(Ennemi):
     # Attributs de classe : frames par direction
@@ -191,6 +213,7 @@ class Gobelin(Ennemi):
                 ),
             }
 
+        self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"  # par défaut
         self.frame_index = 0
         self.frame_timer = 0
@@ -246,7 +269,7 @@ class Rat(Ennemi):
         super().__init__(
             tempsApparition=tempsApparition,
             vitesse=120.0,
-            pointsDeVie=20,
+            pointsDeVie=5,
             degats=3,
             argent=0,
             chemin=chemin,
@@ -260,6 +283,7 @@ class Rat(Ennemi):
                 "side": charger_et_scaler("rat", "S_Run.png", 6, scale=2 / 3),
             }
 
+        self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"
         self.frame_index = 0
         self.frame_timer = 0
@@ -326,7 +350,8 @@ class Loup(Ennemi):
                     "wolf", "S_Walk.png", 6, scale=SCALE_FACTOR * 0.8
                 ),
             }
-
+        
+        self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"
         self.frame_index = 0
         self.frame_timer = 0
@@ -396,7 +421,8 @@ class Mage(Ennemi):
                     "mage", "S_Fly.png", 6, scale=SCALE_FACTOR * 0.6
                 ),
             }
-
+        
+        self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"
         self.frame_index = 0
         self.frame_timer = 0
@@ -473,7 +499,8 @@ class Ogre(Ennemi):
                 "up": charger_et_scaler("ogre", "U_Walk.png", 6, scale=SCALE_FACTOR),
                 "side": charger_et_scaler("ogre", "S_Walk.png", 6, scale=SCALE_FACTOR),
             }
-
+        
+        self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"
         self.frame_index = 0
         self.frame_timer = 0
@@ -538,7 +565,8 @@ class Chevalier(Ennemi):
                 "upBlock": charger_et_scaler("knight", "U_Block.png", 1, scale=SCALE_FACTOR*0.8),
                 "sideBlock": charger_et_scaler("knight", "S_Block.png", 1, scale=SCALE_FACTOR*0.8),
             }
-
+        
+        self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"
         self.frame_index = 0
         self.frame_timer = 0

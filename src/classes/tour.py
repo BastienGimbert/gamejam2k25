@@ -108,7 +108,7 @@ class Tour(ABC):
                 if (
                     self._cible is not None
                     and not self._cible.estMort()
-                    and self._cible.visible
+                    
                 ):
                     if (
                         distance_positions(self.position, self._cible.position)
@@ -131,21 +131,26 @@ class Tour(ABC):
         )
 
     def _choisir_cible(self, ennemis: List["Ennemi"]) -> Optional["Ennemi"]:
+        """Choisit la cible parmi les ennemis dans la portée de la tour.
+        La cible choisie est celle qui a le moins de distance restante à parcourir."""
         candidats: List[tuple[float, Ennemi]] = []
         for e in ennemis:
             if e.estMort() or not e.visible:
                 continue
             if distance_positions(self.position, e.position) <= self.portee:
-                try:
-                    fin = e._chemin[-1]
-                except Exception:
-                    fin = e.position
-                d_end = distance_positions(e.position, fin)
+                d_end = e.get_distance_restante() 
                 candidats.append((d_end, e))
+
         if not candidats:
             return None
-        candidats.sort(key=lambda t: t[0])
-        return candidats[0][1]
+
+        meilleur_candidat = candidats[0]
+        for c in candidats[1:]:
+            if c[0] < meilleur_candidat[0]:
+                meilleur_candidat = c
+
+        return meilleur_candidat[1]
+
 
     @abstractmethod
     def attaquer(self, cible: "Ennemi") -> None:
@@ -196,22 +201,44 @@ class Catapulte(Tour):
 
     def attaquer(self, cible: "Ennemi") -> None:
         return
+    def _choisir_cible(self, ennemis: List["Ennemi"]) -> Optional["Ennemi"]:
+        """Choisit la cible parmi les ennemis dans la portée de la tour.
+        La cible choisie est celle qui a le plus de points de vie. En cas d'égalité, c'est celle qui est la plus proche de la fin."""
+        candidats: List[tuple[int, float, Ennemi]] = []
+        for e in ennemis:
+            if e.estMort() or not e.visible:
+                continue
+            if distance_positions(self.position, e.position) <= self.portee:
+                candidats.append((e.pointsDeVieInitiaux, e.get_distance_restante(), e))
 
+        if not candidats:
+            return None
+
+        # Trouver l’ennemi le plus de pv
+        meilleur_candidat = candidats[0]
+        for c in candidats[1:]:
+            if c[0] > meilleur_candidat[0]:
+                meilleur_candidat = c
+            elif c[0] == meilleur_candidat[0] and c[1] < meilleur_candidat[1]:
+                # égalité sur les PV donc on prend le plus proche de la fin
+                meilleur_candidat = c
+
+        return meilleur_candidat[2]
 
 class Mage(Tour):
     TYPE_ID = 3
     TYPE_NOM = "mage"
     PORTEE = 150.0
 
-    # Prix indicatif de la tour Catapulte (affiché dans la boutique)
-    PRIX = 60
+    # Prix indicatif de la tour Mage (affiché dans la boutique)
+    PRIX = 100
 
     def __init__(self, id: int, position: Position) -> None:
         super().__init__(
             id=id,
             type_id=self.TYPE_ID,
             type_nom=self.TYPE_NOM,
-            cooldown_s=1.5,
+            cooldown_s=0.4,
             portee=self.PORTEE,
             position=position,
             prix=self.PRIX,
@@ -219,6 +246,23 @@ class Mage(Tour):
 
     def attaquer(self, cible: "Ennemi") -> None:
         return
+    def maj(
+        self,
+        dt: float,
+        ennemis: List["Ennemi"],
+        au_tir: Optional[Callable[["Tour", "Ennemi"], None]] = None,
+    ) -> None:
+        if dt < 0:
+            return
+
+        self._time_since_last_shot += dt
+        self._anim.update(dt)  
+
+        if self._time_since_last_shot >= self.cooldown_s:
+            cible = self._choisir_cible(ennemis)
+            if cible is not None and au_tir is not None:
+                au_tir(self, cible)
+                self._time_since_last_shot = 0.0
 
 
 class Campement(Tour):

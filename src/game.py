@@ -1344,7 +1344,7 @@ class Game:
                     elif self.type_selectionne == "catapulte":
                         self.prix_par_type["catapulte"] = int(self.prix_par_type["catapulte"] + 5)
                     elif self.type_selectionne == "mage":
-                        self.prix_par_type["mage"] = int(self.prix_par_type["mage"] + 6)
+                        self.prix_par_type["mage"] = int(self.prix_par_type["mage"] * 1.5)
 
                     self.type_selectionne = None
                     self.tour_selectionnee = None  # désélectionne la range
@@ -1373,7 +1373,7 @@ class Game:
                     elif self.positions_occupees[case]["type_selectionne"] == "catapulte":  
                         self.prix_par_type["catapulte"] = max(10, int(self.prix_par_type["catapulte"] - 5))
                     elif self.positions_occupees[case]["type_selectionne"] == "mage":
-                        self.prix_par_type["mage"] = max(12, int(self.prix_par_type["mage"] - 6))
+                        self.prix_par_type["mage"] = int(round(self.prix_par_type["mage"] * 0.6666))
 
                     # Retire l'instance de tour à cet emplacement (centre de case)
                     cx = case[0] * self.taille_case + self.taille_case // 2
@@ -1397,26 +1397,16 @@ class Game:
         self.est_nuit = True  # Active l'effet de nuit pendant la manche
         print("Vague n°", self.numVague, "lancée")
 
-        # Génère la liste d'ennemis depuis le CSV (la fabrique gère leurs types)
+        # Génère la liste d'ennemis depuis le CSV
         self.ennemis = creer_liste_ennemis_depuis_csv(self.numVague)
-        # Désactive le callback d'arrivée au château (les dégâts sont gérés sur les cases (3,0) et (4,0))
+
         for e in self.ennemis:
             try:
                 setattr(e, "_on_reach_castle", None)
             except Exception:
                 pass
 
-        # Si aucune donnée CSV, on peut au moins spawner un gobelin de base
-        if not self.ennemis:
-            gob = Gobelin(id=1, tmj_path=self.tmj_path)
-            if hasattr(gob, "apparaitre"):
-                gob.apparaitre()
-            # Désactive le callback d'arrivée pour le fallback
-            try:
-                setattr(gob, "_on_reach_castle", None)
-            except Exception:
-                pass
-            self.ennemis = [gob]
+        
 
     def majvague(self):
         """Fait apparaître les ennemis au moment de leur temps d'apparition."""
@@ -1433,7 +1423,6 @@ class Game:
                     if hasattr(e, "apparaitre"):
                         e.apparaitre()
             except Exception:
-                # Si l'ennemi ne supporte pas l'apparition temporisée, on ignore
                 pass
 
     # ---------- Chemin / placement ----------
