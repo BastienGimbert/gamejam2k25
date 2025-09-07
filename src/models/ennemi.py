@@ -1,4 +1,3 @@
-import os
 from abc import ABC, abstractmethod
 
 # Evite les boucles dans les imports mutuels
@@ -6,14 +5,10 @@ from typing import TYPE_CHECKING, Callable, List, Optional
 
 import pygame
 
-from classes.constants import MAP_TILESET_TMJ, TILESETS_DIR
+from classes.constants import MAP_TILESET_TMJ
 from classes.position import Position
-from classes.utils import (
-    charger_chemin_tiled,
-    charger_et_scaler,
-    decouper_sprite,
-    distance_positions,
-)
+from classes.sprites import charger_sprites_ennemi
+from classes.utils import charger_chemin_tiled, distance_positions
 
 if TYPE_CHECKING:
     from game import Game
@@ -41,8 +36,8 @@ class Ennemi(ABC):
             raise ValueError("Chemin invalide (>=2 points requis).")
         self.vitesse = float(vitesse)
         self.pointsDeVie = int(pointsDeVie)
-        self.pointsDeVieInitiaux = int(pointsDeVie)  
-        self.pointsDeVieMax = int(pointsDeVie)  
+        self.pointsDeVieInitiaux = int(pointsDeVie)
+        self.pointsDeVieMax = int(pointsDeVie)
         self.degats = int(degats)
         # Montant d'or donné au joueur quand cet ennemi est tué
         self.argent = int(argent)
@@ -149,7 +144,7 @@ class Ennemi(ABC):
 
         if (
             distance_positions(self.position, pointeurPos) < portee_curseur
-        ) or game.dansFeuDeCamp(self.position):
+        ) or game.tour_manager.dans_feu_de_camp(self.position):
             self.set_visibilite(True)
         else:
             self.set_visibilite(False)
@@ -202,13 +197,13 @@ class Gobelin(Ennemi):
         # Charger les spritesheets une seule fois
         if Gobelin._frames_by_dir is None:
             Gobelin._frames_by_dir = {
-                "down": charger_et_scaler(
+                "down": charger_sprites_ennemi(
                     "goblin", "D_Walk.png", 6, scale=SCALE_FACTOR * 0.8
                 ),
-                "up": charger_et_scaler(
+                "up": charger_sprites_ennemi(
                     "goblin", "U_Walk.png", 6, scale=SCALE_FACTOR * 0.8
                 ),
-                "side": charger_et_scaler(
+                "side": charger_sprites_ennemi(
                     "goblin", "S_Walk.png", 6, scale=SCALE_FACTOR * 0.8
                 ),
             }
@@ -278,9 +273,9 @@ class Rat(Ennemi):
 
         if Rat._frames_by_dir is None:
             Rat._frames_by_dir = {
-                "down": charger_et_scaler("rat", "D_Run.png", 6, scale=2 / 3),
-                "up": charger_et_scaler("rat", "U_Run.png", 6, scale=2 / 3),
-                "side": charger_et_scaler("rat", "S_Run.png", 6, scale=2 / 3),
+                "down": charger_sprites_ennemi("rat", "D_Run.png", 6, scale=2 / 3),
+                "up": charger_sprites_ennemi("rat", "U_Run.png", 6, scale=2 / 3),
+                "side": charger_sprites_ennemi("rat", "S_Run.png", 6, scale=2 / 3),
             }
 
         self.pointsDeVieInitiaux = self.pointsDeVie
@@ -340,17 +335,17 @@ class Loup(Ennemi):
 
         if Loup._frames_by_dir is None:
             Loup._frames_by_dir = {
-                "down": charger_et_scaler(
+                "down": charger_sprites_ennemi(
                     "wolf", "D_Walk.png", 6, scale=SCALE_FACTOR * 0.8
                 ),
-                "up": charger_et_scaler(
+                "up": charger_sprites_ennemi(
                     "wolf", "U_Walk.png", 6, scale=SCALE_FACTOR * 0.8
                 ),
-                "side": charger_et_scaler(
+                "side": charger_sprites_ennemi(
                     "wolf", "S_Walk.png", 6, scale=SCALE_FACTOR * 0.8
                 ),
             }
-        
+
         self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"
         self.frame_index = 0
@@ -411,17 +406,17 @@ class Mage(Ennemi):
 
         if Mage._frames_by_dir is None:
             Mage._frames_by_dir = {
-                "down": charger_et_scaler(
+                "down": charger_sprites_ennemi(
                     "mage", "D_Fly.png", 6, scale=SCALE_FACTOR * 0.6
                 ),
-                "up": charger_et_scaler(
+                "up": charger_sprites_ennemi(
                     "mage", "U_Fly.png", 6, scale=SCALE_FACTOR * 0.6
                 ),
-                "side": charger_et_scaler(
+                "side": charger_sprites_ennemi(
                     "mage", "S_Fly.png", 6, scale=SCALE_FACTOR * 0.6
                 ),
             }
-        
+
         self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"
         self.frame_index = 0
@@ -472,7 +467,6 @@ class Mage(Ennemi):
         self._time_since_last_attack = 0.0
 
 
-
 class Ogre(Ennemi):
     _frames_by_dir: dict[str, list[pygame.Surface]] | None = None
 
@@ -495,11 +489,17 @@ class Ogre(Ennemi):
 
         if Ogre._frames_by_dir is None:
             Ogre._frames_by_dir = {
-                "down": charger_et_scaler("ogre", "D_Walk.png", 6, scale=SCALE_FACTOR),
-                "up": charger_et_scaler("ogre", "U_Walk.png", 6, scale=SCALE_FACTOR),
-                "side": charger_et_scaler("ogre", "S_Walk.png", 6, scale=SCALE_FACTOR),
+                "down": charger_sprites_ennemi(
+                    "ogre", "D_Walk.png", 6, scale=SCALE_FACTOR
+                ),
+                "up": charger_sprites_ennemi(
+                    "ogre", "U_Walk.png", 6, scale=SCALE_FACTOR
+                ),
+                "side": charger_sprites_ennemi(
+                    "ogre", "S_Walk.png", 6, scale=SCALE_FACTOR
+                ),
             }
-        
+
         self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"
         self.frame_index = 0
@@ -535,7 +535,6 @@ class Ogre(Ennemi):
             ecran.blit(temp, pos)
 
 
-
 class Chevalier(Ennemi):
     _frames_by_dir: dict[str, list[pygame.Surface]] | None = None
 
@@ -558,14 +557,26 @@ class Chevalier(Ennemi):
 
         if Chevalier._frames_by_dir is None:
             Chevalier._frames_by_dir = {
-                "down": charger_et_scaler("knight", "D_Walk.png", 6, scale=SCALE_FACTOR*0.8),
-                "up": charger_et_scaler("knight", "U_Walk.png", 6, scale=SCALE_FACTOR*0.8),
-                "side": charger_et_scaler("knight", "S_Walk.png", 6, scale=SCALE_FACTOR*0.8),
-                "downBlock": charger_et_scaler("knight", "D_Block.png", 1, scale=SCALE_FACTOR*0.8),
-                "upBlock": charger_et_scaler("knight", "U_Block.png", 1, scale=SCALE_FACTOR*0.8),
-                "sideBlock": charger_et_scaler("knight", "S_Block.png", 1, scale=SCALE_FACTOR*0.8),
+                "down": charger_sprites_ennemi(
+                    "knight", "D_Walk.png", 6, scale=SCALE_FACTOR * 0.8
+                ),
+                "up": charger_sprites_ennemi(
+                    "knight", "U_Walk.png", 6, scale=SCALE_FACTOR * 0.8
+                ),
+                "side": charger_sprites_ennemi(
+                    "knight", "S_Walk.png", 6, scale=SCALE_FACTOR * 0.8
+                ),
+                "downBlock": charger_sprites_ennemi(
+                    "knight", "D_Block.png", 1, scale=SCALE_FACTOR * 0.8
+                ),
+                "upBlock": charger_sprites_ennemi(
+                    "knight", "U_Block.png", 1, scale=SCALE_FACTOR * 0.8
+                ),
+                "sideBlock": charger_sprites_ennemi(
+                    "knight", "S_Block.png", 1, scale=SCALE_FACTOR * 0.8
+                ),
             }
-        
+
         self.pointsDeVieInitiaux = self.pointsDeVie
         self.direction = "down"
         self.frame_index = 0
@@ -574,7 +585,6 @@ class Chevalier(Ennemi):
         self.block_timer = 0.0
         self.block_duration = 0.2
 
-    
     def update_animation(self, dt: float):
         # Blocage
         if self.block_timer > 0:
@@ -602,7 +612,7 @@ class Chevalier(Ennemi):
             self.direction = "upBlock"
         elif self.direction == "side":
             self.direction = "sideBlock"
-        self.block_timer = self.block_duration  
+        self.block_timer = self.block_duration
 
     def draw(self, ecran: pygame.Surface) -> None:
         if self.estMort():

@@ -3,9 +3,8 @@ import os
 from math import hypot
 from typing import List
 
-import pygame
 
-from classes.constants import ASSETS_DIR, PROJECT_ROOT
+from classes.constants import PROJECT_ROOT
 from classes.position import Position
 
 
@@ -42,63 +41,66 @@ def charger_chemin_tiled(tmj_path: str, layer_name: str = "path") -> List[Positi
     return [Position(ox + p["x"], oy + p["y"]) for p in obj["polygon"]]
 
 
-def decouper_sprite(
-    image: pygame.Surface, nb_images: int, horizontal: bool = True, copy: bool = True
-) -> list[pygame.Surface]:
-    """
-    Découpe une spritesheet simple en 'nb_images' parties égales.
-    - image: Surface source.
-    - nb_images: nombre de frames.
-    - horizontal: True si les frames sont alignées horizontalement.
-    - copy: si True retourne des copies (indépendantes), sinon des subsurfaces.
-    """
-    if nb_images <= 0:
-        raise ValueError("nb_images doit être > 0")
+def cases_depuis_chemin(
+    chemin_positions: list[Position], taille_case: int
+) -> set[tuple[int, int]]:
+    """Approxime les cases de grille traversées par le polygone du chemin."""
+    bannies: set[tuple[int, int]] = set()
+    if not chemin_positions:
+        return bannies
 
-    w, h = image.get_width(), image.get_height()
-    slices: list[pygame.Surface] = []
+    for i in range(len(chemin_positions)):
+        p1 = chemin_positions[i]
+        p2 = chemin_positions[(i + 1) % len(chemin_positions)]
 
-    if horizontal:
-        frame_w = w // nb_images
-        if frame_w * nb_images != w:
-            raise ValueError("Largeur non divisible par nb_images")
-        for i in range(nb_images):
-            rect = pygame.Rect(i * frame_w, 0, frame_w, h)
-            part = image.subsurface(rect)
-            slices.append(part.copy() if copy else part)
-    else:
-        frame_h = h // nb_images
-        if frame_h * nb_images != h:
-            raise ValueError("Hauteur non divisible par nb_images")
-        for i in range(nb_images):
-            rect = pygame.Rect(0, i * frame_h, w, frame_h)
-            part = image.subsurface(rect)
-            slices.append(part.copy() if copy else part)
+        # Calculer les cases traversées par le segment
+        x1, y1 = int(p1.x), int(p1.y)
+        x2, y2 = int(p2.x), int(p2.y)
 
-    return slices
+        # Algorithme de ligne de Bresenham simplifié
+        dx = abs(x2 - x1)
+        dy = abs(y2 - y1)
+        x_step = 1 if x1 < x2 else -1
+        y_step = 1 if y1 < y2 else -1
+
+        x, y = x1, y1
+        bannies.add((x // taille_case, y // taille_case))
+
+        if dx > dy:
+            error = dx / 2
+            while x != x2:
+                error -= dy
+                if error < 0:
+                    y += y_step
+                    error += dx
+                x += x_step
+                bannies.add((x // taille_case, y // taille_case))
+        else:
+            error = dy / 2
+            while y != y2:
+                error -= dx
+                if error < 0:
+                    x += x_step
+                    error += dy
+                y += y_step
+                bannies.add((x // taille_case, y // taille_case))
+
+    return bannies
 
 
-def charger_et_scaler(
-    sous_dossier: str, nom_fichier: str, nb_frames: int, scale: float = 1.0, notInEnemyFolder: bool = False
-) -> list[pygame.Surface]:
-    """
-    Charge une spritesheet, découpe en nb_frames et applique un facteur d'échelle.
-    sous_dossier: sous-dossier dans assets/enemy (ex: 'goblin')
-    nom_fichier: nom du fichier image (ex: 'D_Walk.png')
-    nb_frames: nombre de frames à découper
-    scale: facteur d'échelle (1.0 = taille originale)
-    """
-    if notInEnemyFolder:
-        chemin = os.path.join(ASSETS_DIR, sous_dossier, nom_fichier)
-    else:
-        chemin = os.path.join(ASSETS_DIR, "enemy", sous_dossier, nom_fichier)
-    image = pygame.image.load(chemin).convert_alpha()
-    frames = decouper_sprite(image, nb_frames)
-    if scale != 1.0:
-        frames = [
-            pygame.transform.scale(
-                f, (int(f.get_width() * scale), int(f.get_height() * scale))
-            )
-            for f in frames
-        ]
-    return frames
+def position_dans_grille(
+    pos: tuple[int, int], largeur_ecran: int, hauteur_ecran: int
+) -> bool:
+    """Vérifie si une position est dans la grille de jeu."""
+    return pos[0] < largeur_ecran and 0 <= pos[1] < hauteur_ecran
+
+
+def case_depuis_pos(
+    pos: tuple[int, int], taille_case: int, colonnes: int, lignes: int
+) -> tuple[int, int] | None:
+    """Convertit une position en coordonnées de case de grille."""
+    x_case = pos[0] // taille_case
+    y_case = pos[1] // taille_case
+    if 0 <= x_case < colonnes and 0 <= y_case < lignes:
+        return (x_case, y_case)
+    return None
