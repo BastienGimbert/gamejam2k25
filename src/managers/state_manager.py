@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, Optional
 
 import pygame
-
+from classes.menu import afficher_regles
 from classes.constants import WINDOW_WIDTH
 from classes.menu import (
     creer_boutons_credits,
@@ -20,6 +20,7 @@ class GameState(Enum):
     PAUSE = "PAUSE"
     CREDITS = "CREDITS"
     GAMEOVER = "GAMEOVER"
+    REGLES = "REGLES"
 
 
 class StateManager:
@@ -81,6 +82,7 @@ class StateManager:
             "demarrer_jeu": self._demarrer_jeu,
             "reprendre_jeu": self._reprendre_jeu,
             "afficher_credits": self._afficher_credits,
+            "afficher_regles": self._afficher_regles,
             "retour_depuis_credits": self._retour_depuis_credits,
             "basculer_muet": self._basculer_muet,
             "redemarrer_partie": self._redemarrer_partie,
@@ -92,6 +94,7 @@ class StateManager:
         # Actions pour chaque menu
         actions_menu_principal = {
             "jouer": self._callbacks["demarrer_jeu"],
+            "regles": self._callbacks["afficher_regles"],
             "credits": self._callbacks["afficher_credits"],
             "muet": self._callbacks["basculer_muet"],
             "quitter": self._callbacks["quitter_jeu"],
@@ -113,6 +116,7 @@ class StateManager:
         # Création des boutons
         try:
             from classes.menu import creer_boutons_gameover
+            from classes.menu import creer_boutons_regles
 
             buttons_gameover = creer_boutons_gameover(self.police, actions_gameover)
         except ImportError:
@@ -130,6 +134,7 @@ class StateManager:
             ),
             GameState.GAMEOVER: buttons_gameover,
             GameState.JEU: [],  # Pas de boutons pour l'état de jeu
+            GameState.REGLES: creer_boutons_regles(self.police, self._retour_depuis_regles),
         }
 
     def change_state(self, new_state: GameState) -> bool:
@@ -144,16 +149,18 @@ class StateManager:
         """Vérifie si une transition d'état est valide."""
         # Règles de transition
         valid_transitions = {
-            GameState.MENU: [GameState.JEU, GameState.CREDITS],
+            GameState.MENU: [GameState.JEU, GameState.CREDITS, GameState.REGLES],
             GameState.JEU: [GameState.PAUSE, GameState.GAMEOVER],
-            GameState.PAUSE: [GameState.JEU, GameState.CREDITS],
+            GameState.PAUSE: [GameState.JEU, GameState.CREDITS, GameState.REGLES],
             GameState.CREDITS: [
                 GameState.MENU,
                 GameState.PAUSE,
                 GameState.JEU,
                 GameState.GAMEOVER,
+                GameState.REGLES,
             ],
-            GameState.GAMEOVER: [GameState.JEU, GameState.CREDITS],
+            GameState.GAMEOVER: [GameState.JEU, GameState.CREDITS, GameState.REGLES],
+            GameState.REGLES: [GameState.MENU, GameState.PAUSE, GameState.JEU, GameState.CREDITS, GameState.GAMEOVER],
         }
 
         return to_state in valid_transitions.get(from_state, [])
@@ -188,6 +195,9 @@ class StateManager:
             changement = self.game.gerer_evenement(event)
             if changement == "PAUSE":
                 self.change_state(GameState.PAUSE)
+        elif self.current_state == GameState.REGLES:
+            for button in self.get_buttons():
+                button.gerer_evenement(event)
         else:
             # Gestion des boutons pour les autres états
             for button in self.get_buttons():
@@ -219,6 +229,10 @@ class StateManager:
         elif self.current_state == GameState.GAMEOVER:
             self.game.decompte_dt()
             self._render_gameover(screen)
+        elif self.current_state == GameState.REGLES:
+            afficher_regles(screen, self.police, WINDOW_WIDTH, self.get_buttons())
+    def _afficher_regles(self) -> None:
+        self.change_state(GameState.REGLES)
 
     def _render_gameover(self, screen: pygame.Surface) -> None:
         """Affiche l'écran de Game Over."""
@@ -246,6 +260,9 @@ class StateManager:
     def _afficher_credits(self) -> None:
         """Affiche les crédits."""
         self.change_state(GameState.CREDITS)
+
+    def _retour_depuis_regles(self):
+        self.change_state(GameState.MENU)    
 
     def _retour_depuis_credits(self) -> None:
         """Retourne depuis les crédits."""

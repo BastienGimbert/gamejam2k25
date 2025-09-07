@@ -1,0 +1,22 @@
+Objectif : Défends le château des ennemis. Si tes PV (cœurs) tombent à 0, c’est perdu.
+Tuer des ennemis rapporte de l’or pour acheter des tours.
+Boutique (à droite) : or, PV, bouton “Lancer la vague”, choix des tours.
+Or : achète des tours. PV : état du château.
+Revente : clic droit sur une tour posée → récupère 50% du prix.
+Clic gauche sur une tour en boutique : sélectionne la tour.
+Clic gauche sur une case valide : place la tour (si assez d’or).
+Clic gauche sur une tour posée : affiche sa portée.
+Clic droit sur une tour : vend la tour. Échap : pause.
+Bouton “Lancer la vague” : démarre la prochaine vague (si la précédente est finie).
+Types de tours :
+Archer : rapide, pas cher, dégâts faibles.
+Catapulte : tir lent, dégâts de zone, vulnérable aux mages ennemis.
+Mage : dégâts magiques moyens, cadence modérée.
+Feu de camp : éclaire une zone, n’attaque pas.
+Ennemis :
+Rat / Loup : rapides, peu de PV. Gobelin : standard. Mage ennemi : intercepte les pierres de catapulte.
+Placement :
+Impossible de poser une tour sur le chemin, une case bannie ou occupée.
+Vision et portée :
+Seuls les ennemis et tours dans une zone éclairée (souris ou feu de camp) sont “visibles” et à portée. 
+Les tours n’attaquent que les ennemis éclairés.

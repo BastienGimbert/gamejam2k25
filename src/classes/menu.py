@@ -1,4 +1,5 @@
 
+import os
 import pygame
 
 from classes.constants import COLORS
@@ -125,9 +126,21 @@ def creer_boutons_menu(
     )
     boutons.append(
         Bouton(
-            "Muet",
+            "Règles",
             (largeur_ecran - largeur_bouton) // 2,
             y_depart + 2 * (hauteur_bouton + espacement),
+            largeur_bouton,
+            hauteur_bouton,
+            actions.get("regles"),
+            police,
+            COULEURS_BOUTON,
+        )
+    )
+    boutons.append(
+        Bouton(
+            "Muet",
+            (largeur_ecran - largeur_bouton) // 2,
+            y_depart + 3 * (hauteur_bouton + espacement),
             largeur_bouton,
             hauteur_bouton,
             actions.get("muet"),
@@ -139,7 +152,7 @@ def creer_boutons_menu(
         Bouton(
             "Quitter",
             (largeur_ecran - largeur_bouton) // 2,
-            y_depart + 3 * (hauteur_bouton + espacement),
+            y_depart + 4 * (hauteur_bouton + espacement),
             largeur_bouton,
             hauteur_bouton,
             actions.get("quitter"),
@@ -263,3 +276,23 @@ def dessiner_gameover(ecran: pygame.Surface, boutons: list) -> None:
 
     for b in boutons:
         b.dessiner(ecran)
+
+def creer_boutons_regles(police: pygame.font.Font, action_retour) -> list:
+    from .bouton import Bouton
+    return [Bouton("Retour", 968, 920, 200, 50, action_retour, police, COULEURS_BOUTON)]
+
+def afficher_regles(ecran: pygame.Surface, police: pygame.font.Font, largeur: int, boutons: list = None) -> None:
+    ecran.fill((30, 30, 30))
+    font = pygame.font.Font(None, 28)
+    chemin = os.path.join("assets", "regles.txt")
+    with open(chemin, encoding="utf-8") as f:
+        lignes = [l.strip() for l in f.readlines()]
+    max_lignes = (ecran.get_height() - 120) // 38
+    for i, ligne in enumerate(lignes[:max_lignes]):
+        txt = font.render(ligne, True, (220, 220, 220))
+        ecran.blit(txt, (60, 40 + i * 38))
+    if boutons:
+        for bouton in boutons:
+            bouton.dessiner(ecran)
+
+    
