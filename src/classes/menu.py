@@ -3,6 +3,7 @@ import os
 import pygame
 
 from classes.constants import ASSETS_DIR, COLORS
+from classes.sprites import charger_image_avec_redimensionnement
 
 from .bouton import Bouton
 
@@ -54,8 +55,11 @@ FOND = None
 def charger_fond(ecran: pygame.Surface):
     global FOND
     if FOND is None:  # on le fait une seule fois
-        image = pygame.image.load(os.path.join(ASSETS_DIR, "fond.png")).convert()
-        FOND = pygame.transform.scale(image, ecran.get_size())
+        FOND = charger_image_avec_redimensionnement(
+            "assets/fond.png", 
+            ecran.get_size(), 
+            convert_alpha=False
+        )
 
 
 # ------------------- CRÉDITS -------------------
@@ -198,13 +202,10 @@ _GAMEOVER_IMG = None
 def _charger_gameover(ecran: pygame.Surface):
     global _GAMEOVER_IMG
     if _GAMEOVER_IMG is None:
-        chemin = os.path.join(ASSETS_DIR, "gameover.png")
-        if os.path.exists(chemin):
-            try:
-                img = pygame.image.load(chemin).convert_alpha()
-                _GAMEOVER_IMG = pygame.transform.smoothscale(img, ecran.get_size())
-            except Exception:
-                _GAMEOVER_IMG = None
+        _GAMEOVER_IMG = charger_image_avec_redimensionnement(
+            "assets/gameover.png", 
+            ecran.get_size()
+        )
 
 
 def creer_boutons_gameover(police: pygame.font.Font, actions: dict) -> list:

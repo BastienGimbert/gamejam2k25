@@ -2,6 +2,7 @@ import math
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 from classes.constants import ASSETS_DIR
+from classes.sprites import charger_image_assets, decouper_sprite
 import os
 
 import pygame
@@ -186,97 +187,14 @@ class SortEclair(Sort):
         self.max_niveau = 1  # Un seul niveau pour ce sort
         self.case_cible = None  # Case ciblée 
         self.temps_activation = None  # Timestamp de l'activation
-        self.duree_effet = 0.5  # en sec
-
-        if SortEclair._frames is None:
-            sheet = pygame.image.load("assets/spell/lightning.png").convert_alpha()
-            w, h = sheet.get_width() // 10, sheet.get_height()
-            SortEclair._frames = [
-                sheet.subsurface(pygame.Rect(i * w, 0, w, h)) for i in range(10)
-            ]
-
-    @property
-    def prix(self) -> int:
-        """Prix fixe de 80 gold."""
-        return self.prix_base
-
-    @property
-    def nom_complet(self) -> str:
-        """Retourne le nom complet du sort."""
-        return "Eclair"
-
-    def peut_etre_achete(self, argent_joueur: int) -> bool:
-        """Vérifie si le joueur a assez d'argent pour acheter ce sort."""
-        return argent_joueur >= self.prix
-
-    def est_au_niveau_maximum(self) -> bool:
-        """Retourne False car ce sort n'a pas de niveau maximum (on peut toujours le racheter)."""
-        return False
-
-    def activer_sur_case(self, case_x: int, case_y: int) -> bool:
-        """Active l'éclair sur une case spécifique. Retourne True si l'activation a réussi."""
-        if self.case_cible is not None:
-            return False  # Déjà en cours d'activation
-
-        self.case_cible = (case_x, case_y)
-        self.temps_activation = pygame.time.get_ticks() / 1000.0
-
-        return True
-
-    def est_actif(self) -> bool:
-        """Vérifie si l'effet d'éclair est encore actif."""
-        if self.case_cible is None or self.temps_activation is None:
-            return False
-
-        temps_ecoule = (pygame.time.get_ticks() / 1000.0) - self.temps_activation
-        if temps_ecoule >= self.duree_effet:
-            self.case_cible = None
-            self.temps_activation = None
-            return False
-
-        return True
-
-    def appliquer_effet(self, game: "Game") -> None:
-        """Applique les dégâts de l'éclair aux ennemis sur la case ciblée."""
-        if self.est_actif() and self.case_cible:
-            case_x, case_y = self.case_cible
-            taille_case = 64  # Taille d'une case en pixels
-
-            # Calculer la zone de la case en pixels
-            x_min = case_x * taille_case
-            x_max = (case_x + 1) * taille_case
-            y_min = case_y * taille_case
-            y_max = (case_y + 1) * taille_case
-
-            # Infliger des dégâts aux ennemis dans cette zone
-            for ennemi in game.ennemis:
-                if (
-                    x_min <= ennemi.position.x <= x_max
-                    and y_min <= ennemi.position.y <= y_max
-                ):
-                    ennemi.perdreVie(self.degats)
-
-class SortEclair(Sort):
-    """Sort d'éclair qui inflige 10 dégâts aux ennemis sur une case cliquée."""
-
-    _frames: list[pygame.Surface] | None = None
-
-
-    def __init__(self, niveau: int = 1):
-        super().__init__("Eclair", niveau)
-        self.prix_base = 30
-        self.degats = 10  # Dégâts
-        self.max_niveau = 1  # Un seul niveau pour ce sort
-        self.case_cible = None  # Case ciblée 
-        self.temps_activation = None  # Timestamp de l'activation
         self.duree_effet = 0.6  # en sec
 
         if SortEclair._frames is None:
-            sheet = pygame.image.load(os.path.join(ASSETS_DIR, "spell", "lightning.png")).convert_alpha()
-            w, h = sheet.get_width() // 10, sheet.get_height()
-            SortEclair._frames = [
-                sheet.subsurface(pygame.Rect(i * w, 0, w, h)) for i in range(10)
-            ]
+            sheet = charger_image_assets("lightning.png", "spell")
+            if sheet:
+                SortEclair._frames = decouper_sprite(sheet, 10, horizontal=True, copy=True)
+            else:
+                SortEclair._frames = []
 
     @property
     def prix(self) -> int:

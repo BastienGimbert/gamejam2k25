@@ -44,17 +44,29 @@ from classes.sort import SortEclair, SortFee, SortVision
 from classes.tour import Archer, Campement, Catapulte
 from classes.tour import Mage as TourMage
 from classes.tour import Tour
-from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positions
+from classes.sprites import (
+    charger_animation_ui,
+    charger_image_assets,
+    charger_image_avec_redimensionnement,
+    charger_image_projectile,
+    charger_sprites_tour_assets,
+    charger_spritesheet_ui,
+    decouper_sprite,
+)
+from classes.utils import charger_chemin_tiled, distance_positions
 
 
 class Game:
     def afficher_victoire(self, ecran):
-        img = pygame.image.load(os.path.join(ASSETS_DIR, "VICTOIRE.png")).convert_alpha()
-        img = pygame.transform.scale(img, (ecran.get_width(), ecran.get_height()))
-        ecran.blit(img, (0, 0))
+        img = charger_image_avec_redimensionnement(
+            "assets/VICTOIRE.png", 
+            (ecran.get_width(), ecran.get_height())
+        )
+        if img:
+            ecran.blit(img, (0, 0))
         
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
-        self.joueur = Joueur(argent=45, point_de_vie=100, sort="feu", etat="normal")
+        self.joueur = Joueur(argent=450, point_de_vie=100, sort="feu", etat="normal")
 
         # Gestion des vagues
         self.numVague = 0
@@ -246,71 +258,30 @@ class Game:
 
     # ---------- Chargements ----------
     def _charger_carte(self):
-        chemin_carte = MAP_PNG
-        if not os.path.exists(chemin_carte):
-            raise FileNotFoundError(f"Carte non trouvée: {chemin_carte}")
-        img = pygame.image.load(chemin_carte).convert_alpha()
+        """Charge la carte en utilisant la fonction utilitaire."""
+        img = charger_image_assets(MAP_PNG.split('/')[-1], "tilesets")
+        if img is None:
+            raise FileNotFoundError(f"Carte non trouvée: {MAP_PNG}")
         return img
 
     def _charger_piece(self):
+        """Charge l'animation des pièces depuis MonedaD.png (spritesheet)."""
         coinImg = os.path.join(MONEY_DIR, "MonedaD.png")
-        if os.path.exists(coinImg):
-            img = pygame.image.load(coinImg).convert_alpha()
-            frames = decouper_sprite(img, 5, horizontal=True, copy=True)
+        frames = charger_spritesheet_ui(coinImg, 5, scale=1.0)
+        # Redimensionner à 24x24
+        if frames:
             frames = [pygame.transform.smoothscale(f, (24, 24)) for f in frames]
-            return frames
-        return []
-
-    def _charger_coeurs(self):
-        """Charge toutes les images de coeur dans assets/heart et retourne une liste de surfaces."""
-        frames = []
-        if not os.path.isdir(HEART_DIR):
-            return frames
-        fichiers = [f for f in os.listdir(HEART_DIR) if f.lower().endswith(".png")]
-        if not fichiers:
-            return frames
-        fichiers.sort()
-        for fn in fichiers:
-            p = os.path.join(HEART_DIR, fn)
-            try:
-                img = pygame.image.load(p).convert_alpha()
-                frames.append(img)
-            except Exception:
-                continue
         return frames
 
+    def _charger_coeurs(self):
+        """Charge toutes les images de coeur en utilisant la fonction utilitaire."""
+        return charger_animation_ui("heart", scale=1.0)
+
     def _charger_tours(self):
+        """Charge tous les assets des tours en utilisant la fonction utilitaire."""
         assets = {}
         for tower_type in self.tower_types:
-            tower_folder = os.path.join(TOWER_DIR, tower_type)
-            if not os.path.isdir(tower_folder):
-                continue
-
-            chemins = [f for f in os.listdir(tower_folder) if f.endswith(".png")]
-            if not chemins:
-                continue
-
-            chemins.sort()
-
-            # campement : 6 images
-            if tower_type == "campement":
-                dernier_chemin = os.path.join(tower_folder, chemins[-1])
-                image = pygame.image.load(dernier_chemin).convert_alpha()
-                slices = decouper_sprite(image, 6, horizontal=True, copy=False)
-                frames = [slices]
-                assets[tower_type] = {
-                    "frames": frames,
-                    "icon": pygame.transform.smoothscale(slices[0], (48, 48)),
-                }
-            else:
-                # Cas tour classique : découpe en 4
-                dernier_chemin = os.path.join(tower_folder, chemins[-1])
-                image = pygame.image.load(dernier_chemin).convert_alpha()
-                slices = decouper_sprite(image, 4, horizontal=True, copy=False)
-                frames = [slices]
-                icon = pygame.transform.smoothscale(slices[2], (48, 48))
-                assets[tower_type] = {"frames": frames, "icon": icon}
-
+            assets[tower_type] = charger_sprites_tour_assets(tower_type)
         return assets
 
     def _creer_boutons_boutique(self):
@@ -325,26 +296,8 @@ class Game:
         return boutons
 
     def _charger_image_projectile(self, chemin_relatif: str):
-        if not chemin_relatif:
-            # Fallback simple
-            surf = pygame.Surface((22, 22), pygame.SRCALPHA)
-            pygame.draw.circle(surf, (120, 120, 120), (11, 11), 10)
-            return surf
-
-        p = os.path.join(PROJECT_ROOT, chemin_relatif)
-        if os.path.exists(p):
-            try:
-                return pygame.image.load(p).convert_alpha()
-            except Exception:
-                pass
-        # Fallbacks
-        if "archer" in chemin_relatif:
-            surf = pygame.Surface((24, 24), pygame.SRCALPHA)
-            pygame.draw.line(surf, (220, 220, 50), (12, 2), (12, 22), 3)
-            return surf
-        surf = pygame.Surface((22, 22), pygame.SRCALPHA)
-        pygame.draw.circle(surf, (120, 120, 120), (11, 11), 10)
-        return surf
+        """Charge une image de projectile en utilisant la fonction utilitaire."""
+        return charger_image_projectile(chemin_relatif)
 
     # ---------- Utilitaires ----------
 

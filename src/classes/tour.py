@@ -4,10 +4,11 @@ from typing import Callable, List, Optional, Tuple
 
 import pygame
 
-from classes.animation import DirectionalAnimator
+from classes.animation import AnimateurDirectionnel
 from classes.ennemi import Ennemi
 from classes.position import Position
-from classes.utils import charger_et_scaler, distance_positions
+from classes.sprites import charger_sprites_tour
+from classes.utils import distance_positions
 
 
 def _project_root() -> str:
@@ -45,12 +46,12 @@ class Tour(ABC):
         )
         desired_total = 6 if self.type_nom == "catapulte" else 11
         side_faces_right = False if self.type_nom == "archer" else True
-        self._anim = DirectionalAnimator(
+        self._anim = AnimateurDirectionnel(
             person_path,
-            side_faces_right=side_faces_right,
-            desired_compound_total=desired_total,
+            cote_face_droite=side_faces_right,
+            total_frames_desire=desired_total,
         )
-        self._anim.start("Idle", "S", False)
+        self._anim.demarrer("Idle", "S", False)
 
         offsets = {"archer": -18, "catapulte": 2, "mage": -18}
         self._person_offset_y = offsets.get(self.type_nom, 8)
@@ -61,7 +62,7 @@ class Tour(ABC):
         self.draw_person(ecran)
 
     def draw_person(self, ecran: pygame.Surface) -> None:
-        self._anim.draw(
+        self._anim.dessiner(
             ecran,
             int(self.position.x),
             int(self.position.y) - self._person_offset_y,
@@ -78,24 +79,24 @@ class Tour(ABC):
 
         if self._etat == "idle":
             self._time_since_last_shot += dt
-            self._anim.update(dt)
+            self._anim.mettre_a_jour(dt)
             if self._time_since_last_shot >= self.cooldown_s:
                 cible = self._choisir_cible(ennemis)
                 if cible is not None:
                     self._cible = cible
                     d, fx = self._best_orient(self._cible)
-                    self._anim.start("Preattack", d, fx)
+                    self._anim.demarrer("Preattack", d, fx)
                     self._etat = "preattack"
                     self._au_tir = au_tir
 
         elif self._etat == "preattack":
             if self._cible is not None:
                 d, fx = self._best_orient(self._cible)
-                self._anim.set_orientation(d, fx)
-            if self._anim.update(dt):
+                self._anim.definir_orientation(d, fx)
+            if self._anim.mettre_a_jour(dt):
                 d = self._anim.direction
                 fx = self._anim.flip_x
-                self._anim.start("Attack", d, fx)
+                self._anim.demarrer("Attack", d, fx)
                 self._etat = "attack"
                 if self._cible is not None:
                     self.attaquer(self._cible)
@@ -103,8 +104,8 @@ class Tour(ABC):
         elif self._etat == "attack":
             if self._cible is not None:
                 d, fx = self._best_orient(self._cible)
-                self._anim.set_orientation(d, fx)
-            if self._anim.update(dt):
+                self._anim.definir_orientation(d, fx)
+            if self._anim.mettre_a_jour(dt):
                 if (
                     self._cible is not None
                     and not self._cible.estMort()
@@ -121,12 +122,12 @@ class Tour(ABC):
                 self._etat = "idle"
                 self._cible = None
                 self._au_tir = None
-                self._anim.start("Idle", self._anim.direction, self._anim.flip_x)
+                self._anim.demarrer("Idle", self._anim.direction, self._anim.flip_x)
 
     def _best_orient(self, cible: Optional["Ennemi"]) -> Tuple[str, bool]:
         if cible is None:
             return "S", False
-        return self._anim.best_orientation(
+        return self._anim.meilleure_orientation(
             self.position.x, self.position.y, cible.position.x, cible.position.y
         )
 
@@ -256,7 +257,7 @@ class Mage(Tour):
             return
 
         self._time_since_last_shot += dt
-        self._anim.update(dt)  
+        self._anim.mettre_a_jour(dt)  
 
         if self._time_since_last_shot >= self.cooldown_s:
             cible = self._choisir_cible(ennemis)
@@ -286,8 +287,8 @@ class Campement(Tour):
 
         if Campement._frames is None:
             # Charger les 6 frames de feu
-            Campement._frames = charger_et_scaler(
-                "tower/campement", "1.png", 6, scale=0.8, notInEnemyFolder=True
+            Campement._frames = charger_sprites_tour(
+                "campement", "1.png", 6, scale=0.8
             )
 
         self.frame_index = 0
