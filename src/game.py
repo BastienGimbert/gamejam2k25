@@ -28,31 +28,20 @@ from classes.constants import (
     TOWER_DIR,
     WINDOW_HEIGHT,
 )
-from classes.ennemi import Chevalier, Ennemi, Gobelin, Mage
-from classes.ennemi_manager import EnnemiManager
-from classes.tour_manager import TourManager
-from classes.shop_manager import ShopManager
-from classes.audio_manager import AudioManager
-from classes.ui_manager import UIManager
-from classes.joueur import Joueur
+from models.ennemi import Chevalier, Ennemi, Gobelin, Mage
+from managers.ennemi_manager import EnnemiManager
+from managers.tour_manager import TourManager
+from managers.shop_manager import ShopManager
+from managers.audio_manager import AudioManager
+from managers.ui_manager import UIManager
+from models.joueur import Joueur
 from classes.pointeur import Pointeur
 from classes.position import Position
-# Les projectiles sont maintenant gérés par TourManager
-# from classes.projectile import (
-#     EffetExplosion,
-#     ProjectileFleche,
-#     ProjectileMageEnnemi,
-#     ProjectilePierre,
-#     ProjectileTourMage,
-# )
-from classes.sort import SortEclair, SortFee, SortVision
-# Les tours sont maintenant gérées par TourManager
-# from classes.tour import Archer, Campement, Catapulte
-# from classes.tour import Mage as TourMage
-# from classes.tour import Tour
+from models.sort import SortEclair, SortFee, SortVision
+
 
 # Import nécessaire pour le type hint
-from classes.tour import Campement
+from models.tour import Campement
 from classes.sprites import (
     charger_animation_ui,
     charger_image_assets,
@@ -62,13 +51,10 @@ from classes.sprites import (
     charger_spritesheet_ui,
     decouper_sprite,
 )
-from classes.utils import charger_chemin_tiled, distance_positions
+from classes.utils import charger_chemin_tiled, cases_depuis_chemin, position_dans_grille, case_depuis_pos, distance_positions
 
 
 class Game:
-    # def afficher_victoire(self, ecran):
-    #     # Maintenant géré par UIManager
-    #     self.ui_manager.dessiner_victoire(ecran)
         
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
         self.joueur = Joueur(argent=450, point_de_vie=100, sort="feu", etat="normal")
@@ -82,9 +68,7 @@ class Game:
 
         self.police = police
         self.police_tour = pygame.font.Font(None, 44)
-        # État muet propagé depuis main - maintenant géré par AudioManager
         # self.est_muet = est_muet
-        # Cache de sons ponctuels - maintenant géré par AudioManager
         # self._sons_cache: dict[str, pygame.mixer.Sound] = {}
         self.couleurs = {
             "fond": (0, 6, 25),
@@ -100,17 +84,6 @@ class Game:
         self.hauteur_ecran = GAME_HEIGHT  # Taille normale de la carte
         self.case_survolee: tuple[int, int] | None = None
 
-        # Boutique (à droite de la carte) - maintenant géré par ShopManager
-        # self.largeur_boutique = SHOP_WIDTH
-        # self.rect_boutique = pygame.Rect(
-        #     self.largeur_ecran, 0, self.largeur_boutique, self.hauteur_ecran
-        # )
-
-        # Boutique de sorts (en bas de l'écran) - maintenant géré par ShopManager
-        # self.hauteur_boutique_sorts = SPELLS_HEIGHT
-        # self.rect_boutique_sorts = pygame.Rect(
-        #     0, self.hauteur_ecran, self.largeur_ecran + self.largeur_boutique, self.hauteur_boutique_sorts
-        # )
 
         # Sorts du joueur
         self.sorts = {
@@ -121,41 +94,12 @@ class Game:
 
         # État de sélection des sorts
         self.eclair_selectionne = False
-        # Prix par type de tour (affichage et logique d'achat/vente) - maintenant géré par TourManager
-        # self.prix_par_type: dict[str, int] = {
-        #     "archer": getattr(Archer, "PRIX"),
-        #     "catapulte": getattr(Catapulte, "PRIX"),
-        #     "mage": getattr(TourMage, "PRIX"),
-        #     "campement": getattr(Campement, "PRIX"),
-        # }
 
-        # Portée par type de tour - maintenant géré par TourManager
-        # self.portee_par_type: dict[str, float] = {
-        #     "archer": getattr(Archer, "PORTEE"),
-        #     "catapulte": getattr(Catapulte, "PORTEE"),
-        #     "mage": getattr(TourMage, "PORTEE"),
-        #     "campement": getattr(Campement, "PORTEE"),
-        # }
-
-        # Animation monnaie - maintenant géré par ShopManager
-        # self.coin_frames = self._charger_piece()
-        # self.coin_frame_idx = 0
-        # self.COIN_ANIM_INTERVAL = COIN_ANIM_INTERVAL_MS
-        # self.last_coin_ticks = pygame.time.get_ticks()
-
-        # Animation coeurs (PV) - maintenant géré par ShopManager
-        # self.heart_frames = self._charger_coeurs()
-        # self.heart_frame_idx = 0
-        # self.HEART_ANIM_INTERVAL = HEART_ANIM_INTERVAL_MS
-        # self.last_heart_ticks = pygame.time.get_ticks()
 
         # Types de tours
         self.tower_types = DEFAULT_TOWER_TYPES
-        # --- Ajout : sélection de tour pour affichage de la range - maintenant géré par TourManager ---
-        # self.tour_selectionnee: tuple[int, int] | None = None
 
         self.tower_assets = self._charger_tours()
-        # self.shop_items = self._creer_boutons_boutique()  # maintenant géré par ShopManager
         
         # Manager de la boutique (après la définition des types de tours et assets)
         self.shop_manager = ShopManager(self)
@@ -167,7 +111,6 @@ class Game:
         # Manager UI
         self.ui_manager = UIManager(self)
         
-        # Créer le bouton de vague maintenant que le ShopManager est initialisé
         medieval_couleurs = {
             "fond_normal": (110, 70, 30),  # brun
             "fond_survol": (150, 100, 40),  # brun clair
@@ -181,40 +124,14 @@ class Game:
             self.hauteur_ecran - 70,
             self.shop_manager.largeur_boutique - 40,
             50,
-            self.lancerVague,
+            self.ennemi_manager.lancer_vague,
             police_medievale,
             medieval_couleurs,
         )
         
         self.type_selectionne: str | None = None
 
-        # Occupation des cases (affichage) - maintenant géré par TourManager
-        # self.positions_occupees: dict[tuple[int, int], dict] = {}
 
-        # Tours / projectiles (logique) - maintenant gérés par TourManager
-        # self.tours: list[Tour] = []
-        # self.projectiles: list[
-        #     ProjectileFleche | ProjectilePierre | ProjectileTourMage
-        # ] = []
-        # 
-        # # Effets visuels d'explosion
-        # self.effets_explosion: list[EffetExplosion] = []
-
-        # Couleurs UI - maintenant gérées par ShopManager
-        # self.couleur_boutique_bg = (30, 30, 30)
-        # self.couleur_boutique_border = (80, 80, 80)
-        # self.couleur_bouton_bg = (60, 60, 60)
-        # self.couleur_bouton_hover = (90, 90, 90)
-        # self.couleur_texte = (240, 240, 240)
-
-        # Couleurs pour la boutique de sorts (même style que la boutique) - maintenant gérées par ShopManager
-        # self.couleur_boutique_sorts_bg = self.couleur_boutique_bg
-        # self.couleur_boutique_sorts_border = self.couleur_boutique_border
-
-        # Couleurs UI - maintenant gérées par UIManager
-        # self.couleur_quadrillage = (40, 60, 100)
-        # self.couleur_surbrillance = (80, 180, 255)
-        # self.couleur_surbrillance_interdite = (255, 80, 80)
         self.couleur_boutique_bg = (30, 30, 30)
         self.couleur_boutique_border = (80, 80, 80)
         self.couleur_bouton_bg = (60, 60, 60)
@@ -230,7 +147,7 @@ class Game:
         self.carte = self._charger_carte()
         self.tmj_path = MAP_TILESET_TMJ
         chemin_positions = charger_chemin_tiled(self.tmj_path, layer_name="path")
-        self.cases_bannies = self._cases_depuis_chemin(chemin_positions)
+        self.cases_bannies = cases_depuis_chemin(chemin_positions, self.taille_case)
         # Bannir aussi les 6 cases des deux premières lignes (x=0..5, y=0..1)
         for y in (0, 1):
             for x in range(0, 6):
@@ -240,19 +157,6 @@ class Game:
         # Pointeur
         self.pointeur = Pointeur()
 
-        # État jour/nuit - maintenant géré par EnnemiManager
-        # self.est_nuit = False
-
-        # self.action_bouton= self.lancerVague()
-        # self.bouton = Bouton("Bouton", 100, 100, 200, 50, self.action_bouton, self.police, self.couleurs)
-
-    def getToursFeuDeCamp(self) -> list[Campement]:
-        return self.tour_manager.get_tours_feu_de_camp()
-
-    def dansFeuDeCamp(self, position: Position) -> bool:
-        return self.tour_manager.dans_feu_de_camp(position)
-
-
     # ---------- Chargements ----------
     def _charger_carte(self):
         """Charge la carte en utilisant la fonction utilitaire."""
@@ -261,18 +165,6 @@ class Game:
             raise FileNotFoundError(f"Carte non trouvée: {MAP_PNG}")
         return img
 
-    # def _charger_piece(self):
-    #     """Charge l'animation des pièces depuis MonedaD.png (spritesheet)."""
-    #     coinImg = os.path.join(MONEY_DIR, "MonedaD.png")
-    #     frames = charger_spritesheet_ui(coinImg, 5, scale=1.0)
-    #     # Redimensionner à 24x24
-    #     if frames:
-    #         frames = [pygame.transform.smoothscale(f, (24, 24)) for f in frames]
-    #     return frames
-
-    # def _charger_coeurs(self):
-    #     """Charge toutes les images de coeur en utilisant la fonction utilitaire."""
-    #     return charger_animation_ui("heart", scale=1.0)
 
     def _charger_tours(self):
         """Charge tous les assets des tours en utilisant la fonction utilitaire."""
@@ -281,51 +173,12 @@ class Game:
             assets[tower_type] = charger_sprites_tour_assets(tower_type)
         return assets
 
-    # def _creer_boutons_boutique(self):
-    #     boutons = []
-    #     x = self.rect_boutique.x + 20
-    #     y = 100
-    #     espace_y = 90
-    #     for t in self.tower_types:
-    #         rect = pygame.Rect(x, y, self.largeur_boutique - 40, 70)
-    #         boutons.append({"type": t, "rect": rect})
-    #         y += espace_y
-    #     return boutons
-
-    # def _charger_image_projectile(self, chemin_relatif: str):
-    #     """Charge une image de projectile en utilisant la fonction utilitaire."""
-    #     return charger_image_projectile(chemin_relatif)
-
-    # ---------- Utilitaires ----------
-
-    def _position_dans_grille(self, pos):
-        return pos[0] < self.largeur_ecran and 0 <= pos[1] < self.hauteur_ecran
-
-    def _case_depuis_pos(self, pos):
-        x_case = pos[0] // self.taille_case
-        y_case = pos[1] // self.taille_case
-        if 0 <= x_case < self.colonnes and 0 <= y_case < self.lignes:
-            return (x_case, y_case)
-        return None
-
-    # def _dessiner_quadrillage(self, ecran):
-    #     # Maintenant géré par UIManager
-    #     self.ui_manager.dessiner_quadrillage(ecran)
 
     def _dessiner_personnages_tours(self, ecran):
         self.tour_manager.dessiner_personnages_tours(ecran)
 
-    # Les méthodes de dessin de boutique sont maintenant dans ShopManager
-    # def _dessiner_boutique(self, ecran): ...
-    # def _dessiner_boutique_sorts(self, ecran): ...
 
-    # def _dessiner_surbrillance(self, ecran):
-    #     # Maintenant géré par UIManager
-    #     self.ui_manager.dessiner_surbrillance(ecran)
 
-    # def _dessiner_tours_placees(self, ecran):
-    #     # Maintenant géré par UIManager
-    #     self.tour_manager.dessiner_tours_placees(ecran, self.taille_case)
 
 
     # ---------- Update / boucle ----------
@@ -377,7 +230,6 @@ class Game:
         self.tour_manager.mettre_a_jour_feux_de_camps(dt, nuit_surface)
 
     # def get_max_vague_csv(self) -> int:
-    #     # Maintenant géré par EnnemiManager
     #     return self.ennemi_manager.get_max_vague_csv()  
 
     def dessiner(self, ecran: pygame.Surface) -> None:
@@ -411,8 +263,8 @@ class Game:
 
         if event.type == pygame.MOUSEMOTION:
             pos = pygame.mouse.get_pos()
-            if self._position_dans_grille(pos):
-                self.case_survolee = self._case_depuis_pos(pos)
+            if position_dans_grille(pos, self.largeur_ecran, self.hauteur_ecran):
+                self.case_survolee = case_depuis_pos(pos, self.taille_case, self.colonnes, self.lignes)
             else:
                 self.case_survolee = None
 
@@ -422,8 +274,8 @@ class Game:
 
             # Vérifier si l'éclair est sélectionné et cliquer sur une case
             if hasattr(self, "eclair_selectionne") and self.eclair_selectionne:
-                if self._position_dans_grille(pos):
-                    case = self._case_depuis_pos(pos)
+                if position_dans_grille(pos, self.largeur_ecran, self.hauteur_ecran):
+                    case = case_depuis_pos(pos, self.taille_case, self.colonnes, self.lignes)
                     if case and case in getattr(self, "cases_bannies", set()):
                         # L'éclair ne peut être utilisé que sur les cases du chemin
                         # Mais pas sur les 6 cases en haut à gauche (x=0..5, y=0..1)
@@ -445,7 +297,7 @@ class Game:
             if self.shop_manager.gerer_clic_boutique_sorts(pos):
                 return None
             # Clic dans la boutique des tours
-            if self.bouton_vague.rect.collidepoint(pos) and self.vague_terminee():
+            if self.bouton_vague.rect.collidepoint(pos) and self.ennemi_manager.vague_terminee():
                 self.bouton_vague.action()
                 self.tour_manager.tour_selectionnee = None  # désélectionne la range
                 return None
@@ -454,8 +306,8 @@ class Game:
                 return None
 
             # Placement de tour (priorité sur la sélection)
-            if self.type_selectionne and self._position_dans_grille(pos):
-                case = self._case_depuis_pos(pos)
+            if self.type_selectionne and position_dans_grille(pos, self.largeur_ecran, self.hauteur_ecran):
+                case = case_depuis_pos(pos, self.taille_case, self.colonnes, self.lignes)
                 if case and self.tour_manager.peut_placer_tour(case, self.type_selectionne, self.cases_bannies):
                     if self.tour_manager.placer_tour(case, self.type_selectionne):
                         self.type_selectionne = None
@@ -463,8 +315,8 @@ class Game:
                 return None
             
             # --- Ajout : sélection/désélection d'une tour placée pour afficher la range ---
-            if self._position_dans_grille(pos):
-                case = self._case_depuis_pos(pos)
+            if position_dans_grille(pos, self.largeur_ecran, self.hauteur_ecran):
+                case = case_depuis_pos(pos, self.taille_case, self.colonnes, self.lignes)
                 self.tour_manager.selectionner_tour(case)
                 return None
 
@@ -475,58 +327,11 @@ class Game:
             if self.shop_manager.rect_boutique.collidepoint(pos):
                 self.tour_manager.tour_selectionnee = None  # désélectionne la range
                 return None
-            if self._position_dans_grille(pos):
-                case = self._case_depuis_pos(pos)
+            if position_dans_grille(pos, self.largeur_ecran, self.hauteur_ecran):
+                case = case_depuis_pos(pos, self.taille_case, self.colonnes, self.lignes)
                 if case and case in self.tour_manager.positions_occupees:
                     self.tour_manager.vendre_tour(case)
                     self.tour_manager.tour_selectionnee = None  # désélectionne la range
 
         return None
 
-    # ---------- Vagues ----------
-    def lancerVague(self):
-        """Démarre une nouvelle vague d'ennemis, chargée depuis un CSV."""
-        self.ennemi_manager.lancer_vague()
-
-    def majvague(self):
-        """Fait apparaître les ennemis au moment de leur temps d'apparition."""
-        self.ennemi_manager.mettre_a_jour_vague()
-
-    # ---------- Chemin / placement ----------
-    def _cases_depuis_chemin(
-        self, chemin_positions: list[Position]
-    ) -> set[tuple[int, int]]:
-        """Approxime les cases de grille traversées par le polygone du chemin."""
-        bannies: set[tuple[int, int]] = set()
-        if not chemin_positions:
-            return bannies
-
-        # Ajoute les cases des points eux-mêmes
-        for p in chemin_positions:
-            x_case = int(p.x) // self.taille_case
-            y_case = int(p.y) // self.taille_case
-            if 0 <= x_case < self.colonnes and 0 <= y_case < self.lignes:
-                bannies.add((x_case, y_case))
-
-        # Echantillonne les segments
-        for i in range(len(chemin_positions) - 1):
-            p0 = chemin_positions[i]
-            p1 = chemin_positions[i + 1]
-            dx = p1.x - p0.x
-            dy = p1.y - p0.y
-            dist = max(1.0, (dx * dx + dy * dy) ** 0.5)
-            pas = max(1, int(dist / (self.taille_case / 4)))  # échantillonnage fin
-            for s in range(pas + 1):
-                t = s / pas
-                x = p0.x + dx * t
-                y = p0.y + dy * t
-                x_case = int(x) // self.taille_case
-                y_case = int(y) // self.taille_case
-                if 0 <= x_case < self.colonnes and 0 <= y_case < self.lignes:
-                    bannies.add((x_case, y_case))
-
-        return bannies
-
-    def vague_terminee(self) -> bool:
-        """Retourne True si tous les ennemis sont morts ou arrivés au bout."""
-        return self.ennemi_manager.vague_terminee()

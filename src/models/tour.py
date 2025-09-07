@@ -5,7 +5,7 @@ from typing import Callable, List, Optional, Tuple
 import pygame
 
 from classes.animation import AnimateurDirectionnel
-from classes.ennemi import Ennemi
+from models.ennemi import Ennemi
 from classes.position import Position
 from classes.sprites import charger_sprites_tour
 from classes.utils import distance_positions

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, ClassVar, Optional
 
 import pygame
 
-from classes.ennemi import Chevalier, Ennemi
+from models.ennemi import Chevalier, Ennemi
 from classes.position import Position
 
 if TYPE_CHECKING:

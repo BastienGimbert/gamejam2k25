@@ -6,15 +6,15 @@ import pygame
 
 from classes.constants import ASSETS_DIR, AUDIO_DIR
 from classes.position import Position
-from classes.projectile import (
+from models.projectile import (
     EffetExplosion,
     ProjectileFleche,
     ProjectileMageEnnemi,
     ProjectilePierre,
     ProjectileTourMage,
 )
-from classes.tour import Archer, Campement, Catapulte, Tour
-from classes.tour import Mage as TourMage
+from models.tour import Archer, Campement, Catapulte, Tour
+from models.tour import Mage as TourMage
 from classes.utils import distance_positions
 
 if TYPE_CHECKING:

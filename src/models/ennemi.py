@@ -145,7 +145,7 @@ class Ennemi(ABC):
 
         if (
             distance_positions(self.position, pointeurPos) < portee_curseur
-        ) or game.dansFeuDeCamp(self.position):
+        ) or game.tour_manager.dans_feu_de_camp(self.position):
             self.set_visibilite(True)
         else:
             self.set_visibilite(False)

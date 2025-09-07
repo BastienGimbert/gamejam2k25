@@ -200,7 +200,7 @@ class ShopManager:
                 ecran.blit(coin_surf, (coin_x, coin_y))
 
         # Bouton de vague
-        bouton_actif = self.game.vague_terminee()
+        bouton_actif = self.game.ennemi_manager.vague_terminee()
         if bouton_actif:
             self.game.bouton_vague.dessiner(ecran)
         else:

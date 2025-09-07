@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 import pygame
 
 from classes.csv import creer_liste_ennemis_depuis_csv
-from classes.ennemi import Ennemi
+from models.ennemi import Ennemi
 from classes.constants import PROJECT_ROOT, RECOMPENSES_PAR_VAGUE
 
 if TYPE_CHECKING:
@@ -234,7 +234,7 @@ class EnnemiManager:
     
     def get_mages_actifs(self) -> list[Ennemi]:
         """Retourne la liste des mages actifs."""
-        from classes.ennemi import Mage
+        from models.ennemi import Mage
         return [
             e
             for e in self.ennemis
