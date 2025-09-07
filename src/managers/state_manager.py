@@ -102,6 +102,7 @@ class StateManager:
 
         actions_menu_pause = {
             "reprendre": self._callbacks["reprendre_jeu"],
+            "regles": self._callbacks["afficher_regles"],
             "credits": self._callbacks["afficher_credits"],
             "muet": self._callbacks["basculer_muet"],
             "quitter": self._callbacks["quitter_jeu"],
@@ -195,6 +196,14 @@ class StateManager:
             changement = self.game.gerer_evenement(event)
             if changement == "PAUSE":
                 self.change_state(GameState.PAUSE)
+        elif self.current_state == GameState.PAUSE:
+            # Gestion de la touche R pour les règles en pause
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                self._afficher_regles()
+            else:
+                # Gestion des boutons pour la pause
+                for button in self.get_buttons():
+                    button.gerer_evenement(event)
         elif self.current_state == GameState.REGLES:
             for button in self.get_buttons():
                 button.gerer_evenement(event)
@@ -262,7 +271,11 @@ class StateManager:
         self.change_state(GameState.CREDITS)
 
     def _retour_depuis_regles(self):
-        self.change_state(GameState.MENU)    
+        """Retourne depuis les règles vers l'état précédent."""
+        if self.previous_state and self.previous_state != GameState.REGLES:
+            self.change_state(self.previous_state)
+        else:
+            self.change_state(GameState.MENU)    
 
     def _retour_depuis_credits(self) -> None:
         """Retourne depuis les crédits."""

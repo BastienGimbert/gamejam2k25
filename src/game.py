@@ -230,6 +230,10 @@ class Game:
         """Joue un son ponctuel via l'AudioManager."""
         self.audio_manager.jouer_sfx(fichier, volume)
 
+    def decompte_dt(self) -> None:
+        """Met à jour le delta time sans mettre à jour la logique du jeu (pour la pause)."""
+        self.clock.tick(60) / 1000.0
+
 
     # ---------- Evénements ----------
     def gerer_evenement(self, event: pygame.event.Event) -> str | None:
