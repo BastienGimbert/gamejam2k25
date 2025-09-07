@@ -7,7 +7,7 @@ import pygame
 from classes.animation import DirectionalAnimator
 from classes.ennemi import Ennemi
 from classes.position import Position
-from classes.utils import charger_et_scaler, distance_positions
+from classes.utils import distance_positions, charger_sprite_tour, charger_animation_campement
 
 
 def _project_root() -> str:
@@ -54,10 +54,25 @@ class Tour(ABC):
 
         offsets = {"archer": -18, "catapulte": 2, "mage": -18}
         self._person_offset_y = offsets.get(self.type_nom, 8)
+        
+        # Charger le sprite principal de la tour
+        self._tower_sprite = charger_sprite_tour(self.type_nom, scale=1.0)
+        if self._tower_sprite is None:
+            # Créer une surface de fallback si le chargement échoue
+            self._tower_sprite = pygame.Surface((32, 32), pygame.SRCALPHA)
+            self._tower_sprite.fill((100, 100, 100))  # Gris pour indiquer l'erreur
 
     def draw(self, ecran: pygame.Surface) -> None:
-        rect = pygame.Rect(int(self.position.x) - 16, int(self.position.y) - 16, 32, 32)
-        pygame.draw.rect(ecran, (150, 150, 180), rect)
+        # Dessiner le sprite principal de la tour
+        if hasattr(self, '_tower_sprite') and self._tower_sprite is not None:
+            sprite_rect = self._tower_sprite.get_rect()
+            sprite_rect.center = (int(self.position.x), int(self.position.y))
+            ecran.blit(self._tower_sprite, sprite_rect)
+        else:
+            # Fallback : rectangle gris
+            rect = pygame.Rect(int(self.position.x) - 16, int(self.position.y) - 16, 32, 32)
+            pygame.draw.rect(ecran, (150, 150, 180), rect)
+        
         self.draw_person(ecran)
 
     def draw_person(self, ecran: pygame.Surface) -> None:
@@ -284,23 +299,30 @@ class Campement(Tour):
             prix=self.PRIX,
         )
 
+        # Charger l'animation du campement en utilisant la nouvelle fonction
         if Campement._frames is None:
-            # Charger les 6 frames de feu
-            Campement._frames = charger_et_scaler(
-                "tower/campement", "1.png", 6, scale=0.8, notInEnemyFolder=True
-            )
+            Campement._frames = charger_animation_campement(scale=0.8)
+            # Vérifier que l'animation s'est chargée correctement
+            if not Campement._frames or len(Campement._frames) == 0:
+                print("Erreur: Impossible de charger l'animation du campement")
+                Campement._frames = []
 
         self.frame_index = 0
         self.frame_timer = 0.0
 
-    def maj(self, dt: float, *args, **kwargs) -> None:
+    def maj(self, dt: float, ennemis=None, au_tir=None) -> None:
+        # Mettre à jour l'animation du feu
         self.frame_timer += dt
         if self.frame_timer >= 0.12:
             self.frame_timer = 0
             self.frame_index = (self.frame_index + 1) % len(Campement._frames)
+        
+        # Appeler la méthode maj de la classe parent pour l'animation du personnage
+        super().maj(dt, ennemis or [], au_tir)
 
     def dessiner(self, ecran: pygame.Surface, taille_case: int) -> None:
-        if Campement._frames is None:
+        # Pour le campement, on affiche seulement l'animation du feu (pas de sprite de tour)
+        if Campement._frames is None or len(Campement._frames) == 0:
             return
         frame = Campement._frames[self.frame_index]
         surf = pygame.transform.smoothscale(frame, (taille_case, taille_case))

@@ -10,8 +10,7 @@ from classes.constants import MAP_TILESET_TMJ, TILESETS_DIR
 from classes.position import Position
 from classes.utils import (
     charger_chemin_tiled,
-    charger_et_scaler,
-    decouper_sprite,
+    charger_sprites_directionnels,
     distance_positions,
 )
 
@@ -73,6 +72,7 @@ class Ennemi(ABC):
     def seDeplacer(self, dt: float):
         if self.estMort() or self._arrive_au_bout:
             return
+        
         d = max(0.0, self.vitesse * dt)
         while d > 1e-6 and not self._arrive_au_bout:
             if self._segment_index >= len(self._chemin) - 1:
@@ -199,18 +199,16 @@ class Gobelin(Ennemi):
             **kw
         )
 
-        # Charger les spritesheets une seule fois
+        # Charger les spritesheets une seule fois en utilisant la nouvelle fonction
         if Gobelin._frames_by_dir is None:
+            sprites_loaded = charger_sprites_directionnels(
+                "goblin", ["D", "S", "U"], "{direction}_Walk.png", 6, SCALE_FACTOR * 0.8
+            )
+            # Convertir les clés pour correspondre au code existant
             Gobelin._frames_by_dir = {
-                "down": charger_et_scaler(
-                    "goblin", "D_Walk.png", 6, scale=SCALE_FACTOR * 0.8
-                ),
-                "up": charger_et_scaler(
-                    "goblin", "U_Walk.png", 6, scale=SCALE_FACTOR * 0.8
-                ),
-                "side": charger_et_scaler(
-                    "goblin", "S_Walk.png", 6, scale=SCALE_FACTOR * 0.8
-                ),
+                "down": sprites_loaded["D"],
+                "up": sprites_loaded["U"], 
+                "side": sprites_loaded["S"]
             }
 
         self.pointsDeVieInitiaux = self.pointsDeVie
@@ -220,7 +218,7 @@ class Gobelin(Ennemi):
         self.flip = False
 
     def update_animation(self, dt: float):
-        """Met à jour l’index de frame en fonction du temps (dt)."""
+        """Met à jour l'index de frame en fonction du temps (dt)."""
         self.frame_timer += dt
         if self.frame_timer >= 0.15:  # change toutes les 150ms
             self.frame_timer = 0
@@ -276,11 +274,16 @@ class Rat(Ennemi):
             **kw
         )
 
+        # Charger les spritesheets une seule fois en utilisant la nouvelle fonction
         if Rat._frames_by_dir is None:
+            sprites_loaded = charger_sprites_directionnels(
+                "rat", ["D", "S", "U"], "{direction}_Run.png", 6, 2/3
+            )
+            # Convertir les clés pour correspondre au code existant
             Rat._frames_by_dir = {
-                "down": charger_et_scaler("rat", "D_Run.png", 6, scale=2 / 3),
-                "up": charger_et_scaler("rat", "U_Run.png", 6, scale=2 / 3),
-                "side": charger_et_scaler("rat", "S_Run.png", 6, scale=2 / 3),
+                "down": sprites_loaded["D"],
+                "up": sprites_loaded["U"], 
+                "side": sprites_loaded["S"]
             }
 
         self.pointsDeVieInitiaux = self.pointsDeVie
@@ -338,17 +341,16 @@ class Loup(Ennemi):
             **kw
         )
 
+        # Charger les spritesheets une seule fois en utilisant la nouvelle fonction
         if Loup._frames_by_dir is None:
+            sprites_loaded = charger_sprites_directionnels(
+                "wolf", ["D", "S", "U"], "{direction}_Walk.png", 6, SCALE_FACTOR * 0.8
+            )
+            # Convertir les clés pour correspondre au code existant
             Loup._frames_by_dir = {
-                "down": charger_et_scaler(
-                    "wolf", "D_Walk.png", 6, scale=SCALE_FACTOR * 0.8
-                ),
-                "up": charger_et_scaler(
-                    "wolf", "U_Walk.png", 6, scale=SCALE_FACTOR * 0.8
-                ),
-                "side": charger_et_scaler(
-                    "wolf", "S_Walk.png", 6, scale=SCALE_FACTOR * 0.8
-                ),
+                "down": sprites_loaded["D"],
+                "up": sprites_loaded["U"], 
+                "side": sprites_loaded["S"]
             }
         
         self.pointsDeVieInitiaux = self.pointsDeVie
@@ -389,7 +391,6 @@ class Loup(Ennemi):
 class Mage(Ennemi):
 
     ATTACK_COOLDOWN = 3  # en secondes
-
     _frames_by_dir: dict[str, list[pygame.Surface]] | None = None
 
     @property
@@ -409,17 +410,16 @@ class Mage(Ennemi):
             **kw
         )
 
+        # Charger les spritesheets une seule fois en utilisant la nouvelle fonction
         if Mage._frames_by_dir is None:
+            sprites_loaded = charger_sprites_directionnels(
+                "mage", ["D", "S", "U"], "{direction}_Fly.png", 6, SCALE_FACTOR * 0.6
+            )
+            # Convertir les clés pour correspondre au code existant
             Mage._frames_by_dir = {
-                "down": charger_et_scaler(
-                    "mage", "D_Fly.png", 6, scale=SCALE_FACTOR * 0.6
-                ),
-                "up": charger_et_scaler(
-                    "mage", "U_Fly.png", 6, scale=SCALE_FACTOR * 0.6
-                ),
-                "side": charger_et_scaler(
-                    "mage", "S_Fly.png", 6, scale=SCALE_FACTOR * 0.6
-                ),
+                "down": sprites_loaded["D"],
+                "up": sprites_loaded["U"], 
+                "side": sprites_loaded["S"]
             }
         
         self.pointsDeVieInitiaux = self.pointsDeVie
@@ -493,11 +493,16 @@ class Ogre(Ennemi):
             **kw
         )
 
+        # Charger les spritesheets une seule fois en utilisant la nouvelle fonction
         if Ogre._frames_by_dir is None:
+            sprites_loaded = charger_sprites_directionnels(
+                "ogre", ["D", "S", "U"], "{direction}_Walk.png", 6, SCALE_FACTOR
+            )
+            # Convertir les clés pour correspondre au code existant
             Ogre._frames_by_dir = {
-                "down": charger_et_scaler("ogre", "D_Walk.png", 6, scale=SCALE_FACTOR),
-                "up": charger_et_scaler("ogre", "U_Walk.png", 6, scale=SCALE_FACTOR),
-                "side": charger_et_scaler("ogre", "S_Walk.png", 6, scale=SCALE_FACTOR),
+                "down": sprites_loaded["D"],
+                "up": sprites_loaded["U"], 
+                "side": sprites_loaded["S"]
             }
         
         self.pointsDeVieInitiaux = self.pointsDeVie
@@ -556,14 +561,25 @@ class Chevalier(Ennemi):
             **kw
         )
 
+        # Charger les spritesheets une seule fois en utilisant la nouvelle fonction
         if Chevalier._frames_by_dir is None:
+            # Charger les sprites de marche
+            walk_sprites = charger_sprites_directionnels(
+                "knight", ["D", "S", "U"], "{direction}_Walk.png", 6, SCALE_FACTOR * 0.8
+            )
+            # Charger les sprites de blocage
+            block_sprites = charger_sprites_directionnels(
+                "knight", ["D", "S", "U"], "{direction}_Block.png", 1, SCALE_FACTOR * 0.8
+            )
+            
+            # Convertir les clés pour correspondre au code existant
             Chevalier._frames_by_dir = {
-                "down": charger_et_scaler("knight", "D_Walk.png", 6, scale=SCALE_FACTOR*0.8),
-                "up": charger_et_scaler("knight", "U_Walk.png", 6, scale=SCALE_FACTOR*0.8),
-                "side": charger_et_scaler("knight", "S_Walk.png", 6, scale=SCALE_FACTOR*0.8),
-                "downBlock": charger_et_scaler("knight", "D_Block.png", 1, scale=SCALE_FACTOR*0.8),
-                "upBlock": charger_et_scaler("knight", "U_Block.png", 1, scale=SCALE_FACTOR*0.8),
-                "sideBlock": charger_et_scaler("knight", "S_Block.png", 1, scale=SCALE_FACTOR*0.8),
+                "down": walk_sprites["D"],
+                "up": walk_sprites["U"], 
+                "side": walk_sprites["S"],
+                "downBlock": block_sprites["D"],
+                "upBlock": block_sprites["U"],
+                "sideBlock": block_sprites["S"]
             }
         
         self.pointsDeVieInitiaux = self.pointsDeVie
@@ -574,7 +590,6 @@ class Chevalier(Ennemi):
         self.block_timer = 0.0
         self.block_duration = 0.2
 
-    
     def update_animation(self, dt: float):
         # Blocage
         if self.block_timer > 0:
@@ -628,49 +643,10 @@ class Chevalier(Ennemi):
     def seDeplacer(self, dt: float):
         if self.estMort() or self._arrive_au_bout:
             return
-        d = max(0.0, self.vitesse * dt)
-        while d > 1e-6 and not self._arrive_au_bout:
-            if self._segment_index >= len(self._chemin) - 1:
-                self._arrive()
-                break
-
-            p0 = self._chemin[self._segment_index]
-            p1 = self._chemin[self._segment_index + 1]
-
-            dx = p1.x - p0.x
-            dy = p1.y - p0.y
-
-            # bloquage
-            is_blocked = getattr(self, "block_timer", 0) > 1e-9
-            if not is_blocked:
-                if abs(dx) > abs(dy):
-                    self.direction = "side"
-                    self.flip = dx > 0  # flip horizontal si on va vers la gauche
-                else:
-                    self.direction = "down" if dy > 0 else "up"
-                    self.flip = False
-            else:
-                if abs(dx) > abs(dy):
-                    self.direction = "sideBlock"
-                    self.flip = dx > 0  # flip horizontal si on va vers la gauche
-                else:
-                    self.direction = "downBlock" if dy > 0 else "upBlock"
-                    self.flip = False
-
-            seg_len = max(1e-9, distance_positions(p0, p1))
-            reste = seg_len - self._dist_on_segment
-
-            if d < reste:
-                self._dist_on_segment += d
-                t = self._dist_on_segment / seg_len
-                self.position.x = p0.x + (dx * t)
-                self.position.y = p0.y + (dy * t)
-                d = 0.0
-            else:
-                self.position.x, self.position.y = p1.x, p1.y
-                d -= reste
-                self._segment_index += 1
-                self._dist_on_segment = 0.0
-                if self._segment_index >= len(self._chemin) - 1:
-                    self._arrive()
-                    break
+        
+        # Si on est en train de bloquer, ne pas se déplacer
+        if self.block_timer > 0:
+            return
+        
+        # Utiliser la méthode de déplacement de la classe parent
+        super().seDeplacer(dt)

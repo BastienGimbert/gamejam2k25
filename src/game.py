@@ -43,7 +43,7 @@ from classes.sort import SortEclair, SortFee, SortVision
 from classes.tour import Archer, Campement, Catapulte
 from classes.tour import Mage as TourMage
 from classes.tour import Tour
-from classes.utils import charger_chemin_tiled, decouper_sprite, distance_positions
+from classes.utils import charger_chemin_tiled, distance_positions, charger_image_simple, charger_image_projectile
 
 
 class Game:
@@ -53,7 +53,7 @@ class Game:
         ecran.blit(img, (0, 0))
         
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
-        self.joueur = Joueur(argent=45, point_de_vie=100, sort="feu", etat="normal")
+        self.joueur = Joueur(argent=4500, point_de_vie=100, sort="feu", etat="normal")
 
         # Gestion des vagues
         self.numVague = 0
@@ -116,14 +116,14 @@ class Game:
             "campement": getattr(Campement, "PORTEE"),
         }
 
-        # Animation monnaie
-        self.coin_frames = self._charger_piece()
+        # Animation monnaie et cœurs en utilisant les nouvelles fonctions utilitaires
+        from classes.utils import charger_sprites_ui
+        self.coin_frames = charger_sprites_ui("money", scale=1.0)
         self.coin_frame_idx = 0
         self.COIN_ANIM_INTERVAL = COIN_ANIM_INTERVAL_MS
         self.last_coin_ticks = pygame.time.get_ticks()
 
-        # Animation coeurs (PV)
-        self.heart_frames = self._charger_coeurs()
+        self.heart_frames = charger_sprites_ui("heart", scale=1.0)
         self.heart_frame_idx = 0
         self.HEART_ANIM_INTERVAL = HEART_ANIM_INTERVAL_MS
         self.last_heart_ticks = pygame.time.get_ticks()
@@ -133,7 +133,8 @@ class Game:
         # --- Ajout : sélection de tour pour affichage de la range ---
         self.tour_selectionnee: tuple[int, int] | None = None
 
-        self.tower_assets = self._charger_tours()
+        # Les sprites des tours sont maintenant chargés directement dans les classes de tours
+        self.tower_assets = {}  # Gardé pour compatibilité mais plus utilisé
         self.shop_items = self._creer_boutons_boutique()
         self.type_selectionne: str | None = None
 
@@ -248,69 +249,12 @@ class Game:
         chemin_carte = MAP_PNG
         if not os.path.exists(chemin_carte):
             raise FileNotFoundError(f"Carte non trouvée: {chemin_carte}")
-        img = pygame.image.load(chemin_carte).convert_alpha()
+        img = charger_image_simple("tilesets/carte.png")
+        if img is None:
+            raise FileNotFoundError(f"Impossible de charger la carte: {chemin_carte}")
         return img
 
-    def _charger_piece(self):
-        coinImg = os.path.join(MONEY_DIR, "MonedaD.png")
-        if os.path.exists(coinImg):
-            img = pygame.image.load(coinImg).convert_alpha()
-            frames = decouper_sprite(img, 5, horizontal=True, copy=True)
-            frames = [pygame.transform.smoothscale(f, (24, 24)) for f in frames]
-            return frames
-        return []
 
-    def _charger_coeurs(self):
-        """Charge toutes les images de coeur dans assets/heart et retourne une liste de surfaces."""
-        frames = []
-        if not os.path.isdir(HEART_DIR):
-            return frames
-        fichiers = [f for f in os.listdir(HEART_DIR) if f.lower().endswith(".png")]
-        if not fichiers:
-            return frames
-        fichiers.sort()
-        for fn in fichiers:
-            p = os.path.join(HEART_DIR, fn)
-            try:
-                img = pygame.image.load(p).convert_alpha()
-                frames.append(img)
-            except Exception:
-                continue
-        return frames
-
-    def _charger_tours(self):
-        assets = {}
-        for tower_type in self.tower_types:
-            tower_folder = os.path.join(TOWER_DIR, tower_type)
-            if not os.path.isdir(tower_folder):
-                continue
-
-            chemins = [f for f in os.listdir(tower_folder) if f.endswith(".png")]
-            if not chemins:
-                continue
-
-            chemins.sort()
-
-            # campement : 6 images
-            if tower_type == "campement":
-                dernier_chemin = os.path.join(tower_folder, chemins[-1])
-                image = pygame.image.load(dernier_chemin).convert_alpha()
-                slices = decouper_sprite(image, 6, horizontal=True, copy=False)
-                frames = [slices]
-                assets[tower_type] = {
-                    "frames": frames,
-                    "icon": pygame.transform.smoothscale(slices[0], (48, 48)),
-                }
-            else:
-                # Cas tour classique : découpe en 4
-                dernier_chemin = os.path.join(tower_folder, chemins[-1])
-                image = pygame.image.load(dernier_chemin).convert_alpha()
-                slices = decouper_sprite(image, 4, horizontal=True, copy=False)
-                frames = [slices]
-                icon = pygame.transform.smoothscale(slices[2], (48, 48))
-                assets[tower_type] = {"frames": frames, "icon": icon}
-
-        return assets
 
     def _creer_boutons_boutique(self):
         boutons = []
@@ -330,12 +274,9 @@ class Game:
             pygame.draw.circle(surf, (120, 120, 120), (11, 11), 10)
             return surf
 
-        p = os.path.join(PROJECT_ROOT, chemin_relatif)
-        if os.path.exists(p):
-            try:
-                return pygame.image.load(p).convert_alpha()
-            except Exception:
-                pass
+        img = charger_image_projectile(chemin_relatif)
+        if img is not None:
+            return img
         # Fallbacks
         if "archer" in chemin_relatif:
             surf = pygame.Surface((24, 24), pygame.SRCALPHA)
@@ -444,11 +385,12 @@ class Game:
             label_y = rect.y + (rect.h - label.get_height()) // 2
 
             # icône (si disponible) centrée verticalement
-            icon = None
-
-            if t in self.tower_assets:
-                icon = self.tower_assets[t].get("icon")
-            if icon:
+            # Charger l'icône de la tour en utilisant la nouvelle fonction
+            from classes.utils import charger_sprite_tour
+            icon = charger_sprite_tour(t, scale=1.0)
+            if icon is not None:
+                # Redimensionner l'icône pour la boutique
+                icon = pygame.transform.smoothscale(icon, (48, 48))
                 icon_y = rect.y + (rect.h - icon.get_height()) // 2
                 ecran.blit(icon, (rect.x + 10, icon_y))
 
@@ -747,9 +689,10 @@ class Game:
                 # Cas standard (anciennes tours fixes)
                 ttype = data["type"]
                 surf = None
-                if ttype in self.tower_assets and self.tower_assets[ttype]["frames"]:
-                    slices = self.tower_assets[ttype]["frames"][0]
-                    surf = slices[2]
+                # Charger le sprite de la tour en utilisant la nouvelle fonction
+                from classes.utils import charger_sprite_tour
+                surf = charger_sprite_tour(ttype, scale=1.0)
+                if surf is not None:
                     surf = pygame.transform.smoothscale(
                         surf, (self.taille_case, self.taille_case)
                     )
