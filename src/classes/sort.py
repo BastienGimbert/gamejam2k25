@@ -164,8 +164,9 @@ class SortFee(Sort):
         """Applique l'effet d'éclairage - rend tous les ennemis visibles."""
         if self.est_actif():
             # Rendre tous les ennemis visibles pendant l'effet
-            for ennemi in game.ennemis:
+            for ennemi in game.ennemi_manager.get_ennemis_actifs():
                 ennemi.set_visibilite(True)
+        # Ne pas forcer l'invisibilité - laisser la logique normale de majVisible s'en occuper
 
     def dessiner_effet(self, ecran: pygame.Surface, game: "Game") -> None:
         """N'affiche pas d'effet visuel - utilise le système d'éclairage existant."""
@@ -250,7 +251,7 @@ class SortEclair(Sort):
             y_max = (case_y + 1) * taille_case
 
             # Infliger des dégâts aux ennemis dans cette zone
-            for ennemi in game.ennemis:
+            for ennemi in game.ennemi_manager.get_ennemis_actifs():
                 if (
                     x_min <= ennemi.position.x <= x_max
                     and y_min <= ennemi.position.y <= y_max

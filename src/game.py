@@ -28,8 +28,8 @@ from classes.constants import (
     TOWER_DIR,
     WINDOW_HEIGHT,
 )
-from classes.csv import creer_liste_ennemis_depuis_csv
 from classes.ennemi import Chevalier, Ennemi, Gobelin, Mage
+from classes.ennemi_manager import EnnemiManager
 from classes.joueur import Joueur
 from classes.pointeur import Pointeur
 from classes.position import Position
@@ -69,9 +69,8 @@ class Game:
         self.joueur = Joueur(argent=450, point_de_vie=100, sort="feu", etat="normal")
 
         # Gestion des vagues
-        self.numVague = 0
-        self.debutVague = 0
-        self.ennemis: list[Ennemi] = []  # Rempli lors du lancement de vague
+        # Manager des ennemis
+        self.ennemi_manager = EnnemiManager(self)
 
         self.police = police
         self.police_tour = pygame.font.Font(None, 44)
@@ -243,18 +242,6 @@ class Game:
                 return True
         return False
 
-    def _ennemi_atteint_chateau(self, ennemi: Ennemi) -> None:
-        # Inflige les dégâts de l'ennemi au joueur lorsque l'ennemi atteint la fin
-        try:
-            deg = getattr(ennemi, "degats", 1)
-        except Exception:
-            deg = 1
-        self.joueur.point_de_vie = max(0, int(self.joueur.point_de_vie) - int(deg))
-        # Le marquer comme "mort" pour que les tours cessent de le cibler
-        try:
-            ennemi.pointsDeVie = 0
-        except Exception:
-            pass
 
     # ---------- Chargements ----------
     def _charger_carte(self):
@@ -453,7 +440,7 @@ class Game:
         # Affiche le numéro de vague au-dessus du bouton
         try:
             label_vague = self.police.render(
-                f"Vague n° {self.numVague}", True, self.couleur_texte
+                f"Vague n° {self.ennemi_manager.num_vague}", True, self.couleur_texte
             )
             label_x = (
                 self.bouton_vague.rect.x
@@ -740,101 +727,21 @@ class Game:
                         y2 = int(cy + portee * math.sin(angle_end))
                         pygame.draw.line(ecran, (255, 255, 255), (x1, y1), (x2, y2), 3)
 
-    def dessiner_ennemis(self, ecran):
-        for e in self.ennemis:
-            # Compat : certains ennemis peuvent avoir des états (apparu/mort/arrivé)
-            try:
-                doit_dessiner = (
-                    (not hasattr(e, "estApparu") or e.estApparu(self.debutVague))
-                    and (not hasattr(e, "estMort") or not e.estMort())
-                    and (
-                        not hasattr(e, "a_atteint_le_bout") or not e.a_atteint_le_bout()
-                    )
-                )
-            except Exception:
-                doit_dessiner = True
-            if doit_dessiner:
-                if hasattr(e, "majVisible"):
-                    e.majVisible(self)
-                if hasattr(e, "draw"):
-                    e.draw(ecran)
-                # --- Barre de PV ---
-                if (
-                    hasattr(e, "pointsDeVie")
-                    and hasattr(e, "pointsDeVieMax")
-                    and e.pointsDeVie < e.pointsDeVieMax
-                ):
-                    # Position de la barre : juste au-dessus de l'ennemi
-                    px = int(e.position.x)
-                    py = int(e.position.y)
-
-                    largeur_max = 40
-                    hauteur = 4
-
-                    ratio = max(0, min(1, e.pointsDeVie / e.pointsDeVieMax))
-                    largeur_barre = int(largeur_max * ratio)
-
-                    x_barre = px - largeur_max // 2
-                    y_barre = py - 40  # Espace entre le haut du sprite et l'ennemi
-
-                    # Fond gris
-                    pygame.draw.rect(
-                        ecran,
-                        (60, 60, 60),
-                        (x_barre, y_barre, largeur_max, hauteur),
-                        border_radius=3,
-                    )
-
-                    # Barre rouge
-                    pygame.draw.rect(
-                        ecran,
-                        (220, 50, 50),
-                        (x_barre, y_barre, largeur_barre, hauteur),
-                        border_radius=3,
-                    )
 
     # ---------- Update / boucle ----------
     def maj(self, dt: float):
-        # Apparition des ennemis selon la vague
-        self.majvague()
-
-        # Déplacement des ennemis actifs
-        for e in self.ennemis:
-            try:
-                if not hasattr(e, "estApparu") or e.estApparu(self.debutVague):
-                    e.seDeplacer(dt)
-                    e.update_animation(dt)
-            except Exception:
-                if hasattr(e, "seDeplacer"):
-                    e.seDeplacer(dt)
+        # Mise à jour du manager d'ennemis
+        self.ennemi_manager.mettre_a_jour_vague()
+        self.ennemi_manager.mettre_a_jour_ennemis(dt)
 
         # Appliquer les effets des sorts
         for sort in self.sorts.values():
             sort.appliquer_effet(self)
-
-        # Perte de PV si un ennemi touche certaines cases "château"
-        for e in self.ennemis:
-            try:
-                pos_px = (int(e.position.x), int(e.position.y))
-                case = self._case_depuis_pos(pos_px)
-                if case in {(2, 0), (3, 0)}:
-                    deg = getattr(e, "degats", 1)
-                    self.joueur.point_de_vie = max(
-                        0, int(self.joueur.point_de_vie) - int(deg)
-                    )
-                    try:
-                        setattr(e, "_ne_pas_recompenser", True)
-                    except Exception:
-                        pass
-                    if hasattr(e, "perdreVie"):
-                        e.perdreVie(getattr(e, "pointsDeVie", 1))
-                    else:
-                        try:
-                            e.pointsDeVie = 0
-                        except Exception:
-                            pass
-            except Exception:
-                continue
+        
+        # Mettre à jour la visibilité des ennemis (après les sorts)
+        for ennemi in self.ennemi_manager.get_ennemis_actifs():
+            if hasattr(ennemi, "majVisible"):
+                ennemi.majVisible(self)
 
         # Mise à jour des tours (acquisition cible + tir)
         for t in self.tours:
@@ -895,7 +802,7 @@ class Game:
                     self.jouer_sfx("fire-magic.mp3", volume=0.2)
 
             if hasattr(t, "maj"):
-                t.maj(dt, self.ennemis, au_tir=au_tir)
+                t.maj(dt, self.ennemi_manager.get_ennemis_actifs(), au_tir=au_tir)
 
         # Mise à jour des projectiles + collisions
         for pr in self.projectiles:
@@ -906,15 +813,13 @@ class Game:
 
             if not isinstance(pr, ProjectileMageEnnemi):
                 # Collision projectiles tours -> ennemis
-                for e in self.ennemis:
-                    if hasattr(e, "estMort") and e.estMort():
-                        continue
+                for e in self.ennemi_manager.get_ennemis_actifs():
                     if hasattr(pr, "aTouche") and pr.aTouche(e):
                         if hasattr(pr, "appliquerDegats"):
                             # Gestion spéciale pour les projectiles de mage avec dégâts de zone
                             if isinstance(pr, ProjectileTourMage):
                                 # Appliquer les dégâts de zone à tous les ennemis dans la zone
-                                pr.appliquerDegatsZone(self.ennemis)
+                                pr.appliquerDegatsZone(self.ennemi_manager.get_ennemis_actifs())
                                 # Marquer le projectile comme détruit
                                 pr.detruit = True
                                 # Créer un effet d'explosion visuel
@@ -929,17 +834,7 @@ class Game:
                                     self.jouer_sfx("arrow-hit-metal.mp3", volume=0.5)
                             
                             # Gestion des récompenses pour tous les ennemis morts
-                            for ennemi in self.ennemis:
-                                try:
-                                    if (
-                                        ennemi.estMort()
-                                        and not getattr(ennemi, "_recompense_donnee", False)
-                                        and not getattr(ennemi, "_ne_pas_recompenser", False)
-                                    ):
-                                        self.joueur.argent += int(getattr(ennemi, "argent", 0))
-                                        setattr(ennemi, "_recompense_donnee", True)
-                                except Exception:
-                                    pass
+                            self.ennemi_manager.gerer_collisions_projectiles([pr])
                         break
             else:
                 # Collision spécifique projectile mage ennemi -> projectile de catapulte
@@ -962,30 +857,19 @@ class Game:
         ]
 
         # Nettoyage ennemis
-        self.ennemis = [
-            e
-            for e in self.ennemis
-            if not (
-                getattr(e, "estMort", lambda: False)()
-                or getattr(e, "a_atteint_le_bout", lambda: False)()
-            )
-        ]
+        self.ennemi_manager.nettoyer_ennemis_morts()
 
         # Désactiver l'effet de nuit si la vague est terminée
         if self.vague_terminee() and self.est_nuit:
             self.est_nuit = False
-            recompense = RECOMPENSES_PAR_VAGUE.get(self.numVague, 0)  # 0 = valeur par défaut
+            recompense = RECOMPENSES_PAR_VAGUE.get(self.ennemi_manager.num_vague, 0)  # 0 = valeur par défaut
             self.joueur.argent += recompense
 
     def get_closest_mage(self, pos: Position) -> None | Mage:
         """Retourne le mage le plus proche de la position pos."""
         mages = [
-            e
-            for e in self.ennemis
-            if isinstance(e, Mage)
-            and not e.estMort()
-            and e.estApparu(self.debutVague)
-            and e.ready_to_attack()
+            e for e in self.ennemi_manager.get_mages_actifs() 
+            if e.ready_to_attack()
         ]
         if not mages:
             return None
@@ -1026,7 +910,7 @@ class Game:
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         nb_vagues = self.get_max_vague_csv()
-        if self.numVague == nb_vagues and self.vague_terminee():
+        if self.ennemi_manager.num_vague == nb_vagues and self.vague_terminee():
             self.afficher_victoire(ecran)
             return
 
@@ -1072,7 +956,7 @@ class Game:
         
         self._dessiner_boutique(ecran)
         self._dessiner_boutique_sorts(ecran)
-        self.dessiner_ennemis(ecran)
+        self.ennemi_manager.dessiner_ennemis(ecran)
 
         # Affichage des effets visuels des sorts
         for sort in self.sorts.values():
@@ -1346,38 +1230,14 @@ class Game:
     # ---------- Vagues ----------
     def lancerVague(self):
         """Démarre une nouvelle vague d'ennemis, chargée depuis un CSV."""
-        self.numVague += 1
-        self.debutVague = pygame.time.get_ticks()
+        self.ennemi_manager.lancer_vague()
         self.est_nuit = True  # Active l'effet de nuit pendant la manche
-        print("Vague n°", self.numVague, "lancée")
-
-        # Génère la liste d'ennemis depuis le CSV
-        self.ennemis = creer_liste_ennemis_depuis_csv(self.numVague)
-
-        for e in self.ennemis:
-            try:
-                setattr(e, "_on_reach_castle", None)
-            except Exception:
-                pass
 
         
 
     def majvague(self):
         """Fait apparaître les ennemis au moment de leur temps d'apparition."""
-        if not self.ennemis:
-            return
-        now = pygame.time.get_ticks()
-        elapsed_s = round((now - self.debutVague) / 1000, 1)
-        for e in self.ennemis:
-            try:
-                if (
-                    getattr(e, "tempsApparition", None) is not None
-                    and elapsed_s == e.tempsApparition
-                ):
-                    if hasattr(e, "apparaitre"):
-                        e.apparaitre()
-            except Exception:
-                pass
+        self.ennemi_manager.mettre_a_jour_vague()
 
     # ---------- Chemin / placement ----------
     def _cases_depuis_chemin(
@@ -1416,11 +1276,4 @@ class Game:
 
     def vague_terminee(self) -> bool:
         """Retourne True si tous les ennemis sont morts ou arrivés au bout."""
-        if not self.ennemis:
-            return True
-        for e in self.ennemis:
-            est_mort = getattr(e, "estMort", lambda: False)()
-            au_bout = getattr(e, "a_atteint_le_bout", lambda: False)()
-            if not (est_mort or au_bout):
-                return False
-        return True
+        return self.ennemi_manager.vague_terminee()

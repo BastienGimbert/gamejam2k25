@@ -82,9 +82,8 @@ class Projectile(ABC):
         return hypot(self.x - ex, self.y - ey) <= self.rayon_collision
 
     def appliquerDegats(self, e: Ennemi) -> None:
-        if e.est_Apparu:
-            e.perdreVie(self.degats)
-            self.detruit = True
+        e.perdreVie(self.degats)
+        self.detruit = True
 
     @abstractmethod
     def dessiner(self, ecran: pygame.Surface) -> None:
@@ -190,7 +189,7 @@ class ProjectileTourMage(Projectile):
     def appliquerDegatsZone(self, ennemis: list[Ennemi]) -> None:
         """Applique les dégâts de zone à tous les ennemis dans le rayon d'effet."""
         for ennemi in ennemis:
-            if ennemi.estMort() or not ennemi.est_Apparu:
+            if ennemi.estMort():
                 continue
             
             # Calculer la distance entre le point d'impact et l'ennemi
