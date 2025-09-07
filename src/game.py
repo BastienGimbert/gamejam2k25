@@ -31,6 +31,7 @@ from classes.constants import (
 from classes.ennemi import Chevalier, Ennemi, Gobelin, Mage
 from classes.ennemi_manager import EnnemiManager
 from classes.tour_manager import TourManager
+from classes.shop_manager import ShopManager
 from classes.joueur import Joueur
 from classes.pointeur import Pointeur
 from classes.position import Position
@@ -47,6 +48,9 @@ from classes.sort import SortEclair, SortFee, SortVision
 # from classes.tour import Archer, Campement, Catapulte
 # from classes.tour import Mage as TourMage
 # from classes.tour import Tour
+
+# Import nécessaire pour le type hint
+from classes.tour import Campement
 from classes.sprites import (
     charger_animation_ui,
     charger_image_assets,
@@ -98,17 +102,17 @@ class Game:
         self.hauteur_ecran = GAME_HEIGHT  # Taille normale de la carte
         self.case_survolee: tuple[int, int] | None = None
 
-        # Boutique (à droite de la carte)
-        self.largeur_boutique = SHOP_WIDTH
-        self.rect_boutique = pygame.Rect(
-            self.largeur_ecran, 0, self.largeur_boutique, self.hauteur_ecran
-        )
+        # Boutique (à droite de la carte) - maintenant géré par ShopManager
+        # self.largeur_boutique = SHOP_WIDTH
+        # self.rect_boutique = pygame.Rect(
+        #     self.largeur_ecran, 0, self.largeur_boutique, self.hauteur_ecran
+        # )
 
-        # Boutique de sorts (en bas de l'écran)
-        self.hauteur_boutique_sorts = SPELLS_HEIGHT
-        self.rect_boutique_sorts = pygame.Rect(
-            0, self.hauteur_ecran, self.largeur_ecran + self.largeur_boutique, self.hauteur_boutique_sorts
-        )
+        # Boutique de sorts (en bas de l'écran) - maintenant géré par ShopManager
+        # self.hauteur_boutique_sorts = SPELLS_HEIGHT
+        # self.rect_boutique_sorts = pygame.Rect(
+        #     0, self.hauteur_ecran, self.largeur_ecran + self.largeur_boutique, self.hauteur_boutique_sorts
+        # )
 
         # Sorts du joueur
         self.sorts = {
@@ -135,17 +139,17 @@ class Game:
         #     "campement": getattr(Campement, "PORTEE"),
         # }
 
-        # Animation monnaie
-        self.coin_frames = self._charger_piece()
-        self.coin_frame_idx = 0
-        self.COIN_ANIM_INTERVAL = COIN_ANIM_INTERVAL_MS
-        self.last_coin_ticks = pygame.time.get_ticks()
+        # Animation monnaie - maintenant géré par ShopManager
+        # self.coin_frames = self._charger_piece()
+        # self.coin_frame_idx = 0
+        # self.COIN_ANIM_INTERVAL = COIN_ANIM_INTERVAL_MS
+        # self.last_coin_ticks = pygame.time.get_ticks()
 
-        # Animation coeurs (PV)
-        self.heart_frames = self._charger_coeurs()
-        self.heart_frame_idx = 0
-        self.HEART_ANIM_INTERVAL = HEART_ANIM_INTERVAL_MS
-        self.last_heart_ticks = pygame.time.get_ticks()
+        # Animation coeurs (PV) - maintenant géré par ShopManager
+        # self.heart_frames = self._charger_coeurs()
+        # self.heart_frame_idx = 0
+        # self.HEART_ANIM_INTERVAL = HEART_ANIM_INTERVAL_MS
+        # self.last_heart_ticks = pygame.time.get_ticks()
 
         # Types de tours
         self.tower_types = DEFAULT_TOWER_TYPES
@@ -153,7 +157,30 @@ class Game:
         # self.tour_selectionnee: tuple[int, int] | None = None
 
         self.tower_assets = self._charger_tours()
-        self.shop_items = self._creer_boutons_boutique()
+        # self.shop_items = self._creer_boutons_boutique()  # maintenant géré par ShopManager
+        
+        # Manager de la boutique (après la définition des types de tours et assets)
+        self.shop_manager = ShopManager(self)
+        
+        # Créer le bouton de vague maintenant que le ShopManager est initialisé
+        medieval_couleurs = {
+            "fond_normal": (110, 70, 30),  # brun
+            "fond_survol": (150, 100, 40),  # brun clair
+            "contour": (220, 180, 60),  # doré
+            "texte": (240, 220, 180),  # beige
+        }
+        police_medievale = pygame.font.Font(None, 38)
+        self.bouton_vague = Bouton(
+            "Lancer la vague",
+            self.shop_manager.rect_boutique.x + 20,
+            self.hauteur_ecran - 70,
+            self.shop_manager.largeur_boutique - 40,
+            50,
+            self.lancerVague,
+            police_medievale,
+            medieval_couleurs,
+        )
+        
         self.type_selectionne: str | None = None
 
         # Occupation des cases (affichage) - maintenant géré par TourManager
@@ -168,23 +195,16 @@ class Game:
         # # Effets visuels d'explosion
         # self.effets_explosion: list[EffetExplosion] = []
 
-        # Couleurs UI
-        # Projectiles actifs (flèches, etc.) - maintenant gérés par TourManager
-        # self.projectiles: list = []
-        # # Images de base des projectiles (chargées via une fonction générique)
-        # self.image_fleche = self._charger_image_projectile(
-        #     ProjectileFleche.CHEMIN_IMAGE
-        # )
-        # self.image_pierre = self._charger_image_projectile(
-        #     ProjectilePierre.CHEMIN_IMAGE
-        # )
-        # # Projectile de la tour mage
-        # self.image_orbe_mage = self._charger_image_projectile(
-        #     ProjectileTourMage.CHEMIN_IMAGE
-        # )
-        # self.image_projectileMageEnnemi = self._charger_image_projectile(
-        #     ProjectileMageEnnemi.CHEMIN_IMAGE
-        # )
+        # Couleurs UI - maintenant gérées par ShopManager
+        # self.couleur_boutique_bg = (30, 30, 30)
+        # self.couleur_boutique_border = (80, 80, 80)
+        # self.couleur_bouton_bg = (60, 60, 60)
+        # self.couleur_bouton_hover = (90, 90, 90)
+        # self.couleur_texte = (240, 240, 240)
+
+        # Couleurs pour la boutique de sorts (même style que la boutique) - maintenant gérées par ShopManager
+        # self.couleur_boutique_sorts_bg = self.couleur_boutique_bg
+        # self.couleur_boutique_sorts_border = self.couleur_boutique_border
 
         self.couleur_quadrillage = (40, 60, 100)
         self.couleur_surbrillance = (80, 180, 255)
@@ -213,25 +233,6 @@ class Game:
 
         # Pointeur
         self.pointeur = Pointeur()
-        medieval_couleurs = {
-            "fond_normal": (110, 70, 30),  # brun
-            "fond_survol": (150, 100, 40),  # brun clair
-            "contour": (220, 180, 60),  # doré
-            "texte": (240, 220, 180),  # beige
-        }
-        police_medievale = pygame.font.Font(
-            None, 38
-        )  # police plus grande, à adapter si tu as une police médiévale
-        self.bouton_vague = Bouton(
-            "Lancer la vague",
-            self.rect_boutique.x + 20,
-            self.hauteur_ecran - 70,
-            self.largeur_boutique - 40,
-            50,
-            self.lancerVague,
-            police_medievale,
-            medieval_couleurs,
-        )
 
         # État jour/nuit - jour entre les manches, nuit pendant les manches
         self.est_nuit = False
@@ -254,18 +255,18 @@ class Game:
             raise FileNotFoundError(f"Carte non trouvée: {MAP_PNG}")
         return img
 
-    def _charger_piece(self):
-        """Charge l'animation des pièces depuis MonedaD.png (spritesheet)."""
-        coinImg = os.path.join(MONEY_DIR, "MonedaD.png")
-        frames = charger_spritesheet_ui(coinImg, 5, scale=1.0)
-        # Redimensionner à 24x24
-        if frames:
-            frames = [pygame.transform.smoothscale(f, (24, 24)) for f in frames]
-        return frames
+    # def _charger_piece(self):
+    #     """Charge l'animation des pièces depuis MonedaD.png (spritesheet)."""
+    #     coinImg = os.path.join(MONEY_DIR, "MonedaD.png")
+    #     frames = charger_spritesheet_ui(coinImg, 5, scale=1.0)
+    #     # Redimensionner à 24x24
+    #     if frames:
+    #         frames = [pygame.transform.smoothscale(f, (24, 24)) for f in frames]
+    #     return frames
 
-    def _charger_coeurs(self):
-        """Charge toutes les images de coeur en utilisant la fonction utilitaire."""
-        return charger_animation_ui("heart", scale=1.0)
+    # def _charger_coeurs(self):
+    #     """Charge toutes les images de coeur en utilisant la fonction utilitaire."""
+    #     return charger_animation_ui("heart", scale=1.0)
 
     def _charger_tours(self):
         """Charge tous les assets des tours en utilisant la fonction utilitaire."""
@@ -274,16 +275,16 @@ class Game:
             assets[tower_type] = charger_sprites_tour_assets(tower_type)
         return assets
 
-    def _creer_boutons_boutique(self):
-        boutons = []
-        x = self.rect_boutique.x + 20
-        y = 100
-        espace_y = 90
-        for t in self.tower_types:
-            rect = pygame.Rect(x, y, self.largeur_boutique - 40, 70)
-            boutons.append({"type": t, "rect": rect})
-            y += espace_y
-        return boutons
+    # def _creer_boutons_boutique(self):
+    #     boutons = []
+    #     x = self.rect_boutique.x + 20
+    #     y = 100
+    #     espace_y = 90
+    #     for t in self.tower_types:
+    #         rect = pygame.Rect(x, y, self.largeur_boutique - 40, 70)
+    #         boutons.append({"type": t, "rect": rect})
+    #         y += espace_y
+    #     return boutons
 
     # def _charger_image_projectile(self, chemin_relatif: str):
     #     """Charge une image de projectile en utilisant la fonction utilitaire."""
@@ -313,296 +314,9 @@ class Game:
     def _dessiner_personnages_tours(self, ecran):
         self.tour_manager.dessiner_personnages_tours(ecran)
 
-    def _dessiner_boutique(self, ecran):
-        pygame.draw.rect(ecran, self.couleur_boutique_bg, self.rect_boutique)
-        pygame.draw.rect(ecran, self.couleur_boutique_border, self.rect_boutique, 2)
-        titre = self.police.render("Boutique", True, self.couleur_texte)
-        ecran.blit(
-            titre,
-            (
-                self.rect_boutique.x + (self.largeur_boutique - titre.get_width()) // 2,
-                20,
-            ),
-        )
-
-        # Monnaie
-        if self.coin_frames:
-            coin = self.coin_frames[self.coin_frame_idx % len(self.coin_frames)]
-            ecran.blit(coin, (self.rect_boutique.x + 20, 60))
-            now = pygame.time.get_ticks()
-            if now - self.last_coin_ticks >= self.COIN_ANIM_INTERVAL:
-                self.coin_frame_idx = (self.coin_frame_idx + 1) % len(self.coin_frames)
-                self.last_coin_ticks = now
-        txt_solde = self.police.render(
-            f"{self.joueur.argent}", True, self.couleur_texte
-        )
-        # Décale le texte si l'argent est grand
-        ecran.blit(txt_solde, (self.rect_boutique.x + 50, 56))
-
-        # Points de vie
-        coeur_pos = (self.rect_boutique.x + 140, 60)
-        if self.heart_frames:
-            coeur = self.heart_frames[self.heart_frame_idx % len(self.heart_frames)]
-            coeur_s = pygame.transform.smoothscale(coeur, (24, 24))
-            ecran.blit(coeur_s, coeur_pos)
-            now = pygame.time.get_ticks()
-            if now - self.last_heart_ticks >= self.HEART_ANIM_INTERVAL:
-                self.heart_frame_idx = (self.heart_frame_idx + 1) % len(
-                    self.heart_frames
-                )
-                self.last_heart_ticks = now
-        else:
-            # Petit fallback visuel si aucun asset
-            pygame.draw.circle(
-                ecran, (220, 50, 50), (coeur_pos[0] + 12, coeur_pos[1] + 12), 12
-            )
-        txt_pv = self.police.render(
-            f"{self.joueur.point_de_vie}", True, self.couleur_texte
-        )
-        ecran.blit(txt_pv, (coeur_pos[0] + 30, coeur_pos[1]))
-
-        # Boutons tours
-        for item in self.shop_items:
-            rect = item["rect"]
-            t = item["type"]
-            hover = rect.collidepoint(pygame.mouse.get_pos())
-            # --- Ajout : fond hover si sélectionné ---
-            if self.type_selectionne == t or hover:
-                couleur_fond_boutton = self.couleur_bouton_hover
-            else:
-                couleur_fond_boutton = self.couleur_bouton_bg
-            pygame.draw.rect(
-                ecran,
-                couleur_fond_boutton,
-                rect,
-                border_radius=6,
-            )
-            pygame.draw.rect(
-                ecran, self.couleur_boutique_border, rect, 2, border_radius=6
-            )
-
-            # label centré verticalement
-            label = self.police_tour.render(t.capitalize(), True, self.couleur_texte)
-
-            label_y = rect.y + (rect.h - label.get_height()) // 2
-
-            # icône (si disponible) centrée verticalement
-            icon = None
-
-            if t in self.tower_assets:
-                icon = self.tower_assets[t].get("icon")
-            if icon:
-                icon_y = rect.y + (rect.h - icon.get_height()) // 2
-                ecran.blit(icon, (rect.x + 10, icon_y))
-
-            # position du label (après icône)
-            label_x = rect.x + 70
-            ecran.blit(label, (label_x, label_y))
-
-            # prix : aligné à droite et centré verticalement, couleur selon solvabilité
-            prix_val = self.tour_manager.prix_par_type.get(t, 0)
-            can_buy = self.joueur.argent >= prix_val
-            prix_color = (240, 240, 240) if can_buy else (220, 80, 80)
-            prix = self.police.render(f"{prix_val}", True, prix_color)
-
-            # icône de pièce : utilise frames chargées si disponibles, sinon fallback circulaire
-            coin_w, coin_h = 20, 20
-            if self.coin_frames:
-                coin_frame = self.coin_frames[
-                    self.coin_frame_idx % len(self.coin_frames)
-                ]
-                try:
-                    coin_surf = pygame.transform.smoothscale(
-                        coin_frame, (coin_w, coin_h)
-                    )
-                except Exception:
-                    coin_surf = coin_frame
-            else:
-                coin_surf = pygame.Surface((coin_w, coin_h), pygame.SRCALPHA)
-                pygame.draw.circle(
-                    coin_surf, (220, 200, 40), (coin_w // 2, coin_h // 2), coin_w // 2
-                )
-
-            # aligne coin au bord droit du bouton, prix à sa gauche
-            gap = 6
-            coin_x = rect.right - 10 - coin_surf.get_width()
-            prix_x = coin_x - gap - prix.get_width()
-
-            # centrage vertical
-            prix_y = rect.y + (rect.h - prix.get_height()) // 2
-            coin_y = rect.y + (rect.h - coin_surf.get_height()) // 2
-
-            # dessin: prix puis icône (icône à droite)
-            ecran.blit(prix, (prix_x, prix_y))
-            if coin_surf:
-                ecran.blit(coin_surf, (coin_x, coin_y))
-
-        bouton_actif = self.vague_terminee()
-
-        # Affiche le numéro de vague au-dessus du bouton
-        try:
-            label_vague = self.police.render(
-                f"Vague n° {self.ennemi_manager.num_vague}", True, self.couleur_texte
-            )
-            label_x = (
-                self.bouton_vague.rect.x
-                + (self.bouton_vague.rect.w - label_vague.get_width()) // 2
-            )
-            label_y = self.bouton_vague.rect.y - 36
-            ecran.blit(label_vague, (label_x, label_y))
-        except Exception:
-            pass
-
-        if bouton_actif:
-            self.bouton_vague.dessiner(ecran)
-        else:
-            # Dessin grisé
-            old_couleurs = self.bouton_vague.couleurs.copy()
-            self.bouton_vague.couleurs["fond_normal"] = (120, 120, 120)
-            self.bouton_vague.couleurs["fond_survol"] = (160, 160, 160)
-            self.bouton_vague.couleurs["texte"] = (180, 180, 180)
-            self.bouton_vague.dessiner(ecran)
-            self.bouton_vague.couleurs = old_couleurs
-
-    def _dessiner_boutique_sorts(self, ecran):
-        """Dessine la boutique de sorts en bas de l'écran."""
-        pygame.draw.rect(
-            ecran, self.couleur_boutique_sorts_bg, self.rect_boutique_sorts
-        )
-        pygame.draw.rect(
-            ecran, self.couleur_boutique_sorts_border, self.rect_boutique_sorts, 2
-        )
-
-        # Titre de la boutique de sorts
-        titre = self.police.render("Boutique de sorts", True, self.couleur_texte)
-        ecran.blit(
-            titre,
-            (
-                self.rect_boutique_sorts.x
-                + (self.rect_boutique_sorts.width - titre.get_width()) // 2,
-                self.rect_boutique_sorts.y + 20,
-            ),
-        )
-
-        # Affichage des sorts disponibles
-        y_offset = 60
-        x_offset = 20
-
-        for sort_key, sort in self.sorts.items():
-            # Rectangle pour le sort (même style que la boutique)
-            sort_rect = pygame.Rect(
-                self.rect_boutique_sorts.x + x_offset,
-                self.rect_boutique_sorts.y + y_offset,
-                300,
-                80,
-            )
-
-            # Vérifier si le sort est au niveau maximum
-            is_max_level = (
-                hasattr(sort, "est_au_niveau_maximum") and sort.est_au_niveau_maximum()
-            )
-
-            # Pour le sort de la fée, vérifier s'il est déjà actif
-            is_fee_active = (
-                sort_key == "fee" and hasattr(sort, "est_actif") and sort.est_actif()
-            )
-
-            # Pour l'éclair, vérifier s'il est sélectionné
-            is_eclair_selected = (
-                sort_key == "eclair"
-                and hasattr(self, "eclair_selectionne")
-                and self.eclair_selectionne
-            )
-
-            # Effet de survol (comme dans la boutique)
-            hover = sort_rect.collidepoint(pygame.mouse.get_pos())
-            can_buy = (
-                sort.peut_etre_achete(self.joueur.argent)
-                and not is_max_level
-                and not is_fee_active
-                and not is_eclair_selected
-            )
-
-            if hover and can_buy:
-                couleur_fond = self.couleur_bouton_hover
-            else:
-                couleur_fond = self.couleur_bouton_bg
-
-            # Dessin avec bordures arrondies (comme la boutique)
-            pygame.draw.rect(ecran, couleur_fond, sort_rect, border_radius=6)
-            pygame.draw.rect(
-                ecran, self.couleur_boutique_sorts_border, sort_rect, 2, border_radius=6
-            )
-
-            # Nom du sort avec niveau (style boutique)
-            if is_max_level or is_fee_active or is_eclair_selected:
-                # Grisé quand au niveau maximum, quand la fée est active, ou quand l'éclair est sélectionné
-                nom_sort = self.police.render(sort.nom_complet, True, (120, 120, 120))
-            else:
-                nom_sort = self.police.render(
-                    sort.nom_complet, True, self.couleur_texte
-                )
-            ecran.blit(nom_sort, (sort_rect.x + 10, sort_rect.y + 10))
-
-            # Prix et icône seulement si pas au niveau maximum, pas actif, et pas sélectionné
-            if not is_max_level and not is_fee_active and not is_eclair_selected:
-                # Prix avec couleur selon solvabilité (comme la boutique)
-                prix_color = self.couleur_texte if can_buy else (220, 80, 80)
-                prix_text = self.police.render(f"{sort.prix}", True, prix_color)
-
-                # Icône de pièce (comme la boutique)
-                coin_w, coin_h = 20, 20
-                if self.coin_frames:
-                    coin_frame = self.coin_frames[
-                        self.coin_frame_idx % len(self.coin_frames)
-                    ]
-                    try:
-                        coin_surf = pygame.transform.smoothscale(
-                            coin_frame, (coin_w, coin_h)
-                        )
-                    except Exception:
-                        coin_surf = coin_frame
-                else:
-                    coin_surf = pygame.Surface((coin_w, coin_h), pygame.SRCALPHA)
-                    pygame.draw.circle(
-                        coin_surf,
-                        (220, 200, 40),
-                        (coin_w // 2, coin_h // 2),
-                        coin_w // 2,
-                    )
-
-                # Positionnement du prix et de l'icône (comme la boutique)
-                gap = 6
-                coin_x = sort_rect.right - 10 - coin_surf.get_width()
-                prix_x = coin_x - gap - prix_text.get_width()
-                prix_y = sort_rect.y + 40
-                coin_y = sort_rect.y + 40
-
-                ecran.blit(prix_text, (prix_x, prix_y))
-                if coin_surf:
-                    ecran.blit(coin_surf, (coin_x, coin_y))
-            elif is_max_level:
-                # Afficher "MAX" à la place du prix
-                max_text = self.police.render("MAX", True, (100, 200, 100))
-                max_x = sort_rect.right - 10 - max_text.get_width()
-                max_y = sort_rect.y + 40
-                ecran.blit(max_text, (max_x, max_y))
-            elif is_fee_active:
-                # Afficher "ACTIF" pour la fée
-                actif_text = self.police.render("ACTIF", True, (100, 200, 100))
-                actif_x = sort_rect.right - 10 - actif_text.get_width()
-                actif_y = sort_rect.y + 40
-                ecran.blit(actif_text, (actif_x, actif_y))
-            elif is_eclair_selected:
-                # Afficher "SÉLECTIONNÉ" pour l'éclair
-                selected_text = self.police.render("SÉLECTIONNÉ", True, (255, 200, 0))
-                selected_x = sort_rect.right - 10 - selected_text.get_width()
-                selected_y = sort_rect.y + 40
-                ecran.blit(selected_text, (selected_x, selected_y))
-
-            # Pas d'affichage de portée pour garder l'interface propre
-
-            x_offset += 320  # Espacement entre les sorts
+    # Les méthodes de dessin de boutique sont maintenant dans ShopManager
+    # def _dessiner_boutique(self, ecran): ...
+    # def _dessiner_boutique_sorts(self, ecran): ...
 
     def _dessiner_surbrillance(self, ecran):
         # Surbrillance pour l'éclair (seulement sur les cases du chemin, sauf les 6 en haut à gauche)
@@ -797,8 +511,8 @@ class Game:
         else:
             self.majFeuxDeCamps(dt, None)
         
-        self._dessiner_boutique(ecran)
-        self._dessiner_boutique_sorts(ecran)
+        self.shop_manager.dessiner_boutique_tours(ecran)
+        self.shop_manager.dessiner_boutique_sorts(ecran)
         self.ennemi_manager.dessiner_ennemis(ecran)
 
         # Affichage des effets visuels des sorts
@@ -875,68 +589,14 @@ class Game:
                             self.eclair_selectionne = False
                         return None
             # Clic dans la boutique de sorts
-            if self.rect_boutique_sorts.collidepoint(pos):
-                x_offset = 20
-                for sort_key, sort in self.sorts.items():
-                    sort_rect = pygame.Rect(
-                        self.rect_boutique_sorts.x + x_offset,
-                        self.rect_boutique_sorts.y + 60,
-                        300,
-                        80,
-                    )
-                    if sort_rect.collidepoint(pos):
-                        # Vérifier si le sort n'est pas au niveau maximum
-                        is_max_level = (
-                            hasattr(sort, "est_au_niveau_maximum")
-                            and sort.est_au_niveau_maximum()
-                        )
-                        # Vérifier si la fée n'est pas déjà active
-                        is_fee_active = (
-                            sort_key == "fee"
-                            and hasattr(sort, "est_actif")
-                            and sort.est_actif()
-                        )
-
-                        if sort_key == "eclair":
-                            # Pour l'éclair, sélectionner/désélectionner le sort
-                            if self.eclair_selectionne:
-                                # Si déjà sélectionné, le désélectionner
-                                self.eclair_selectionne = False
-                            elif not is_max_level and sort.peut_etre_achete(
-                                self.joueur.argent
-                            ):
-                                # Sinon, le sélectionner si on peut l'acheter
-                                self.eclair_selectionne = True
-                                self.type_selectionne = None  # Désélectionner les tours
-                        elif not is_max_level and not is_fee_active:
-                            achat_ok = sort.acheter(self.joueur)
-                            if achat_ok and sort_key == "fee":
-                                # Son d'activation de la fée
-                                self.jouer_sfx("magic-spell.mp3")
-                        break
-                    x_offset += 320
+            if self.shop_manager.gerer_clic_boutique_sorts(pos):
                 return None
-            # Clic dans la boutique
+            # Clic dans la boutique des tours
             if self.bouton_vague.rect.collidepoint(pos) and self.vague_terminee():
                 self.bouton_vague.action()
                 self.tour_manager.tour_selectionnee = None  # désélectionne la range
                 return None
-            if self.rect_boutique.collidepoint(pos):
-                for item in self.shop_items:
-                    if item["rect"].collidepoint(pos):
-                        # Sélectionne le type uniquement si le joueur a assez d'argent
-                        t = item["type"]
-                        prix_t = self.tour_manager.prix_par_type.get(t, 0)
-
-                        # Si déjà sélectionné, on désélectionne
-                        if self.type_selectionne == t:
-                            self.type_selectionne = None
-                        elif self.joueur.argent >= prix_t:
-                            self.type_selectionne = t
-                            self.eclair_selectionne = False  # Désélectionner l'éclair
-                        else:
-                            self.type_selectionne = None
-                        break
+            if self.shop_manager.gerer_clic_boutique_tours(pos):
                 self.tour_manager.tour_selectionnee = None  # désélectionne la range
                 return None
 
@@ -959,7 +619,7 @@ class Game:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             pos = event.pos
             # On ignore si on clique dans la zone boutique
-            if self.rect_boutique.collidepoint(pos):
+            if self.shop_manager.rect_boutique.collidepoint(pos):
                 self.tour_manager.tour_selectionnee = None  # désélectionne la range
                 return None
             if self._position_dans_grille(pos):
