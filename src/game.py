@@ -33,6 +33,7 @@ from classes.ennemi_manager import EnnemiManager
 from classes.tour_manager import TourManager
 from classes.shop_manager import ShopManager
 from classes.audio_manager import AudioManager
+from classes.ui_manager import UIManager
 from classes.joueur import Joueur
 from classes.pointeur import Pointeur
 from classes.position import Position
@@ -65,13 +66,9 @@ from classes.utils import charger_chemin_tiled, distance_positions
 
 
 class Game:
-    def afficher_victoire(self, ecran):
-        img = charger_image_avec_redimensionnement(
-            "assets/VICTOIRE.png", 
-            (ecran.get_width(), ecran.get_height())
-        )
-        if img:
-            ecran.blit(img, (0, 0))
+    # def afficher_victoire(self, ecran):
+    #     # Maintenant géré par UIManager
+    #     self.ui_manager.dessiner_victoire(ecran)
         
     def __init__(self, police: pygame.font.Font, est_muet: bool = False):
         self.joueur = Joueur(argent=450, point_de_vie=100, sort="feu", etat="normal")
@@ -167,6 +164,9 @@ class Game:
         self.audio_manager = AudioManager(self)
         self.audio_manager.set_muet(est_muet)
         
+        # Manager UI
+        self.ui_manager = UIManager(self)
+        
         # Créer le bouton de vague maintenant que le ShopManager est initialisé
         medieval_couleurs = {
             "fond_normal": (110, 70, 30),  # brun
@@ -211,9 +211,10 @@ class Game:
         # self.couleur_boutique_sorts_bg = self.couleur_boutique_bg
         # self.couleur_boutique_sorts_border = self.couleur_boutique_border
 
-        self.couleur_quadrillage = (40, 60, 100)
-        self.couleur_surbrillance = (80, 180, 255)
-        self.couleur_surbrillance_interdite = (255, 80, 80)
+        # Couleurs UI - maintenant gérées par UIManager
+        # self.couleur_quadrillage = (40, 60, 100)
+        # self.couleur_surbrillance = (80, 180, 255)
+        # self.couleur_surbrillance_interdite = (255, 80, 80)
         self.couleur_boutique_bg = (30, 30, 30)
         self.couleur_boutique_border = (80, 80, 80)
         self.couleur_bouton_bg = (60, 60, 60)
@@ -307,14 +308,9 @@ class Game:
             return (x_case, y_case)
         return None
 
-    def _dessiner_quadrillage(self, ecran):
-        largeur_draw = self.largeur_ecran
-        for x in range(0, largeur_draw + 1, self.taille_case):
-            pygame.draw.line(
-                ecran, self.couleur_quadrillage, (x, 0), (x, self.hauteur_ecran)
-            )
-        for y in range(0, self.hauteur_ecran + 1, self.taille_case):
-            pygame.draw.line(ecran, self.couleur_quadrillage, (0, y), (largeur_draw, y))
+    # def _dessiner_quadrillage(self, ecran):
+    #     # Maintenant géré par UIManager
+    #     self.ui_manager.dessiner_quadrillage(ecran)
 
     def _dessiner_personnages_tours(self, ecran):
         self.tour_manager.dessiner_personnages_tours(ecran)
@@ -323,83 +319,13 @@ class Game:
     # def _dessiner_boutique(self, ecran): ...
     # def _dessiner_boutique_sorts(self, ecran): ...
 
-    def _dessiner_surbrillance(self, ecran):
-        # Surbrillance pour l'éclair (seulement sur les cases du chemin, sauf les 6 en haut à gauche)
-        if (
-            hasattr(self, "eclair_selectionne")
-            and self.eclair_selectionne
-            and self.case_survolee
-        ):
-            if self.case_survolee in getattr(
-                self, "cases_bannies", set()
-            ) and self.case_survolee not in [
-                (x, y) for y in (0, 1) for x in range(0, 6)
-            ]:
-                x_case, y_case = self.case_survolee
-                rect = pygame.Rect(
-                    x_case * self.taille_case,
-                    y_case * self.taille_case,
-                    self.taille_case,
-                    self.taille_case,
-                )
-                overlay = pygame.Surface(
-                    (self.taille_case, self.taille_case), pygame.SRCALPHA
-                )
-                # Couleur jaune pour l'éclair
-                overlay.fill((255, 255, 0, 100))
-                if rect.right <= self.largeur_ecran:
-                    ecran.blit(overlay, rect)
-            return
+    # def _dessiner_surbrillance(self, ecran):
+    #     # Maintenant géré par UIManager
+    #     self.ui_manager.dessiner_surbrillance(ecran)
 
-        # Surbrillance pour les tours
-        if not self.case_survolee or not self.type_selectionne:
-            return
-
-        x_case, y_case = self.case_survolee
-        rect = pygame.Rect(
-            x_case * self.taille_case,
-            y_case * self.taille_case,
-            self.taille_case,
-            self.taille_case,
-        )
-
-        # Surbrillance
-        overlay = pygame.Surface((self.taille_case, self.taille_case), pygame.SRCALPHA)
-        interdit = (x_case, y_case) in getattr(self, "cases_bannies", set()) or (
-            x_case,
-            y_case,
-        ) in self.tour_manager.positions_occupees
-        couleur = (
-            self.couleur_surbrillance_interdite
-            if interdit
-            else self.couleur_surbrillance
-        )
-        overlay.fill((*couleur, 80))
-        if rect.right <= self.largeur_ecran:
-            ecran.blit(overlay, rect)
-
-        # Cercle autour de la case
-
-        portee = self.tour_manager.portee_par_type.get(self.type_selectionne, 0)
-        cx = x_case * self.taille_case + self.taille_case // 2
-        cy = y_case * self.taille_case + self.taille_case // 2
-
-        # Dessine un cercle
-        dash_count = 15  # nombre de segments
-        dash_length = 0.15  # en radians
-
-        for i in range(dash_count):
-            angle_start = 2 * math.pi * i / dash_count
-            angle_end = angle_start + dash_length
-            x1 = int(cx + portee * math.cos(angle_start))
-            y1 = int(cy + portee * math.sin(angle_start))
-            x2 = int(cx + portee * math.cos(angle_end))
-            y2 = int(cy + portee * math.sin(angle_end))
-            pygame.draw.line(ecran, (255, 255, 255), (x1, y1), (x2, y2), 3)
-
-    def _dessiner_tours_placees(self, ecran):
-        """Dessine les tours, avec un traitement spécial pour Campement."""
-        self.tour_manager.dessiner_tours_placees(ecran, self.taille_case)
+    # def _dessiner_tours_placees(self, ecran):
+    #     # Maintenant géré par UIManager
+    #     self.tour_manager.dessiner_tours_placees(ecran, self.taille_case)
 
 
     # ---------- Update / boucle ----------
@@ -456,60 +382,13 @@ class Game:
 
     def dessiner(self, ecran: pygame.Surface) -> None:
         if self.ennemi_manager.est_victoire():
-            self.afficher_victoire(ecran)
+            self.ui_manager.dessiner_victoire(ecran)
             return
 
         dt = self.clock.tick(60) / 1000.0
-        ecran.blit(self.carte, (0, 0))
-        self._dessiner_tours_placees(ecran)
-        self._dessiner_personnages_tours(ecran)
-        self._dessiner_surbrillance(ecran)
-
-        # Effet nuit - seulement pendant les manches
-        if self.ennemi_manager.est_nuit:
-            nuit_surface = pygame.Surface(
-                (self.largeur_ecran, self.hauteur_ecran), pygame.SRCALPHA
-            )
-            nuit_surface.fill((0, 6, 25, int(255 * 0.7)))  # 70% opacity
-
-            # Vérifier si la fée est active
-            if "fee" in self.sorts and self.sorts["fee"].est_actif():
-                # Si la fée est active, éclairer toute la carte
-                pygame.draw.circle(
-                    nuit_surface,
-                    (0, 0, 0, 0),
-                    (self.largeur_ecran // 2, self.hauteur_ecran // 2),
-                    max(self.largeur_ecran, self.hauteur_ecran),
-                )
-            else:
-                # Effet de lumière du curseur seulement si la souris est sur la carte
-                x, y = pygame.mouse.get_pos()
-                if x < self.largeur_ecran:
-                    # Portée de base du curseur
-                    portee_curseur = 100
-                    # Vérifier si le joueur a le sort de vision et augmenter la portée
-                    if "vision" in self.sorts:
-                        portee_curseur = self.sorts["vision"].portee
-                    pygame.draw.circle(
-                        nuit_surface, (0, 0, 0, 0), (x, y), portee_curseur
-                    )  # dessin de la lumiere
-            self.majFeuxDeCamps(dt, nuit_surface)
-
-            ecran.blit(nuit_surface, (0, 0))
-        else:
-            self.majFeuxDeCamps(dt, None)
         
-        self.shop_manager.dessiner_boutique_tours(ecran)
-        self.shop_manager.dessiner_boutique_sorts(ecran)
-        self.ennemi_manager.dessiner_ennemis(ecran)
-
-        # Affichage des effets visuels des sorts
-        for sort in self.sorts.values():
-            sort.dessiner_effet(ecran, self)
-
-        # Dessiner les projectiles et effets d'explosion
-        self.tour_manager.dessiner_projectiles(ecran)
-        self.tour_manager.dessiner_effets_explosion(ecran)
+        # Délégation complète du rendu à l'UIManager
+        self.ui_manager.dessiner_interface_jeu(ecran, dt)
 
         # self.pointeur.draw(ecran, self)  # Désactivé pour enlever le filtre bleu
         self.maj(dt)
