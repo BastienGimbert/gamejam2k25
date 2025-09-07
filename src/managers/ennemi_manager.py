@@ -166,13 +166,13 @@ class EnnemiManager:
                         
                         # Fond gris
                         pygame.draw.rect(
-                            ecran, (60, 60, 60), (x_barre, y_barre, largeur_max, hauteur)
+                            ecran, (60, 60, 60), (x_barre, y_barre, largeur_max, hauteur), border_radius=3
                         )
                         
                         # Barre de vie verte
                         couleur_vie = (0, 255, 0) if pourcentage_vie > 0.5 else (255, 255, 0) if pourcentage_vie > 0.25 else (255, 0, 0)
                         pygame.draw.rect(
-                            ecran, couleur_vie, (x_barre, y_barre, largeur_actuelle, hauteur)
+                            ecran, couleur_vie, (x_barre, y_barre, largeur_actuelle, hauteur), border_radius=3
                         )
                         
             except Exception:
