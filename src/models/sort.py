@@ -1,11 +1,8 @@
-import math
-import os
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 import pygame
 
-from classes.constants import ASSETS_DIR
 from classes.sprites import charger_image_assets, decouper_sprite
 
 if TYPE_CHECKING:

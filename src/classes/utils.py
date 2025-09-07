@@ -3,9 +3,8 @@ import os
 from math import hypot
 from typing import List
 
-import pygame
 
-from classes.constants import ASSETS_DIR, PROJECT_ROOT
+from classes.constants import PROJECT_ROOT
 from classes.position import Position
 
 

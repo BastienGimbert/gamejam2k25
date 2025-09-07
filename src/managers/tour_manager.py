@@ -1,10 +1,10 @@
 import math
 import os
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Tuple
 
 import pygame
 
-from classes.constants import ASSETS_DIR, AUDIO_DIR
+from classes.constants import ASSETS_DIR
 from classes.position import Position
 from classes.utils import distance_positions
 from models.projectile import (
@@ -399,7 +399,6 @@ class TourManager:
     def _diminuer_prix_apres_vente(self, case: tuple[int, int]) -> None:
         """Diminue le prix d'une tour après vente."""
         type_tour = self.positions_occupees[case]["type_selectionne"]
-        prix_achat = int(self.positions_occupees[case].get("prix", 0))
 
         if type_tour == "campement":
             self.prix_par_type["campement"] = int(

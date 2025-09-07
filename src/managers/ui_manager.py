@@ -1,10 +1,8 @@
 import math
-import os
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING
 
 import pygame
 
-from classes.constants import ASSETS_DIR
 from classes.sprites import charger_image_avec_redimensionnement
 
 if TYPE_CHECKING:

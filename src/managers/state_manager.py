@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, Optional
 
 import pygame
 
-from classes.constants import FPS, WINDOW_HEIGHT, WINDOW_WIDTH
+from classes.constants import WINDOW_WIDTH
 from classes.menu import (
     creer_boutons_credits,
     creer_boutons_menu,

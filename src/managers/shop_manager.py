@@ -1,11 +1,9 @@
 import os
-from typing import TYPE_CHECKING, Dict, List, Tuple
+from typing import TYPE_CHECKING, Tuple
 
 import pygame
 
 from classes.constants import (
-    ASSETS_DIR,
-    AUDIO_DIR,
     COIN_ANIM_INTERVAL_MS,
     HEART_ANIM_INTERVAL_MS,
     MONEY_DIR,

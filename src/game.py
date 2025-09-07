@@ -1,43 +1,24 @@
 from __future__ import annotations
 
-import math
-import os
 
 import pygame
 
 from classes.bouton import Bouton
 from classes.constants import (
-    ASSETS_DIR,
-    AUDIO_DIR,
-    COIN_ANIM_INTERVAL_MS,
     DEFAULT_TOWER_TYPES,
     GAME_HEIGHT,
     GAME_WIDTH,
     GRID_COLS,
     GRID_ROWS,
-    HEART_ANIM_INTERVAL_MS,
-    HEART_DIR,
     MAP_PNG,
     MAP_TILESET_TMJ,
-    MONEY_DIR,
-    PROJECT_ROOT,
-    RECOMPENSES_PAR_VAGUE,
-    SHOP_WIDTH,
-    SPELLS_HEIGHT,
     TILE_SIZE,
-    TOWER_DIR,
-    WINDOW_HEIGHT,
 )
 from classes.pointeur import Pointeur
 from classes.position import Position
 from classes.sprites import (
-    charger_animation_ui,
     charger_image_assets,
-    charger_image_avec_redimensionnement,
-    charger_image_projectile,
     charger_sprites_tour_assets,
-    charger_spritesheet_ui,
-    decouper_sprite,
 )
 from classes.utils import (
     case_depuis_pos,
@@ -51,12 +32,11 @@ from managers.ennemi_manager import EnnemiManager
 from managers.shop_manager import ShopManager
 from managers.tour_manager import TourManager
 from managers.ui_manager import UIManager
-from models.ennemi import Chevalier, Ennemi, Gobelin, Mage
+from models.ennemi import Mage
 from models.joueur import Joueur
 from models.sort import SortEclair, SortFee, SortVision
 
 # Import nécessaire pour le type hint
-from models.tour import Campement
 
 
 class Game:
@@ -250,8 +230,6 @@ class Game:
         """Joue un son ponctuel via l'AudioManager."""
         self.audio_manager.jouer_sfx(fichier, volume)
 
-    def decompte_dt(self) -> None:
-        dt = self.clock.tick(60) / 1000.0
 
     # ---------- Evénements ----------
     def gerer_evenement(self, event: pygame.event.Event) -> str | None:

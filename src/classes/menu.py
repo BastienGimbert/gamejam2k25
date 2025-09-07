@@ -1,8 +1,7 @@
-import os
 
 import pygame
 
-from classes.constants import ASSETS_DIR, COLORS
+from classes.constants import COLORS
 from classes.sprites import charger_image_avec_redimensionnement
 
 from .bouton import Bouton

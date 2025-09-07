@@ -1,4 +1,3 @@
-import os
 from abc import ABC, abstractmethod
 
 # Evite les boucles dans les imports mutuels
@@ -6,7 +5,7 @@ from typing import TYPE_CHECKING, Callable, List, Optional
 
 import pygame
 
-from classes.constants import MAP_TILESET_TMJ, TILESETS_DIR
+from classes.constants import MAP_TILESET_TMJ
 from classes.position import Position
 from classes.sprites import charger_sprites_ennemi
 from classes.utils import charger_chemin_tiled, distance_positions
